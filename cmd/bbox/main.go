@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+	bbox.Init()
+
 	go bbox.RunInput()
 	go bbox.RunAudio()
 

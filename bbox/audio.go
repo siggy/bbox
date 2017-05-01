@@ -2,24 +2,44 @@ package bbox
 
 import (
 	"fmt"
-	// "io/ioutil"
+	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/gordonklaus/portaudio"
 	"github.com/youpy/go-wav"
 )
 
-// type Audio struct {
-// 	wavs [][]float32
-// }
+type Audio struct {
+	wavs [][]float32
+}
 
-// func Init() *Audio {
-// 	files, _ := ioutil.ReadDir("./wav")
-// 	for _, f := range files {
-// 		fmt.Println(f.Name())
-// 	}
-// 	return
-// }
+func Init() *Audio {
+	a := Audio{}
+
+	files, _ := ioutil.ReadDir("./wav")
+	a.wavs = make([][]float32, len(files))
+
+	for i, f := range files {
+		a.wavs[i] = make([]float32, 524288)
+
+		fmt.Printf("%+v: reading\n", f.Name())
+		file, _ := os.Open("./wav/" + f.Name())
+		reader := wav.NewReader(file)
+		defer file.Close()
+
+		samples, err := reader.ReadSamples(524288)
+		if err != io.EOF {
+			chk(err)
+		}
+		for j, sample := range samples {
+			a.wavs[i][j] = float32(reader.FloatValue(sample, 0))
+		}
+
+		fmt.Printf("%+v: read %+v samples\n", f.Name(), len(samples))
+	}
+	return &a
+}
 
 var out []float32
 
