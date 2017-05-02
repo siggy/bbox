@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/gordonklaus/portaudio"
 	"github.com/youpy/go-wav"
@@ -17,16 +18,21 @@ type Wav struct {
 	active bool
 }
 
+var last = int64(0)
+
 func (w *Wav) cb(output [][]float32) {
-	fmt.Printf("cb: %+v\n", len(output[0]))
+	now := time.Now().UnixNano()
+	fmt.Printf("1: %+v cb: %+v\n", now-last, len(output[0]))
+	last = now
 	if w.active {
-		fmt.Printf("  w.active: %+v\n", len(output[0]))
+		// fmt.Printf("  w.active: %+v\n", len(output[0]))
 		copy(output[0], w.buf)
-		w.active = false
+		// w.active = false
 	} else {
 		copy(output[0], make([]float32, len(output[0])))
 	}
-	fmt.Printf("  output[0][0] %+v\n", output[0][0])
+	fmt.Printf("2: %+v output[0][0] %+v\n", time.Now().UnixNano()-last, output[0][0])
+	last = time.Now().UnixNano()
 }
 
 type Audio struct {
@@ -34,7 +40,7 @@ type Audio struct {
 }
 
 func Init() *Audio {
-	var err error
+	// var err error
 
 	a := Audio{}
 
@@ -45,6 +51,7 @@ func Init() *Audio {
 	// a.wavs = make([][]float32, len(files))
 	// a.lengths = make([]int, len(files))
 
+	// files = []os.FileInfo{files[0]}
 	for i, f := range files {
 		buf := make([]float32, 524288)
 
@@ -94,10 +101,11 @@ func Init() *Audio {
 		// 	// defer stream.Close()
 		// 	// defer stream.Stop()
 		// }
+		// return &a
 
-		a.wavs[i].stream, err = portaudio.OpenDefaultStream(0, 1, 44100, len(a.wavs[i].buf), a.wavs[i].cb)
-		chk(err)
-		chk(a.wavs[i].stream.Start())
+		// a.wavs[i].stream, err = portaudio.OpenDefaultStream(0, 1, 44100, len(a.wavs[i].buf), a.wavs[i].cb)
+		// chk(err)
+		// chk(a.wavs[i].stream.Start())
 	}
 
 	return &a
@@ -124,6 +132,34 @@ func (a *Audio) Play(i int) error {
 	chk(stream.Start())
 
 	return nil
+}
+
+func (a *Audio) PlayZero(i int) {
+	out := make([]float32, 8192)
+
+	stream, err := portaudio.OpenDefaultStream(0, 1, 44100, len(out), &out)
+	chk(err)
+	defer stream.Close()
+
+	chk(stream.Start())
+	defer stream.Stop()
+	for remaining := int(len(a.wavs[i].buf)); remaining > 0; remaining -= len(out) {
+		if len(out) > remaining {
+			out = out[:remaining]
+		}
+		copy(out, a.wavs[i].buf[(int(len(a.wavs[i].buf))-remaining):])
+		// err := binary.Read(audio, binary.BigEndian, out)
+		// if err == io.EOF {
+		// 	break
+		// }
+		chk(err)
+		chk(stream.Write())
+		// select {
+		// case <-sig:
+		// 	return
+		// default:
+		// }
+	}
 }
 
 var out []float32
