@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -12,48 +11,59 @@ import (
 	"github.com/youpy/go-wav"
 )
 
+const (
+	BPM      = 120
+	TICKS    = 16
+	INTERVAL = 60 * time.Second / BPM / (TICKS / 4) // 4 beats per interval
+	BUF      = 16
+	MAX_BUF  = 524288
+)
+
+var empty = make([]float32, BUF)
+
 type Wav struct {
-	buf    []float32
-	stream *portaudio.Stream
-	active bool
+	buf       []float32
+	length    int
+	stream    *portaudio.Stream
+	active    chan bool
+	remaining int
 }
 
-var last = int64(0)
-
 func (w *Wav) cb(output [][]float32) {
-	now := time.Now().UnixNano()
-	fmt.Printf("1: %+v cb: %+v\n", now-last, len(output[0]))
-	last = now
-	if w.active {
-		// fmt.Printf("  w.active: %+v\n", len(output[0]))
-		copy(output[0], w.buf)
-		// w.active = false
-	} else {
-		copy(output[0], make([]float32, len(output[0])))
+	select {
+	case <-w.active:
+		w.remaining = w.length
+	default:
 	}
-	fmt.Printf("2: %+v output[0][0] %+v\n", time.Now().UnixNano()-last, output[0][0])
-	last = time.Now().UnixNano()
+
+	if w.remaining > 0 {
+		if w.remaining < BUF {
+			output[0] = output[0][:w.remaining]
+		}
+		copy(output[0], w.buf[(w.length-w.remaining):])
+		w.remaining -= BUF
+	} else {
+		copy(output[0], empty)
+	}
 }
 
 type Audio struct {
 	wavs []*Wav
+	bs   *BeatState
 }
 
-func Init() *Audio {
-	// var err error
-
-	a := Audio{}
+func InitAudio(bs *BeatState, files []os.FileInfo) *Audio {
+	var err error
 
 	portaudio.Initialize()
 
-	files, _ := ioutil.ReadDir("./wav")
-	a.wavs = make([]*Wav, len(files))
-	// a.wavs = make([][]float32, len(files))
-	// a.lengths = make([]int, len(files))
+	a := Audio{
+		bs:   bs,
+		wavs: make([]*Wav, len(files)),
+	}
 
-	// files = []os.FileInfo{files[0]}
 	for i, f := range files {
-		buf := make([]float32, 524288)
+		buf := make([]float32, MAX_BUF)
 
 		file, _ := os.Open("./wav/" + f.Name())
 		reader := wav.NewReader(file)
@@ -75,139 +85,51 @@ func Init() *Audio {
 		}
 
 		a.wavs[i] = &Wav{
-			buf: make([]float32, loc),
+			buf:    make([]float32, loc),
+			length: loc,
+			active: make(chan bool),
 		}
 		copy(a.wavs[i].buf, buf)
 
 		fmt.Printf("%+v: %+v samples\n", f.Name(), loc)
-		// a.lengths[i] = loc
 
-		// var stream *portaudio.Stream
-		// cb := func(output [][]float32) {
-		// 	fmt.Printf("%+v: cb a.wavs[%+v] output[0]: %+v\n", f.Name(), i, len(output[0]))
-		// 	bufLen := len(output[0])
-		// 	for _, wav := range a.wavs {
-		// 		if bufLen == len(wav.buf) {
-		// 			if wav.active {
-		// 				fmt.Printf("wav.active: %+v: cb a.wavs[%+v] output[0]: %+v\n", f.Name(), i, len(output[0]))
-		// 				copy(output[0], wav.buf)
-		// 				wav.active = false
-		// 			}
-		// 			fmt.Printf("output[0][0] %+v\n", output[0][0])
-		// 			break
-		// 		}
-		// 	}
-		// 	// copy(output[0], a.wavs[i].buf)
-		// 	// defer stream.Close()
-		// 	// defer stream.Stop()
-		// }
-		// return &a
-
-		// a.wavs[i].stream, err = portaudio.OpenDefaultStream(0, 1, 44100, len(a.wavs[i].buf), a.wavs[i].cb)
-		// chk(err)
-		// chk(a.wavs[i].stream.Start())
+		a.wavs[i].stream, err = portaudio.OpenDefaultStream(0, 1, 44100, BUF, a.wavs[i].cb)
+		chk(err)
+		chk(a.wavs[i].stream.Start())
 	}
 
 	return &a
+}
+
+func (a *Audio) Run() {
+	curTick := 0
+
+	ticker := time.NewTicker(INTERVAL)
+	quit := make(chan struct{})
+
+	for {
+		select {
+		case <-ticker.C:
+			for i := 0; i < len(a.wavs); i++ {
+				if a.bs.Get(i, curTick) {
+					a.Play(i)
+				}
+			}
+			curTick = (curTick + 1) % TICKS
+
+		case <-quit:
+			ticker.Stop()
+			return
+		}
+	}
 }
 
 func (a *Audio) Play(i int) error {
 	if i < 0 || i >= len(a.wavs) {
 		return errors.New(fmt.Sprintf("index out of range: %+v", i))
 	}
-
-	a.wavs[i].active = true
+	a.wavs[i].active <- true
 	return nil
-
-	var stream *portaudio.Stream
-	cb := func(out2 [][]float32) {
-		fmt.Printf("cb a.wavs[%+v] out2[0]: %+v\n", i, len(out2[0]))
-		copy(out2[0], a.wavs[i].buf)
-		// defer stream.Close()
-		// defer stream.Stop()
-	}
-
-	stream, err := portaudio.OpenDefaultStream(0, 1, 44100, len(a.wavs[i].buf), cb)
-	chk(err)
-	chk(stream.Start())
-
-	return nil
-}
-
-func (a *Audio) PlayZero(i int) {
-	out := make([]float32, 8192)
-
-	stream, err := portaudio.OpenDefaultStream(0, 1, 44100, len(out), &out)
-	chk(err)
-	defer stream.Close()
-
-	chk(stream.Start())
-	defer stream.Stop()
-	for remaining := int(len(a.wavs[i].buf)); remaining > 0; remaining -= len(out) {
-		if len(out) > remaining {
-			out = out[:remaining]
-		}
-		copy(out, a.wavs[i].buf[(int(len(a.wavs[i].buf))-remaining):])
-		// err := binary.Read(audio, binary.BigEndian, out)
-		// if err == io.EOF {
-		// 	break
-		// }
-		chk(err)
-		chk(stream.Write())
-		// select {
-		// case <-sig:
-		// 	return
-		// default:
-		// }
-	}
-}
-
-var out []float32
-
-func streamCallback(out2 [][]float32) {
-	fmt.Printf("streamCallback out2[0]: %+v\n", len(out2[0]))
-	copy(out2[0], out)
-}
-
-func RunAudio() {
-	return
-
-	out = make([]float32, 524288)
-
-	file, _ := os.Open("wav/bass_drum.wav")
-	reader := wav.NewReader(file)
-	defer file.Close()
-
-	loc := 0
-
-	for {
-		samples, err := reader.ReadSamples()
-		if len(samples) == 0 {
-			break
-		}
-
-		for _, sample := range samples {
-			out[loc] = float32(reader.FloatValue(sample, 0))
-			loc += 1
-		}
-
-		if err == io.EOF {
-			fmt.Printf("break2\n")
-			break
-		}
-	}
-	fmt.Printf("reader.ReadSamples read %+v\n", loc)
-
-	portaudio.Initialize()
-	// defer portaudio.Terminate()
-	stream, err := portaudio.OpenDefaultStream(0, 1, 44100, loc, streamCallback)
-	chk(err)
-	// defer stream.Close()
-
-	chk(stream.Start())
-	// defer stream.Stop()
-
-	return
 }
 
 func chk(err error) {

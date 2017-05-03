@@ -11,5 +11,5 @@ brew install portaudio
 ## Run
 
 ```bash
-go run cmd/bbox/main.go
+go run -race cmd/bbox/main.go
 ```
