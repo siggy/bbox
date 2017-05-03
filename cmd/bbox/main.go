@@ -16,10 +16,10 @@ func main() {
 	bs.Toggle(0, 0)
 	bs.Toggle(0, 8)
 
-	input := bbox.InitInput(bs)
+	keyboard := bbox.InitKeyboard(bs)
 	audio := bbox.InitAudio(bs, files)
 
-	go input.Run()
+	go keyboard.Run()
 	go audio.Run()
 
 	time.Sleep(60 * time.Second)

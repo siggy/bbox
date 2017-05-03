@@ -76,21 +76,21 @@ var keymaps = map[string][]int{
 	"<": []int{3, 15},
 }
 
-type Input struct {
+type Keyboard struct {
 	bs *BeatState
 }
 
-func InitInput(bs *BeatState) *Input {
-	return &Input{
+func InitKeyboard(bs *BeatState) *Keyboard {
+	return &Keyboard{
 		bs: bs,
 	}
 }
 
-func (input *Input) Draw() {
-	for i := 0; i < input.bs.BeatCount(); i++ {
+func (kb *Keyboard) Draw() {
+	for i := 0; i < kb.bs.BeatCount(); i++ {
 		for j := 0; j < TICKS; j++ {
 			c := '-'
-			if input.bs.Get(i, j) {
+			if kb.bs.Enabled(i, j) {
 				c = 'X'
 			}
 			termbox.SetCell(j*2, i, c, termbox.ColorDefault, termbox.ColorDefault)
@@ -101,7 +101,7 @@ func (input *Input) Draw() {
 	termbox.Flush()
 }
 
-func (input *Input) Run() {
+func (kb *Keyboard) Run() {
 	var current string
 	var curev termbox.Event
 
@@ -112,7 +112,7 @@ func (input *Input) Run() {
 	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputAlt)
 
-	input.Draw()
+	kb.Draw()
 
 	data := make([]byte, 0, 64)
 mainloop:
@@ -135,9 +135,9 @@ mainloop:
 
 			key := keymaps[current]
 			if key != nil {
-				input.bs.Toggle(key[0], key[1])
+				kb.bs.Toggle(key[0], key[1])
 			}
-			input.Draw()
+			kb.Draw()
 
 			for {
 				ev := termbox.ParseEvent(data)

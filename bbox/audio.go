@@ -111,7 +111,7 @@ func (a *Audio) Run() {
 		select {
 		case <-ticker.C:
 			for i := 0; i < len(a.wavs); i++ {
-				if a.bs.Get(i, curTick) {
+				if a.bs.Enabled(i, curTick) {
 					a.Play(i)
 				}
 			}

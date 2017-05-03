@@ -13,3 +13,13 @@ brew install portaudio
 ```bash
 go run -race cmd/bbox/main.go
 ```
+
+## TODO
+
+- graceful shutdown
+
+    ```golang
+    stream.Stop()
+    stream.Close()
+    termbox.Close()
+    ````
