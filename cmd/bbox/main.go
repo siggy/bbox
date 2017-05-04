@@ -15,11 +15,11 @@ func main() {
 	msgs := make(chan bbox.Beats)
 
 	keyboard := bbox.InitKeyboard(msgs)
-	audio := bbox.InitAudio(msgs, files)
+	loop := bbox.InitLoop(msgs, files)
 
 	// keyboard broadcasts quit with close(msgs)
 	go keyboard.Run()
 
 	// audio.Run() blocks until close(msgs)
-	audio.Run()
+	loop.Run()
 }

@@ -14,48 +14,48 @@ const (
 
 type Beats [BEATS][TICKS]bool
 
-type Audio struct {
+type Loop struct {
 	beats Beats
 	msgs  <-chan Beats
 	wavs  [BEATS]*Wav
 }
 
-func InitAudio(msgs <-chan Beats, files []os.FileInfo) *Audio {
-	a := Audio{
+func InitLoop(msgs <-chan Beats, files []os.FileInfo) *Loop {
+	l := Loop{
 		beats: Beats{},
 		msgs:  msgs,
 		wavs:  [BEATS]*Wav{},
 	}
 
 	for i, f := range files {
-		a.wavs[i] = InitWav(f)
+		l.wavs[i] = InitWav(f)
 	}
 
-	return &a
+	return &l
 }
 
-func (a *Audio) Run() {
+func (l *Loop) Run() {
 	ticker := time.NewTicker(INTERVAL)
 	defer ticker.Stop()
-	defer a.Close()
+	defer l.Close()
 
 	cur := 0
 	for {
 		select {
-		case beats, more := <-a.msgs:
+		case beats, more := <-l.msgs:
 			if more {
 				// incoming beat update from keyboard
-				a.beats = beats
+				l.beats = beats
 			} else {
 				// closing
 				return
 			}
 		case <-ticker.C: // for every time interval
 			// for each beat type
-			for i, beat := range a.beats {
+			for i, beat := range l.beats {
 				if beat[cur] {
 					// initiate playback
-					a.wavs[i].Play()
+					l.wavs[i].Play()
 				}
 			}
 			// next interval
@@ -64,8 +64,8 @@ func (a *Audio) Run() {
 	}
 }
 
-func (a *Audio) Close() {
-	for _, wav := range a.wavs {
+func (l *Loop) Close() {
+	for _, wav := range l.wavs {
 		wav.Close()
 	}
 }
