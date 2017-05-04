@@ -73,16 +73,6 @@ func InitWav(f os.FileInfo) *Wav {
 	return &w
 }
 
-func (w *Wav) Play() {
-	w.active <- struct{}{}
-}
-
-func (w *Wav) Close() {
-	w.stream.Stop()
-	w.stream.Close()
-	portaudio.Terminate()
-}
-
 func (w *Wav) cb(output [][]float32) {
 	select {
 	case <-w.active:
@@ -99,4 +89,16 @@ func (w *Wav) cb(output [][]float32) {
 	} else {
 		copy(output[0], empty)
 	}
+}
+
+func (w *Wav) Play() {
+	w.active <- struct{}{}
+}
+
+func (w *Wav) Close() {
+	fmt.Printf("%+v: closing\n", w.name)
+
+	w.stream.Stop()
+	w.stream.Close()
+	portaudio.Terminate()
 }

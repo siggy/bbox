@@ -1,7 +1,7 @@
 package bbox
 
 import (
-	"os"
+	"io/ioutil"
 	"time"
 )
 
@@ -20,11 +20,16 @@ type Loop struct {
 	wavs  [BEATS]*Wav
 }
 
-func InitLoop(msgs <-chan Beats, files []os.FileInfo) *Loop {
+func InitLoop(msgs <-chan Beats) *Loop {
 	l := Loop{
 		beats: Beats{},
 		msgs:  msgs,
 		wavs:  [BEATS]*Wav{},
+	}
+
+	files, _ := ioutil.ReadDir("./wav")
+	if len(files) != BEATS {
+		panic(0)
 	}
 
 	for i, f := range files {

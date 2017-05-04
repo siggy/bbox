@@ -16,9 +16,4 @@ go run -race cmd/bbox/main.go
 
 ## TODO
 
-- graceful shutdown
-
-    ```golang
-    stream.Stop()
-    stream.Close()
-    ````
+- display rendering comes from loop, not keyboard
