@@ -1,7 +1,6 @@
 package bbox
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,19 +12,23 @@ import (
 
 const (
 	BPM      = 120
+	BEATS    = 4
 	TICKS    = 16
 	INTERVAL = 60 * time.Second / BPM / (TICKS / 4) // 4 beats per interval
 	BUF      = 16
 	MAX_BUF  = 524288
 )
 
+type Beats [BEATS][TICKS]bool
+
 var empty = make([]float32, BUF)
 
 type Wav struct {
+	name      string
 	buf       []float32
 	length    int
 	stream    *portaudio.Stream
-	active    chan bool
+	active    chan struct{}
 	remaining int
 }
 
@@ -48,18 +51,21 @@ func (w *Wav) cb(output [][]float32) {
 }
 
 type Audio struct {
-	wavs []*Wav
-	bs   *BeatState
+	beats Beats
+	msgs  <-chan Beats
+	wavs  [BEATS]*Wav
+	quit  chan struct{}
 }
 
-func InitAudio(bs *BeatState, files []os.FileInfo) *Audio {
+func InitAudio(msgs <-chan Beats, files []os.FileInfo) *Audio {
 	var err error
 
 	portaudio.Initialize()
 
 	a := Audio{
-		bs:   bs,
-		wavs: make([]*Wav, len(files)),
+		beats: Beats{},
+		msgs:  msgs,
+		wavs:  [BEATS]*Wav{},
 	}
 
 	for i, f := range files {
@@ -72,10 +78,12 @@ func InitAudio(bs *BeatState, files []os.FileInfo) *Audio {
 		loc := 0
 		for {
 			samples, err := reader.ReadSamples()
-			if err != io.EOF {
-				chk(err)
-			} else {
-				break
+			if err != nil {
+				if err == io.EOF {
+					break
+				} else {
+					panic(err)
+				}
 			}
 
 			for _, sample := range samples {
@@ -85,56 +93,48 @@ func InitAudio(bs *BeatState, files []os.FileInfo) *Audio {
 		}
 
 		a.wavs[i] = &Wav{
+			name:   f.Name(),
 			buf:    make([]float32, loc),
 			length: loc,
-			active: make(chan bool),
+			active: make(chan struct{}),
 		}
 		copy(a.wavs[i].buf, buf)
 
-		fmt.Printf("%+v: %+v samples\n", f.Name(), loc)
+		fmt.Printf("%+v: %+v samples\n", a.wavs[i].name, loc)
 
 		a.wavs[i].stream, err = portaudio.OpenDefaultStream(0, 1, 44100, BUF, a.wavs[i].cb)
-		chk(err)
-		chk(a.wavs[i].stream.Start())
+		if err != nil {
+			panic(err)
+		}
+		err = a.wavs[i].stream.Start()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return &a
 }
 
 func (a *Audio) Run() {
-	curTick := 0
-
 	ticker := time.NewTicker(INTERVAL)
-	quit := make(chan struct{})
+	defer ticker.Stop()
 
+	cur := 0
 	for {
 		select {
-		case <-ticker.C:
-			for i := 0; i < len(a.wavs); i++ {
-				if a.bs.Enabled(i, curTick) {
-					a.Play(i)
+		case beats := <-a.msgs:
+			// incoming beat update from keyboard
+			a.beats = beats
+		case <-ticker.C: // for every time interval
+			// for each beat type
+			for i, beat := range a.beats {
+				if beat[cur] {
+					// initiate playback
+					go func(j int) { a.wavs[j].active <- struct{}{} }(i)
 				}
 			}
-			curTick = (curTick + 1) % TICKS
-
-		case <-quit:
-			ticker.Stop()
-			return
+			// next interval
+			cur = (cur + 1) % TICKS
 		}
-	}
-}
-
-func (a *Audio) Play(i int) error {
-	if i < 0 || i >= len(a.wavs) {
-		return errors.New(fmt.Sprintf("index out of range: %+v", i))
-	}
-	a.wavs[i].active <- true
-	return nil
-}
-
-func chk(err error) {
-	if err != nil {
-		fmt.Printf("died with: %+v\n", err)
-		panic(err)
 	}
 }

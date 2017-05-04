@@ -77,20 +77,29 @@ var keymaps = map[string][]int{
 }
 
 type Keyboard struct {
-	bs *BeatState
+	beats Beats
+	msgs  chan<- Beats
 }
 
-func InitKeyboard(bs *BeatState) *Keyboard {
+func InitKeyboard(msgs chan<- Beats) *Keyboard {
+	beats := Beats{}
+
+	// starter beat
+	beats[0][0] = true
+	beats[0][8] = true
+	go func() { msgs <- beats }()
+
 	return &Keyboard{
-		bs: bs,
+		beats: beats,
+		msgs:  msgs,
 	}
 }
 
 func (kb *Keyboard) Draw() {
-	for i := 0; i < kb.bs.BeatCount(); i++ {
+	for i := 0; i < len(kb.beats); i++ {
 		for j := 0; j < TICKS; j++ {
 			c := '-'
-			if kb.bs.Enabled(i, j) {
+			if kb.beats[i][j] {
 				c = 'X'
 			}
 			termbox.SetCell(j*2, i, c, termbox.ColorDefault, termbox.ColorDefault)
@@ -101,7 +110,7 @@ func (kb *Keyboard) Draw() {
 	termbox.Flush()
 }
 
-func (kb *Keyboard) Run() {
+func (kb *Keyboard) Run(quit chan<- struct{}) {
 	var current string
 	var curev termbox.Event
 
@@ -109,13 +118,16 @@ func (kb *Keyboard) Run() {
 	if err != nil {
 		panic(err)
 	}
-	defer termbox.Close()
+	defer func() {
+		termbox.Close()
+		close(quit)
+	}()
 	termbox.SetInputMode(termbox.InputAlt)
 
 	kb.Draw()
 
 	data := make([]byte, 0, 64)
-mainloop:
+
 	for {
 		if cap(data)-len(data) < 32 {
 			newdata := make([]byte, len(data), len(data)+32)
@@ -129,13 +141,15 @@ mainloop:
 			data = data[:beg+ev.N]
 			current = fmt.Sprintf("%s", data)
 			if current == "q" {
-				panic(0)
-				break mainloop
+				// trigger the deferred termbox.Close and quit<-
+				panic("quit called")
 			}
 
 			key := keymaps[current]
 			if key != nil {
-				kb.bs.Toggle(key[0], key[1])
+				kb.beats[key[0]][key[1]] = !kb.beats[key[0]][key[1]]
+				beats := kb.beats // make a copy before going asynch
+				go func() { kb.msgs <- beats }()
 			}
 			kb.Draw()
 

@@ -21,5 +21,4 @@ go run -race cmd/bbox/main.go
     ```golang
     stream.Stop()
     stream.Close()
-    termbox.Close()
     ````

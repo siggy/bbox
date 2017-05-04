@@ -2,25 +2,25 @@ package main
 
 import (
 	"io/ioutil"
-	"time"
 
 	"github.com/siggy/bbox/bbox"
 )
 
 func main() {
 	files, _ := ioutil.ReadDir("./wav")
+	if len(files) != bbox.BEATS {
+		panic(0)
+	}
 
-	bs := bbox.InitBeatState(len(files))
+	msgs := make(chan bbox.Beats)
 
-	// starter beat
-	bs.Toggle(0, 0)
-	bs.Toggle(0, 8)
+	keyboard := bbox.InitKeyboard(msgs)
+	audio := bbox.InitAudio(msgs, files)
 
-	keyboard := bbox.InitKeyboard(bs)
-	audio := bbox.InitAudio(bs, files)
+	quit := make(chan struct{})
 
-	go keyboard.Run()
+	go keyboard.Run(quit)
 	go audio.Run()
 
-	time.Sleep(60 * time.Second)
+	<-quit
 }
