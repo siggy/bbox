@@ -17,10 +17,9 @@ func main() {
 	keyboard := bbox.InitKeyboard(msgs)
 	audio := bbox.InitAudio(msgs, files)
 
-	quit := make(chan struct{})
+	// keyboard broadcasts quit with close(msgs)
+	go keyboard.Run()
 
-	go keyboard.Run(quit)
-	go audio.Run()
-
-	<-quit
+	// audio.Run() blocks until close(msgs)
+	audio.Run()
 }

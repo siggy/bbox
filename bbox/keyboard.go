@@ -110,7 +110,7 @@ func (kb *Keyboard) Draw() {
 	termbox.Flush()
 }
 
-func (kb *Keyboard) Run(quit chan<- struct{}) {
+func (kb *Keyboard) Run() {
 	var current string
 	var curev termbox.Event
 
@@ -120,7 +120,7 @@ func (kb *Keyboard) Run(quit chan<- struct{}) {
 	}
 	defer func() {
 		termbox.Close()
-		close(quit)
+		close(kb.msgs)
 	}()
 	termbox.SetInputMode(termbox.InputAlt)
 
@@ -142,7 +142,7 @@ func (kb *Keyboard) Run(quit chan<- struct{}) {
 			current = fmt.Sprintf("%s", data)
 			if current == "q" {
 				// trigger the deferred termbox.Close and quit<-
-				panic("quit called")
+				return
 			}
 
 			key := keymaps[current]
