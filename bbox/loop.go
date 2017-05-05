@@ -29,7 +29,7 @@ func InitLoop(msgs <-chan Beats, ticks chan<- int) *Loop {
 		ticks: ticks,
 	}
 
-	files, _ := ioutil.ReadDir("./wav")
+	files, _ := ioutil.ReadDir("./wavs")
 	if len(files) != BEATS {
 		panic(0)
 	}
