@@ -76,10 +76,14 @@ var keymaps = map[string][]int{
 	"<": []int{3, 15},
 }
 
+// normal operation:
+//   beats -> emit -> msgs
+// shtudown operation:
+//   q -> close(emit) -> close(msgs) -> termbox.Close()
 type Keyboard struct {
 	beats Beats
+	emit  chan Beats
 	msgs  []chan<- Beats
-	done  chan struct{}
 }
 
 func InitKeyboard(msgs []chan<- Beats) *Keyboard {
@@ -89,27 +93,26 @@ func InitKeyboard(msgs []chan<- Beats) *Keyboard {
 	}
 	termbox.SetInputMode(termbox.InputAlt)
 
-	kb := Keyboard{
+	return &Keyboard{
 		beats: Beats{},
+		emit:  make(chan Beats),
 		msgs:  msgs,
-		done:  make(chan struct{}),
 	}
-
-	// starter beat
-	kb.beats[1][0] = true
-	kb.beats[1][8] = true
-	kb.Emit()
-
-	return &kb
 }
 
 func (kb *Keyboard) Run() {
 	var current string
 	var curev termbox.Event
 
-	defer kb.Stop()
+	defer close(kb.emit)
 
 	data := make([]byte, 0, 64)
+
+	// starter beat
+	go kb.Emitter()
+	kb.beats[1][0] = true
+	kb.beats[1][8] = true
+	kb.Emit()
 
 	for {
 		if cap(data)-len(data) < 32 {
@@ -124,7 +127,6 @@ func (kb *Keyboard) Run() {
 			data = data[:beg+ev.N]
 			current = fmt.Sprintf("%s", data)
 			if current == "q" {
-				// trigger the deferred termbox.Close and quit<-
 				return
 			}
 
@@ -149,25 +151,27 @@ func (kb *Keyboard) Run() {
 	}
 }
 
-func (kb *Keyboard) Stop() {
-	close(kb.done)
-	kb.Emit()
-	termbox.Close()
+func (kb *Keyboard) Emit() {
+	beats := kb.beats
+	kb.emit <- beats
 }
 
-func (kb *Keyboard) Emit() {
-	// make a copy before going asynch
-	beats := kb.beats
-	go func() {
+func (kb *Keyboard) Emitter() {
+	defer termbox.Close()
+
+	for {
 		select {
-		case <-kb.done:
-			for _, msg := range kb.msgs {
-				close(msg)
-			}
-		default:
-			for _, msg := range kb.msgs {
-				msg <- beats
+		case beats, more := <-kb.emit:
+			if more {
+				for _, msg := range kb.msgs {
+					msg <- beats
+				}
+			} else {
+				for _, msg := range kb.msgs {
+					close(msg)
+				}
+				return
 			}
 		}
-	}()
+	}
 }
