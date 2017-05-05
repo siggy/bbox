@@ -96,9 +96,9 @@ func (w *Wav) Play() {
 }
 
 func (w *Wav) Close() {
-	fmt.Printf("%+v: closing\n", w.name)
-
 	w.stream.Stop()
 	w.stream.Close()
 	portaudio.Terminate()
+
+	fmt.Printf("%+v closed\n", w.name)
 }

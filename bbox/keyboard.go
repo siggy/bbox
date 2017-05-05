@@ -78,53 +78,36 @@ var keymaps = map[string][]int{
 
 type Keyboard struct {
 	beats Beats
-	msgs  chan<- Beats
+	msgs  []chan<- Beats
+	done  chan struct{}
 }
 
-func InitKeyboard(msgs chan<- Beats) *Keyboard {
-	beats := Beats{}
+func InitKeyboard(msgs []chan<- Beats) *Keyboard {
+	err := termbox.Init()
+	if err != nil {
+		panic(err)
+	}
+	termbox.SetInputMode(termbox.InputAlt)
+
+	kb := Keyboard{
+		beats: Beats{},
+		msgs:  msgs,
+		done:  make(chan struct{}),
+	}
 
 	// starter beat
-	beats[0][0] = true
-	beats[0][8] = true
-	go func() { msgs <- beats }()
+	kb.beats[1][0] = true
+	kb.beats[1][8] = true
+	kb.Emit()
 
-	return &Keyboard{
-		beats: beats,
-		msgs:  msgs,
-	}
-}
-
-func (kb *Keyboard) Draw() {
-	for i := 0; i < len(kb.beats); i++ {
-		for j := 0; j < TICKS; j++ {
-			c := '-'
-			if kb.beats[i][j] {
-				c = 'X'
-			}
-			termbox.SetCell(j*2, i, c, termbox.ColorDefault, termbox.ColorDefault)
-			termbox.SetCell(j*2+1, i, ' ', termbox.ColorDefault, termbox.ColorDefault)
-		}
-	}
-
-	termbox.Flush()
+	return &kb
 }
 
 func (kb *Keyboard) Run() {
 	var current string
 	var curev termbox.Event
 
-	err := termbox.Init()
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		termbox.Close()
-		close(kb.msgs)
-	}()
-	termbox.SetInputMode(termbox.InputAlt)
-
-	kb.Draw()
+	defer kb.Stop()
 
 	data := make([]byte, 0, 64)
 
@@ -148,10 +131,8 @@ func (kb *Keyboard) Run() {
 			key := keymaps[current]
 			if key != nil {
 				kb.beats[key[0]][key[1]] = !kb.beats[key[0]][key[1]]
-				beats := kb.beats // make a copy before going asynch
-				go func() { kb.msgs <- beats }()
+				kb.Emit()
 			}
-			kb.Draw()
 
 			for {
 				ev := termbox.ParseEvent(data)
@@ -169,4 +150,27 @@ func (kb *Keyboard) Run() {
 			panic(ev.Err)
 		}
 	}
+}
+
+func (kb *Keyboard) Stop() {
+	close(kb.done)
+	termbox.Close()
+	kb.Emit()
+}
+
+func (kb *Keyboard) Emit() {
+	// make a copy before going asynch
+	beats := kb.beats
+	go func() {
+		select {
+		case <-kb.done:
+			for _, msg := range kb.msgs {
+				close(msg)
+			}
+		default:
+			for _, msg := range kb.msgs {
+				msg <- beats
+			}
+		}
+	}()
 }

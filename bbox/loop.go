@@ -18,13 +18,15 @@ type Loop struct {
 	beats Beats
 	msgs  <-chan Beats
 	wavs  [BEATS]*Wav
+	ticks chan<- int
 }
 
-func InitLoop(msgs <-chan Beats) *Loop {
+func InitLoop(msgs <-chan Beats, ticks chan<- int) *Loop {
 	l := Loop{
 		beats: Beats{},
 		msgs:  msgs,
 		wavs:  [BEATS]*Wav{},
+		ticks: ticks,
 	}
 
 	files, _ := ioutil.ReadDir("./wav")
@@ -44,7 +46,7 @@ func (l *Loop) Run() {
 	defer ticker.Stop()
 	defer l.Close()
 
-	cur := 0
+	tick := 0
 	for {
 		select {
 		case beats, more := <-l.msgs:
@@ -58,13 +60,16 @@ func (l *Loop) Run() {
 		case <-ticker.C: // for every time interval
 			// for each beat type
 			for i, beat := range l.beats {
-				if beat[cur] {
+				if beat[tick] {
 					// initiate playback
 					l.wavs[i].Play()
 				}
 			}
+
 			// next interval
-			cur = (cur + 1) % TICKS
+			tick = (tick + 1) % TICKS
+			tmp := tick
+			l.ticks <- tmp
 		}
 	}
 }

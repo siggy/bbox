@@ -5,14 +5,36 @@ import (
 )
 
 func main() {
-	msgs := make(chan bbox.Beats)
+	// beat changes
+	//   keyboard => loop
+	//   keyboard => render
+	msgs := []chan bbox.Beats{
+		make(chan bbox.Beats),
+		make(chan bbox.Beats),
+	}
 
-	keyboard := bbox.InitKeyboard(msgs)
-	loop := bbox.InitLoop(msgs)
+	// ticks
+	//   loop => render
+	ticks := make(chan int)
+
+	keyboard := bbox.InitKeyboard(writeonly(msgs))
+	loop := bbox.InitLoop(msgs[0], ticks)
+	render := bbox.InitRender(msgs[1], ticks)
 
 	// keyboard broadcasts quit with close(msgs)
 	go keyboard.Run()
+	go render.Run()
 
 	// loop.Run() blocks until close(msgs)
 	loop.Run()
+}
+
+// can't pass a slice of non-direction channels as a slice of directional
+// channels, so we have to convert the whole slice to directional first.
+func writeonly(channels []chan bbox.Beats) []chan<- bbox.Beats {
+	ret := make([]chan<- bbox.Beats, len(channels))
+	for n, ch := range channels {
+		ret[n] = ch
+	}
+	return ret
 }
