@@ -28,7 +28,7 @@ type Wav struct {
 func InitWav(f os.FileInfo) *Wav {
 	portaudio.Initialize()
 
-	file, _ := os.Open("./wav/" + f.Name())
+	file, _ := os.Open(WAVS + "/" + f.Name())
 	reader := wav.NewReader(file)
 	defer file.Close()
 

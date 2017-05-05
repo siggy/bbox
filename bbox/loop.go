@@ -10,6 +10,7 @@ const (
 	BEATS    = 4
 	TICKS    = 16
 	INTERVAL = 60 * time.Second / BPM / (TICKS / 4) // 4 beats per interval
+	WAVS     = "./wavs"
 )
 
 type Beats [BEATS][TICKS]bool
@@ -29,7 +30,7 @@ func InitLoop(msgs <-chan Beats, ticks chan<- int) *Loop {
 		ticks: ticks,
 	}
 
-	files, _ := ioutil.ReadDir("./wavs")
+	files, _ := ioutil.ReadDir(WAVS)
 	if len(files) != BEATS {
 		panic(0)
 	}

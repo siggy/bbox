@@ -136,9 +136,6 @@ func (kb *Keyboard) Run() {
 
 			for {
 				ev := termbox.ParseEvent(data)
-				// fmt.Printf("  data: %+v\n", data)
-				// fmt.Printf("  ev: %+v\n", ev)
-
 				if ev.N == 0 {
 					break
 				}
@@ -154,8 +151,8 @@ func (kb *Keyboard) Run() {
 
 func (kb *Keyboard) Stop() {
 	close(kb.done)
-	termbox.Close()
 	kb.Emit()
+	termbox.Close()
 }
 
 func (kb *Keyboard) Emit() {
