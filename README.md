@@ -16,4 +16,4 @@ go run -race cmd/bbox/main.go
 
 ## Credits
 
-(wavs) courtesy of (http://99sounds.org/drum-samples/)
+[wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
