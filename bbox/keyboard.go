@@ -87,6 +87,7 @@ type Keyboard struct {
 }
 
 func InitKeyboard(msgs []chan<- Beats) *Keyboard {
+	// termbox.Close() called when Render.Run() exits
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -157,8 +158,6 @@ func (kb *Keyboard) Emit() {
 }
 
 func (kb *Keyboard) Emitter() {
-	defer termbox.Close()
-
 	for {
 		select {
 		case beats, more := <-kb.emit:
