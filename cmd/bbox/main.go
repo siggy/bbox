@@ -17,11 +17,11 @@ func main() {
 	//   loop => render
 	ticks := make(chan int)
 
+	// keyboard broadcasts quit with close(msgs)
 	keyboard := bbox.InitKeyboard(writeonly(msgs))
 	loop := bbox.InitLoop(msgs[0], ticks)
 	render := bbox.InitRender(msgs[1], ticks)
 
-	// keyboard broadcasts quit with close(msgs)
 	go keyboard.Run()
 	go render.Run()
 
