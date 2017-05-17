@@ -10,7 +10,7 @@ import (
 const (
 	LED_COUNT = 30
 	GPIO_PIN  = 18
-	LOOPS     = 100
+	LOOPS     = 10
 )
 
 var (

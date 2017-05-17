@@ -26,7 +26,7 @@ cp rpi_ws281x/libws2811.a /usr/local/lib/
 ## Run
 
 ```bash
-go run -race cmd/bbox/main.go
+go build main.go && sudo ./main
 ```
 
 ## Credits
