@@ -5,28 +5,35 @@ import (
 )
 
 func main() {
-	bbox.RunLeds()
-	return
-
 	// beat changes
 	//   keyboard => loop
 	//   keyboard => render
+	//   keyboard => leds
 	msgs := []chan bbox.Beats{
+		make(chan bbox.Beats),
 		make(chan bbox.Beats),
 		make(chan bbox.Beats),
 	}
 
 	// ticks
 	//   loop => render
-	ticks := make(chan int)
+	//   loop => leds
+	ticks := []chan int{
+		make(chan int),
+		// make(chan int),
+	}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(writeonly(msgs))
-	loop := bbox.InitLoop(msgs[0], ticks)
-	render := bbox.InitRender(msgs[1], ticks)
+	keyboard := bbox.InitKeyboard(writeonlyBeats(msgs))
+	defer keyboard.Close()
+
+	loop := bbox.InitLoop(msgs[0], writeonlyInt(ticks))
+	render := bbox.InitRender(msgs[1], ticks[0])
+	// leds := bbox.InitLeds(msgs[2], ticks[1])
 
 	go keyboard.Run()
 	go render.Run()
+	// go leds.Run()
 
 	// loop.Run() blocks until close(msgs)
 	loop.Run()
@@ -34,8 +41,16 @@ func main() {
 
 // can't pass a slice of non-direction channels as a slice of directional
 // channels, so we have to convert the whole slice to directional first.
-func writeonly(channels []chan bbox.Beats) []chan<- bbox.Beats {
+func writeonlyBeats(channels []chan bbox.Beats) []chan<- bbox.Beats {
 	ret := make([]chan<- bbox.Beats, len(channels))
+	for n, ch := range channels {
+		ret[n] = ch
+	}
+	return ret
+}
+
+func writeonlyInt(channels []chan int) []chan<- int {
+	ret := make([]chan<- int, len(channels))
 	for n, ch := range channels {
 		ret[n] = ch
 	}

@@ -19,10 +19,10 @@ type Loop struct {
 	beats Beats
 	msgs  <-chan Beats
 	wavs  [BEATS]*Wav
-	ticks chan<- int
+	ticks []chan<- int
 }
 
-func InitLoop(msgs <-chan Beats, ticks chan<- int) *Loop {
+func InitLoop(msgs <-chan Beats, ticks []chan<- int) *Loop {
 	l := Loop{
 		beats: Beats{},
 		msgs:  msgs,
@@ -70,7 +70,10 @@ func (l *Loop) Run() {
 			// next interval
 			tick = (tick + 1) % TICKS
 			tmp := tick
-			l.ticks <- tmp
+
+			for _, ch := range l.ticks {
+				ch <- tmp
+			}
 		}
 	}
 }

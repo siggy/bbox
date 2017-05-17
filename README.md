@@ -29,6 +29,12 @@ cp rpi_ws281x/libws2811.a /usr/local/lib/
 go build main.go && sudo ./main
 ```
 
+Clear LEDs
+
+```bash
+go build cmd/clear/main.go && sudo ./main
+```
+
 ## Credits
 
 [wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
