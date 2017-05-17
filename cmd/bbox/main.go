@@ -5,6 +5,9 @@ import (
 )
 
 func main() {
+	bbox.RunLeds()
+	return
+
 	// beat changes
 	//   keyboard => loop
 	//   keyboard => render

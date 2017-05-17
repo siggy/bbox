@@ -20,6 +20,10 @@
 			"Rev": "7994c181db7761ca3c67a217068cf31826113f5f"
 		},
 		{
+			"ImportPath": "github.com/siggy/rpi_ws281x/golang/ws2811",
+			"Rev": "95400c3b085e2b82c6e564e63a6601e95decd5a1"
+		},
+		{
 			"ImportPath": "github.com/youpy/go-riff",
 			"Rev": "557d78c11efbdcdf178bf52723cfba91f02e0bb2"
 		},
