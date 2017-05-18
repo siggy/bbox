@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/pkg/leds"
 )
 
 func main() {
@@ -20,20 +21,19 @@ func main() {
 	//   loop => leds
 	ticks := []chan int{
 		make(chan int),
-		// make(chan int),
+		make(chan int),
 	}
 
 	// keyboard broadcasts quit with close(msgs)
 	keyboard := bbox.InitKeyboard(writeonlyBeats(msgs))
-	defer keyboard.Close()
 
 	loop := bbox.InitLoop(msgs[0], writeonlyInt(ticks))
 	render := bbox.InitRender(msgs[1], ticks[0])
-	// leds := bbox.InitLeds(msgs[2], ticks[1])
+	leds := leds.InitLeds(msgs[2], ticks[1])
 
 	go keyboard.Run()
 	go render.Run()
-	// go leds.Run()
+	go leds.Run()
 
 	// loop.Run() blocks until close(msgs)
 	loop.Run()
