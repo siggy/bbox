@@ -29,10 +29,22 @@ cp rpi_ws281x/libws2811.a /usr/local/lib/
 go build main.go && sudo ./main
 ```
 
+No LEDs 
+
+```bash
+go run cmd/noleds/main.go
+```
+
 Clear LEDs
 
 ```bash
 go build cmd/clear/main.go && sudo ./main
+```
+
+Audio Test
+
+```bash
+go run cmd/aud/main.go
 ```
 
 ## Credits

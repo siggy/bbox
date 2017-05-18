@@ -152,10 +152,6 @@ func (kb *Keyboard) Run() {
 	}
 }
 
-func (kb *Keyboard) Close() {
-	termbox.Close()
-}
-
 func (kb *Keyboard) Emit() {
 	beats := kb.beats
 	kb.emit <- beats

@@ -34,7 +34,7 @@ func (r *Render) Draw() {
 
 func (r *Render) Run() {
 	// termbox.Init() called in InitKeyboard()
-	// defer termbox.Close()
+	defer termbox.Close()
 
 	for i := 0; i < BEATS+1; i++ {
 		for j := 0; j < TICKS*2; j++ {

@@ -1,4 +1,4 @@
-package bbox
+package leds
 
 import (
 	"encoding/binary"
