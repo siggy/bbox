@@ -4,35 +4,35 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
 const (
-	LED_COUNT = 30
-	GPIO_PIN  = 18
-	LOOPS     = 10
+	BRIGHTNESS = 64 // 0-255
+	LED_COUNT  = 30
+	GPIO_PIN   = 18
+	TICK_DELAY = 3 // match sound to LEDs
 )
 
 var (
-	red    = binary.LittleEndian.Uint32([]byte{0x00, 0x20, 0x00, 0x00})
-	redw   = binary.LittleEndian.Uint32([]byte{0x10, 0x20, 0x00, 0x00})
-	green  = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x20, 0x00})
-	greenw = binary.LittleEndian.Uint32([]byte{0x10, 0x00, 0x20, 0x00})
-	blue   = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x00, 0x20})
-	bluew  = binary.LittleEndian.Uint32([]byte{0x10, 0x00, 0x00, 0x20})
-	white  = binary.LittleEndian.Uint32([]byte{0x00, 0x10, 0x10, 0x10})
+	red    = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x20, 0x00})
+	redw   = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x20, 0x10})
+	green  = binary.LittleEndian.Uint32([]byte{0x00, 0x20, 0x00, 0x00})
+	greenw = binary.LittleEndian.Uint32([]byte{0x00, 0x20, 0x00, 0x10})
+	blue   = binary.LittleEndian.Uint32([]byte{0x20, 0x00, 0x00, 0x00})
+	bluew  = binary.LittleEndian.Uint32([]byte{0x20, 0x00, 0x00, 0x10})
+	white  = binary.LittleEndian.Uint32([]byte{0x10, 0x10, 0x10, 0x00})
 	whitew = binary.LittleEndian.Uint32([]byte{0x10, 0x10, 0x10, 0x10})
-
-	colors = []uint32{red, redw, green, greenw, blue, bluew, white, whitew}
 )
 
 type Leds struct {
-	beats Beats
-	msgs  <-chan Beats
+	beats bbox.Beats
+	msgs  <-chan bbox.Beats
 	ticks <-chan int
 }
 
-func InitLeds(msgs <-chan Beats, ticks <-chan int) *Leds {
+func InitLeds(msgs <-chan bbox.Beats, ticks <-chan int) *Leds {
 	return &Leds{
 		msgs:  msgs,
 		ticks: ticks,
@@ -40,7 +40,7 @@ func InitLeds(msgs <-chan Beats, ticks <-chan int) *Leds {
 }
 
 func (l *Leds) Run() {
-	err := ws2811.Init(GPIO_PIN, LED_COUNT, 64)
+	err := ws2811.Init(GPIO_PIN, LED_COUNT, BRIGHTNESS)
 	if err != nil {
 		fmt.Printf("ws2811.Init failed: %+v\n", err)
 		panic(err)
@@ -69,7 +69,22 @@ func (l *Leds) Run() {
 	for {
 		select {
 		case tick := <-l.ticks:
-			ws2811.SetLed(tick, redw)
+			tick = (tick + bbox.TICKS - TICK_DELAY) % bbox.TICKS
+			ws2811.Clear()
+			ws2811.SetLed(tick, whitew)
+
+			for _, beat := range l.beats {
+				for j, t := range beat {
+					if t {
+						if j == tick {
+							ws2811.SetLed(j, redw)
+						} else {
+							ws2811.SetLed(j, red)
+						}
+					}
+				}
+			}
+
 			err = ws2811.Render()
 			if err != nil {
 				fmt.Printf("ws2811.Render failed: %+v\n", err)
@@ -83,50 +98,14 @@ func (l *Leds) Run() {
 		case beats, more := <-l.msgs:
 			if more {
 				// incoming beat update from keyboard
-				fmt.Printf("leds::l.msgs beats: %+v\n", beats)
-				// r.beats = beats
-				// r.Draw()
+				l.beats = beats
 			} else {
 				// closing
-				fmt.Printf("leds::l.msgs closing %+v\n", beats)
+				fmt.Printf("LEDs closing\n")
 				return
 			}
 		}
 	}
-
-	// color := 0
-	// fmt.Printf("cycle LEDs\n")
-	// for l := 0; l < LOOPS; l++ {
-	// 	for i := 0; i < LED_COUNT; i++ {
-	// 		ws2811.SetLed(i, colors[color%len(colors)])
-	// 		color++
-
-	// 		err = ws2811.Render()
-	// 		if err != nil {
-	// 			fmt.Printf("ws2811.Render failed: %+v\n", err)
-	// 			panic(err)
-	// 		}
-	// 		err = ws2811.Wait()
-	// 		if err != nil {
-	// 			fmt.Printf("ws2811.Wait failed: %+v\n", err)
-	// 			panic(err)
-	// 		}
-	// 	}
-	// }
-
-	// fmt.Printf("calling Clear()\n")
-	// ws2811.Clear()
-
-	// err = ws2811.Render()
-	// if err != nil {
-	// 	fmt.Printf("ws2811.Render failed: %+v\n", err)
-	// 	panic(err)
-	// }
-	// err = ws2811.Wait()
-	// if err != nil {
-	// 	fmt.Printf("ws2811.Wait failed: %+v\n", err)
-	// 	panic(err)
-	// }
 }
 
 /*
@@ -134,7 +113,7 @@ func (l *Leds) Run() {
  */
 func Clear() {
 	fmt.Printf("ws2811.Init()\n")
-	err := ws2811.Init(GPIO_PIN, LED_COUNT, 64)
+	err := ws2811.Init(GPIO_PIN, LED_COUNT, BRIGHTNESS)
 	if err != nil {
 		fmt.Printf("ws2811.Init failed: %+v\n", err)
 		panic(err)
