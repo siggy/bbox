@@ -3,6 +3,7 @@ package bbox
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/gordonklaus/portaudio"
@@ -10,24 +11,52 @@ import (
 )
 
 const (
+	WAVS    = "./wavs32"
 	BUF     = 16
 	MAX_BUF = 524288
 )
 
-var empty = make([]float32, BUF)
+type Wavs struct {
+	wavs   [BEATS]*wavFile
+	stream *portaudio.Stream
+}
 
-type Wav struct {
+type wavFile struct {
 	name      string
 	buf       []float32
 	length    int
-	stream    *portaudio.Stream
 	active    chan struct{}
 	remaining int
 }
 
-func InitWav(f os.FileInfo) *Wav {
+func InitWavs() *Wavs {
 	portaudio.Initialize()
 
+	files, _ := ioutil.ReadDir(WAVS)
+	if len(files) != BEATS {
+		panic(0)
+	}
+
+	wavs := &Wavs{}
+
+	for i, f := range files {
+		wavs.wavs[i] = initWav(f)
+	}
+
+	var err error
+	wavs.stream, err = portaudio.OpenDefaultStream(0, 1, 44100, BUF, wavs.cb)
+	if err != nil {
+		panic(err)
+	}
+	err = wavs.stream.Start()
+	if err != nil {
+		panic(err)
+	}
+
+	return wavs
+}
+
+func initWav(f os.FileInfo) *wavFile {
 	file, _ := os.Open(WAVS + "/" + f.Name())
 	reader := wav.NewReader(file)
 	defer file.Close()
@@ -50,7 +79,7 @@ func InitWav(f os.FileInfo) *Wav {
 		}
 	}
 
-	w := Wav{
+	w := wavFile{
 		name:   f.Name(),
 		buf:    make([]float32, loc),
 		length: loc,
@@ -60,45 +89,38 @@ func InitWav(f os.FileInfo) *Wav {
 
 	fmt.Printf("%+v: %+v samples\n", w.name, loc)
 
-	var err error
-	w.stream, err = portaudio.OpenDefaultStream(0, 1, 44100, BUF, w.cb)
-	if err != nil {
-		panic(err)
-	}
-	err = w.stream.Start()
-	if err != nil {
-		panic(err)
-	}
-
 	return &w
 }
 
-func (w *Wav) cb(output [][]float32) {
-	select {
-	case <-w.active:
-		w.remaining = w.length
-	default:
-	}
-
-	if w.remaining > 0 {
-		if w.remaining < BUF {
-			output[0] = output[0][:w.remaining]
+func (w *Wavs) cb(output [][]float32) {
+	for _, wv := range w.wavs {
+		select {
+		case <-wv.active:
+			wv.remaining = wv.length
+		default:
 		}
-		copy(output[0], w.buf[(w.length-w.remaining):])
-		w.remaining -= BUF
-	} else {
-		copy(output[0], empty)
 	}
+
+	out := make([]float32, BUF)
+	for _, wv := range w.wavs {
+		for i := 0; i < BUF; i++ {
+			if wv.remaining > i {
+				out[i] += wv.buf[wv.length-wv.remaining+i]
+			}
+		}
+		wv.remaining -= BUF
+	}
+	copy(output[0], out)
 }
 
-func (w *Wav) Play() {
-	w.active <- struct{}{}
+func (wavs *Wavs) Play(i int) {
+	wavs.wavs[i].active <- struct{}{}
 }
 
-func (w *Wav) Close() {
+func (w *Wavs) Close() {
 	w.stream.Stop()
 	w.stream.Close()
 	portaudio.Terminate()
 
-	fmt.Printf("%+v closed\n", w.name)
+	fmt.Printf("Wavs closed\n")
 }

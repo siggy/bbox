@@ -1,7 +1,6 @@
 package bbox
 
 import (
-	"io/ioutil"
 	"time"
 )
 
@@ -10,7 +9,6 @@ const (
 	BEATS    = 4
 	TICKS    = 16
 	INTERVAL = 60 * time.Second / BPM / (TICKS / 4) // 4 beats per interval
-	WAVS     = "./wavs"
 )
 
 type Beats [BEATS][TICKS]bool
@@ -18,7 +16,7 @@ type Beats [BEATS][TICKS]bool
 type Loop struct {
 	beats Beats
 	msgs  <-chan Beats
-	wavs  [BEATS]*Wav
+	wavs  *Wavs
 	ticks []chan<- int
 }
 
@@ -26,17 +24,8 @@ func InitLoop(msgs <-chan Beats, ticks []chan<- int) *Loop {
 	l := Loop{
 		beats: Beats{},
 		msgs:  msgs,
-		wavs:  [BEATS]*Wav{},
+		wavs:  InitWavs(),
 		ticks: ticks,
-	}
-
-	files, _ := ioutil.ReadDir(WAVS)
-	if len(files) != BEATS {
-		panic(0)
-	}
-
-	for i, f := range files {
-		l.wavs[i] = InitWav(f)
 	}
 
 	return &l
@@ -63,7 +52,7 @@ func (l *Loop) Run() {
 			for i, beat := range l.beats {
 				if beat[tick] {
 					// initiate playback
-					l.wavs[i].Play()
+					l.wavs.Play(i)
 				}
 			}
 
@@ -79,7 +68,5 @@ func (l *Loop) Run() {
 }
 
 func (l *Loop) Close() {
-	for _, wav := range l.wavs {
-		wav.Close()
-	}
+	l.wavs.Close()
 }
