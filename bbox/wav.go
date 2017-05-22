@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	WAVS    = "./wavs32"
+	WAVS    = "./wavs"
 	BUF     = 16
 	MAX_BUF = 524288
 )
