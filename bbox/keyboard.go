@@ -6,6 +6,94 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+// mapping from keyboard box
+// 2 x 21 = [volume down]
+// 2 x 24 = [mute]
+// 3 x 19 = `
+// 3 x 20 = 1
+// 3 x 21 = q
+// 3 x 22 = [tab]
+// 3 x 23 = a
+// 3 x 24 = z
+// 4 x 20 = 2
+// 4 x 21 = w
+// 4 x 23 = S
+// 4 x 24 = §
+// 4 x 25 = x
+// 5 x 20 = 3
+// 5 x 21 = e
+// 5 x 22 = d
+// 5 x 23 = c
+// 6 x 19 = 5
+// 6 x 20 = 4
+// 6 x 21 = r
+// 6 x 22 = t
+// 6 x 23 = f
+// 6 x 24 = g
+// 6 x 25 = v
+// 6 x 26 = b
+// 7 x 19 = 6
+// 7 x 20 = 7
+// 7 x 21 = u
+// 7 x 22 = y
+// 7 x 23 = j
+// 7 x 24 = h
+// 7 x 25 = m
+// 7 x 26 = n
+// 8 x 19 = =
+// 8 x 20 = 8
+// 8 x 21 = i
+// 8 x 22 = ]
+// 8 x 23 = k
+// 8 x 25 = ,
+// 9 x 19 =
+// 9 x 20 = 9
+// 9 x 21 = o
+// 9 x 23 = l
+// 9 x 25 = .
+// 10 x 19 = -
+// 10 x 20 = 0
+// 10 x 21 = p
+// 10 x 22 = [
+// 10 x 23 = ;
+// 10 x 24 = '
+// 10 x 25 = \
+// 10 x 26 = /
+// 11 x 22 = [backspace]
+// 11 x 23 = \ ***
+// 11 x 25 = [enter]
+// 11 x 26 = [space]
+// 12 x 21 = 8 ***
+// 12 x 22 = 5 ***
+// 12 x 23 = 2 ***
+// 12 x 24 = 0 ***
+// 12 x 25 = / ***
+// 12 x 26 = [right arrow]
+// 13 x 19 = [delete (the reverse one)]
+// 13 x 20 = [fn f11]
+// 13 x 21 = 7 ***
+// 13 x 22 = 4 ***
+// 13 x 23 = 1
+// 13 x 26 = [down arrow]
+// 14 x 19 = [pg up]
+// 14 x 20 = [pg down]
+// 14 x 21 = 9 ***
+// 14 x 22 = 6 ***
+// 14 x 23 = 3 ***
+// 14 x 24 = .
+// 14 x 25 = *
+// 14 x 26 = -
+// 15 x 19 = [home]
+// 15 x 20 = [end]
+// 15 x 21 = +
+// 15 x 23 = [enter] ***
+// 15 x 24 = [arrow up]
+// 15 x 25 = [brightness up]
+// 15 x 26 = [backspace] ***
+// 16 x 21 = [brightness down]
+// 17 x 24 = [launch itunes?]
+// 18 x 22 = [volume up]
+
 var keymaps = map[string][]int{
 	"1": []int{0, 0},
 	"2": []int{0, 1},
@@ -86,6 +174,13 @@ type Keyboard struct {
 	msgs  []chan<- Beats
 }
 
+func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
+	for _, c := range msg {
+		termbox.SetCell(x, y, c, fg, bg)
+		x++
+	}
+}
+
 func InitKeyboard(msgs []chan<- Beats) *Keyboard {
 	// termbox.Close() called when Render.Run() exits
 	err := termbox.Init()
@@ -138,6 +233,7 @@ func (kb *Keyboard) Run() {
 			}
 
 			for {
+				// TODO: move kb.beats code to here
 				ev := termbox.ParseEvent(data)
 				if ev.N == 0 {
 					break
@@ -145,6 +241,10 @@ func (kb *Keyboard) Run() {
 				curev = ev
 				copy(data, data[curev.N:])
 				data = data[:len(data)-curev.N]
+
+				tbprint(0, BEATS+1, termbox.ColorDefault, termbox.ColorDefault,
+					fmt.Sprintf("EventKey: k: %5d, c: %c", ev.Key, ev.Ch))
+				termbox.Flush()
 			}
 		case termbox.EventError:
 			panic(ev.Err)
