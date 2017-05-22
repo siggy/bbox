@@ -46,7 +46,7 @@ import (
 // 8 x 22 = ]
 // 8 x 23 = k
 // 8 x 25 = ,
-// 9 x 19 =
+// 9 x 19 = ???????????????
 // 9 x 20 = 9
 // 9 x 21 = o
 // 9 x 23 = l
@@ -73,16 +73,16 @@ import (
 // 13 x 20 = [fn f11]
 // 13 x 21 = 7 ***
 // 13 x 22 = 4 ***
-// 13 x 23 = 1
+// 13 x 23 = 1 ***
 // 13 x 26 = [down arrow]
 // 14 x 19 = [pg up]
 // 14 x 20 = [pg down]
 // 14 x 21 = 9 ***
 // 14 x 22 = 6 ***
 // 14 x 23 = 3 ***
-// 14 x 24 = .
+// 14 x 24 = . ***
 // 14 x 25 = *
-// 14 x 26 = -
+// 14 x 26 = - ***
 // 15 x 19 = [home]
 // 15 x 20 = [end]
 // 15 x 21 = +
@@ -164,6 +164,83 @@ var keymaps = map[string][]int{
 	"<": []int{3, 15},
 }
 
+var keymaps_rpi = map[string][]int{
+	"1": []int{0, 0},  // 3 x 20
+	"q": []int{0, 1},  // 3 x 21
+	"a": []int{0, 2},  // 3 x 23
+	"z": []int{0, 4},  // 3 x 24
+	"2": []int{0, 5},  // 4 x 20
+	"w": []int{0, 6},  // 4 x 21
+	"S": []int{0, 7},  // 4 x 23
+	"§": []int{0, 8},  // 4 x 24
+	"x": []int{0, 9},  // 4 x 25
+	"3": []int{0, 10}, // 5 x 20
+	"e": []int{0, 11}, // 5 x 21
+	"d": []int{0, 12}, // 5 x 22
+	"c": []int{0, 13}, // 5 x 23
+	"5": []int{0, 14}, // 6 x 19
+	"4": []int{0, 15}, // 6 x 20
+
+	"r": []int{1, 0},  // 6 x 21
+	"t": []int{1, 1},  // 6 x 22
+	"f": []int{1, 2},  // 6 x 23
+	"g": []int{1, 3},  // 6 x 24
+	"v": []int{1, 4},  // 6 x 25
+	"b": []int{1, 5},  // 6 x 26
+	"6": []int{1, 6},  // 7 x 19
+	"7": []int{1, 7},  // 7 x 20
+	"u": []int{1, 8},  // 7 x 21
+	"y": []int{1, 9},  // 7 x 22
+	"j": []int{1, 10}, // 7 x 23
+	"h": []int{1, 11}, // 7 x 24
+	"m": []int{1, 12}, // 7 x 25
+	"n": []int{1, 13}, // 7 x 26
+	"=": []int{1, 14}, // 8 x 19
+	"8": []int{1, 15}, // 8 x 20
+
+	"i":  []int{2, 0},  // 8 x 21
+	"]":  []int{2, 1},  // 8 x 22
+	"k":  []int{2, 2},  // 8 x 23
+	",":  []int{2, 3},  // 8 x 25
+	"9":  []int{2, 4},  // 9 x 20
+	"o":  []int{2, 5},  // 9 x 21
+	"l":  []int{2, 6},  // 9 x 23
+	".":  []int{2, 7},  // 9 x 23
+	"-":  []int{2, 8},  // 10 x 19
+	"0":  []int{2, 9},  // 10 x 20
+	"p":  []int{2, 10}, // 10 x 21
+	"[":  []int{2, 11}, // 10 x 22
+	";":  []int{2, 12}, // 10 x 23
+	"'":  []int{2, 13}, // 10 x 24
+	"\\": []int{2, 14}, // 10 x 25
+	"/":  []int{2, 15}, // 10 x 26
+
+	".": []int{3, 8}, // 14 x 24
+
+	"*": []int{3, 9}, // 14 x 25
+
+	"-": []int{3, 10}, // 14 x 26
+
+	"+": []int{3, 13}, // 15 x 21
+}
+
+var keymaps_rpi_keys = map[termbox.Key][]int{
+	termbox.KeyTab: []int{0, 3}, // 3 x 22
+
+	termbox.KeyBackspace:  []int{3, 0},  // 11 x 22
+	termbox.KeyEnter:      []int{3, 1},  // 11 x 25
+	termbox.KeySpace:      []int{3, 2},  // 11 x 26
+	termbox.KeyArrowRight: []int{3, 3},  // 12 x 26
+	termbox.KeyDelete:     []int{3, 4},  // 13 x 19
+	termbox.KeyArrowDown:  []int{3, 5},  // 13 x 26
+	termbox.KeyPgup:       []int{3, 6},  // 14 x 19
+	termbox.KeyPgDown:     []int{3, 7},  // 14 x 20
+	termbox.KeyHome:       []int{3, 11}, // 15 x 19
+	termbox.KeyEnd:        []int{3, 12}, // 15 x 20
+	termbox.KeyArrowUp:    []int{3, 14}, // 15 x 24
+	termbox.KeyF2:         []int{3, 15}, // 15 x 25
+}
+
 // normal operation:
 //   beats -> emit -> msgs
 // shtudown operation:
@@ -222,7 +299,7 @@ func (kb *Keyboard) Run() {
 		case termbox.EventRaw:
 			data = data[:beg+ev.N]
 			current = fmt.Sprintf("%s", data)
-			if current == "q" {
+			if current == "`" {
 				return
 			}
 
