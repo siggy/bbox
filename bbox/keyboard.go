@@ -12,18 +12,21 @@ import (
 // 3 x 19 = `
 // 3 x 20 = 1
 // 3 x 21 = q
-// 3 x 22 = [tab]
+// 3 x 22 = KeyTab
 // 3 x 23 = a
 // 3 x 24 = z
+// 4 x 19 = KeyF1
 // 4 x 20 = 2
 // 4 x 21 = w
 // 4 x 23 = S
 // 4 x 24 = §
 // 4 x 25 = x
+// 5 x 19 = KeyF2
 // 5 x 20 = 3
 // 5 x 21 = e
 // 5 x 22 = d
 // 5 x 23 = c
+// 5 x 24 = KeyF4
 // 6 x 19 = 5
 // 6 x 20 = 4
 // 6 x 21 = r
@@ -44,9 +47,10 @@ import (
 // 8 x 20 = 8
 // 8 x 21 = i
 // 8 x 22 = ]
-// 8 x 23 = k
+// 8 x 23 = K
+// 8 x 24 = KeyF6
 // 8 x 25 = ,
-// 9 x 19 = ???????????????
+// 9 x 19 = KeyF8
 // 9 x 20 = 9
 // 9 x 21 = o
 // 9 x 23 = l
@@ -59,37 +63,41 @@ import (
 // 10 x 24 = '
 // 10 x 25 = \
 // 10 x 26 = /
-// 11 x 22 = [backspace]
+// 11 x 19 = KeyF9
+// 11 x 20 = KeyF10
+// 11 x 22 = KeyBackspace2
 // 11 x 23 = \ ***
-// 11 x 25 = [enter]
-// 11 x 26 = [space]
+// 11 x 24 = KeyF5
+// 11 x 25 = KeyEnter
+// 11 x 26 = KeySpace
+// 12 x 20 = KeyF12
 // 12 x 21 = 8 ***
 // 12 x 22 = 5 ***
 // 12 x 23 = 2 ***
 // 12 x 24 = 0 ***
 // 12 x 25 = / ***
-// 12 x 26 = [right arrow]
-// 13 x 19 = [delete (the reverse one)]
+// 12 x 26 = KeyArrowRight
+// 13 x 19 = KeyDelete
 // 13 x 20 = [fn f11]
 // 13 x 21 = 7 ***
 // 13 x 22 = 4 ***
 // 13 x 23 = 1 ***
-// 13 x 26 = [down arrow]
-// 14 x 19 = [pg up]
-// 14 x 20 = [pg down]
+// 13 x 26 = KeyArrowDown
+// 14 x 19 = KeyPgup
+// 14 x 20 = KeyPgdn
 // 14 x 21 = 9 ***
 // 14 x 22 = 6 ***
 // 14 x 23 = 3 ***
 // 14 x 24 = . ***
 // 14 x 25 = *
 // 14 x 26 = - ***
-// 15 x 19 = [home]
-// 15 x 20 = [end]
+// 15 x 19 = KeyHome
+// 15 x 20 = KeyEnd
 // 15 x 21 = +
-// 15 x 23 = [enter] ***
-// 15 x 24 = [arrow up]
+// 15 x 23 = KeyEnter ***
+// 15 x 24 = KeyArrowUp
 // 15 x 25 = [brightness up]
-// 15 x 26 = [backspace] ***
+// 15 x 26 = KeyArrowLeft
 // 16 x 21 = [brightness down]
 // 17 x 24 = [launch itunes?]
 // 18 x 22 = [volume up]
@@ -200,7 +208,7 @@ var keymaps_rpi = map[string][]int{
 
 	"i":  []int{2, 0},  // 8 x 21
 	"]":  []int{2, 1},  // 8 x 22
-	"k":  []int{2, 2},  // 8 x 23
+	"K":  []int{2, 2},  // 8 x 23
 	",":  []int{2, 3},  // 8 x 25
 	"9":  []int{2, 4},  // 9 x 20
 	"o":  []int{2, 5},  // 9 x 21
