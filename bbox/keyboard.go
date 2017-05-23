@@ -215,11 +215,11 @@ var keymaps_rpi = map[string][]int{
 	"\\": []int{2, 14}, // 10 x 25
 	"/":  []int{2, 15}, // 10 x 26
 
-	".": []int{3, 8}, // 14 x 24
+	// ".": []int{3, 8}, // 14 x 24
 
 	"*": []int{3, 9}, // 14 x 25
 
-	"-": []int{3, 10}, // 14 x 26
+	// "-": []int{3, 10}, // 14 x 26
 
 	"+": []int{3, 13}, // 15 x 21
 }
@@ -234,7 +234,7 @@ var keymaps_rpi_keys = map[termbox.Key][]int{
 	termbox.KeyDelete:     []int{3, 4},  // 13 x 19
 	termbox.KeyArrowDown:  []int{3, 5},  // 13 x 26
 	termbox.KeyPgup:       []int{3, 6},  // 14 x 19
-	termbox.KeyPgDown:     []int{3, 7},  // 14 x 20
+	termbox.KeyPgdn:       []int{3, 7},  // 14 x 20
 	termbox.KeyHome:       []int{3, 11}, // 15 x 19
 	termbox.KeyEnd:        []int{3, 12}, // 15 x 20
 	termbox.KeyArrowUp:    []int{3, 14}, // 15 x 24
