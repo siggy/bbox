@@ -6,102 +6,6 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-// mapping from keyboard box
-// 2 x 21 = [volume down]
-// 2 x 24 = [mute]
-// 3 x 19 = `
-// 3 x 20 = 1
-// 3 x 21 = q
-// 3 x 22 = KeyTab
-// 3 x 23 = a
-// 3 x 24 = z
-// 4 x 19 = KeyF1
-// 4 x 20 = 2
-// 4 x 21 = w
-// 4 x 23 = S
-// 4 x 24 = §
-// 4 x 25 = x
-// 5 x 19 = KeyF2
-// 5 x 20 = 3
-// 5 x 21 = e
-// 5 x 22 = d
-// 5 x 23 = c
-// 5 x 24 = KeyF4
-// 6 x 19 = 5
-// 6 x 20 = 4
-// 6 x 21 = r
-// 6 x 22 = t
-// 6 x 23 = f
-// 6 x 24 = g
-// 6 x 25 = v
-// 6 x 26 = b
-// 7 x 19 = 6
-// 7 x 20 = 7
-// 7 x 21 = u
-// 7 x 22 = y
-// 7 x 23 = j
-// 7 x 24 = h
-// 7 x 25 = m
-// 7 x 26 = n
-// 8 x 19 = =
-// 8 x 20 = 8
-// 8 x 21 = i
-// 8 x 22 = ]
-// 8 x 23 = K
-// 8 x 24 = KeyF6
-// 8 x 25 = ,
-// 9 x 19 = KeyF8
-// 9 x 20 = 9
-// 9 x 21 = o
-// 9 x 23 = l
-// 9 x 25 = .
-// 10 x 19 = -
-// 10 x 20 = 0
-// 10 x 21 = p
-// 10 x 22 = [
-// 10 x 23 = ;
-// 10 x 24 = '
-// 10 x 25 = \
-// 10 x 26 = /
-// 11 x 19 = KeyF9
-// 11 x 20 = KeyF10
-// 11 x 22 = KeyBackspace2
-// 11 x 23 = \ ***
-// 11 x 24 = KeyF5
-// 11 x 25 = KeyEnter
-// 11 x 26 = KeySpace
-// 12 x 20 = KeyF12
-// 12 x 21 = 8 ***
-// 12 x 22 = 5 ***
-// 12 x 23 = 2 ***
-// 12 x 24 = 0 ***
-// 12 x 25 = / ***
-// 12 x 26 = KeyArrowRight
-// 13 x 19 = KeyDelete
-// 13 x 20 = [fn f11]
-// 13 x 21 = 7 ***
-// 13 x 22 = 4 ***
-// 13 x 23 = 1 ***
-// 13 x 26 = KeyArrowDown
-// 14 x 19 = KeyPgup
-// 14 x 20 = KeyPgdn
-// 14 x 21 = 9 ***
-// 14 x 22 = 6 ***
-// 14 x 23 = 3 ***
-// 14 x 24 = . ***
-// 14 x 25 = *
-// 14 x 26 = - ***
-// 15 x 19 = KeyHome
-// 15 x 20 = KeyEnd
-// 15 x 21 = +
-// 15 x 23 = KeyEnter ***
-// 15 x 24 = KeyArrowUp
-// 15 x 25 = [brightness up]
-// 15 x 26 = KeyArrowLeft
-// 16 x 21 = [brightness down]
-// 17 x 24 = [launch itunes?]
-// 18 x 22 = [volume up]
-
 var keymaps = map[string][]int{
 	"1": []int{0, 0},
 	"2": []int{0, 1},
@@ -172,81 +76,111 @@ var keymaps = map[string][]int{
 	"<": []int{3, 15},
 }
 
-var keymaps_rpi = map[string][]int{
-	"1": []int{0, 0},  // 3 x 20
-	"q": []int{0, 1},  // 3 x 21
-	"a": []int{0, 2},  // 3 x 23
-	"z": []int{0, 4},  // 3 x 24
-	"2": []int{0, 5},  // 4 x 20
-	"w": []int{0, 6},  // 4 x 21
-	"S": []int{0, 7},  // 4 x 23
-	"§": []int{0, 8},  // 4 x 24
-	"x": []int{0, 9},  // 4 x 25
-	"3": []int{0, 10}, // 5 x 20
-	"e": []int{0, 11}, // 5 x 21
-	"d": []int{0, 12}, // 5 x 22
-	"c": []int{0, 13}, // 5 x 23
-	"5": []int{0, 14}, // 6 x 19
-	"4": []int{0, 15}, // 6 x 20
-
-	"r": []int{1, 0},  // 6 x 21
-	"t": []int{1, 1},  // 6 x 22
-	"f": []int{1, 2},  // 6 x 23
-	"g": []int{1, 3},  // 6 x 24
-	"v": []int{1, 4},  // 6 x 25
-	"b": []int{1, 5},  // 6 x 26
-	"6": []int{1, 6},  // 7 x 19
-	"7": []int{1, 7},  // 7 x 20
-	"u": []int{1, 8},  // 7 x 21
-	"y": []int{1, 9},  // 7 x 22
-	"j": []int{1, 10}, // 7 x 23
-	"h": []int{1, 11}, // 7 x 24
-	"m": []int{1, 12}, // 7 x 25
-	"n": []int{1, 13}, // 7 x 26
-	"=": []int{1, 14}, // 8 x 19
-	"8": []int{1, 15}, // 8 x 20
-
-	"i":  []int{2, 0},  // 8 x 21
-	"]":  []int{2, 1},  // 8 x 22
-	"K":  []int{2, 2},  // 8 x 23
-	",":  []int{2, 3},  // 8 x 25
-	"9":  []int{2, 4},  // 9 x 20
-	"o":  []int{2, 5},  // 9 x 21
-	"l":  []int{2, 6},  // 9 x 23
-	".":  []int{2, 7},  // 9 x 23
-	"-":  []int{2, 8},  // 10 x 19
-	"0":  []int{2, 9},  // 10 x 20
-	"p":  []int{2, 10}, // 10 x 21
-	"[":  []int{2, 11}, // 10 x 22
-	";":  []int{2, 12}, // 10 x 23
-	"'":  []int{2, 13}, // 10 x 24
-	"\\": []int{2, 14}, // 10 x 25
-	"/":  []int{2, 15}, // 10 x 26
-
-	// ".": []int{3, 8}, // 14 x 24
-
-	"*": []int{3, 9}, // 14 x 25
-
-	// "-": []int{3, 10}, // 14 x 26
-
-	"+": []int{3, 13}, // 15 x 21
+type Key struct {
+	Ch  rune        // a unicode character
+	Key termbox.Key // one of Key* constants, invalid if 'Ch' is not 0
 }
 
-var keymaps_rpi_keys = map[termbox.Key][]int{
-	termbox.KeyTab: []int{0, 3}, // 3 x 22
+// mapping from keyboard box
+var keymaps_rpi = map[Key][]int{
+	// 2 x 21 = [volume down]
+	// 2 x 24 = [mute]
+	// 3 x 19 = ` (quit)
 
-	termbox.KeyBackspace:  []int{3, 0},  // 11 x 22
-	termbox.KeyEnter:      []int{3, 1},  // 11 x 25
-	termbox.KeySpace:      []int{3, 2},  // 11 x 26
-	termbox.KeyArrowRight: []int{3, 3},  // 12 x 26
-	termbox.KeyDelete:     []int{3, 4},  // 13 x 19
-	termbox.KeyArrowDown:  []int{3, 5},  // 13 x 26
-	termbox.KeyPgup:       []int{3, 6},  // 14 x 19
-	termbox.KeyPgdn:       []int{3, 7},  // 14 x 20
-	termbox.KeyHome:       []int{3, 11}, // 15 x 19
-	termbox.KeyEnd:        []int{3, 12}, // 15 x 20
-	termbox.KeyArrowUp:    []int{3, 14}, // 15 x 24
-	termbox.KeyF2:         []int{3, 15}, // 15 x 25
+	{'1', 0}:            []int{0, 0}, // 3 x 20
+	{'q', 0}:            []int{0, 1}, // 3 x 21
+	{0, termbox.KeyTab}: []int{0, 2}, // 3 x 22
+	{'a', 0}:            []int{0, 3}, // 3 x 23
+	{'z', 0}:            []int{0, 4}, // 3 x 24
+	{0, termbox.KeyF1}:  []int{0, 5}, // 4 x 19
+	{'2', 0}:            []int{0, 6}, // 4 x 20
+	{'w', 0}:            []int{0, 7}, // 4 x 21
+	{'S', 0}:            []int{0, 8}, // 4 x 23
+	// 4 x 24 = §
+	{'x', 0}:           []int{0, 9},  // 4 x 25
+	{0, termbox.KeyF2}: []int{0, 10}, // 5 x 19
+	{'3', 0}:           []int{0, 11}, // 5 x 20
+	{'e', 0}:           []int{0, 12}, // 5 x 21
+	{'d', 0}:           []int{0, 13}, // 5 x 22
+	{'c', 0}:           []int{0, 14}, // 5 x 23
+	{0, termbox.KeyF4}: []int{0, 15}, // 5 x 24
+
+	{'5', 0}: []int{1, 0},  // 6 x 19
+	{'4', 0}: []int{1, 1},  // 6 x 20
+	{'r', 0}: []int{1, 2},  // 6 x 21
+	{'t', 0}: []int{1, 3},  // 6 x 22
+	{'f', 0}: []int{1, 4},  // 6 x 23
+	{'g', 0}: []int{1, 5},  // 6 x 24
+	{'v', 0}: []int{1, 6},  // 6 x 25
+	{'b', 0}: []int{1, 7},  // 6 x 26
+	{'6', 0}: []int{1, 8},  // 7 x 19
+	{'7', 0}: []int{1, 9},  // 7 x 20
+	{'u', 0}: []int{1, 10}, // 7 x 21
+	{'y', 0}: []int{1, 11}, // 7 x 22
+	{'j', 0}: []int{1, 12}, // 7 x 23
+	{'h', 0}: []int{1, 13}, // 7 x 24
+	{'m', 0}: []int{1, 14}, // 7 x 25
+	{'n', 0}: []int{1, 15}, // 7 x 26
+
+	{'=', 0}:           []int{2, 0},  // 8 x 19
+	{'8', 0}:           []int{2, 1},  // 8 x 20
+	{'i', 0}:           []int{2, 2},  // 8 x 21
+	{']', 0}:           []int{2, 3},  // 8 x 22
+	{'K', 0}:           []int{2, 4},  // 8 x 23
+	{0, termbox.KeyF6}: []int{2, 5},  // 8 x 24
+	{',', 0}:           []int{2, 6},  // 8 x 25
+	{0, termbox.KeyF8}: []int{2, 7},  // 9 x 19
+	{'9', 0}:           []int{2, 8},  // 9 x 20
+	{'o', 0}:           []int{2, 9},  // 9 x 21
+	{'l', 0}:           []int{2, 10}, // 9 x 23
+	{'.', 0}:           []int{2, 11}, // 9 x 25
+	{'-', 0}:           []int{2, 12}, // 10 x 19
+	{'0', 0}:           []int{2, 13}, // 10 x 20
+	{'p', 0}:           []int{2, 14}, // 10 x 21
+	{'[', 0}:           []int{2, 15}, // 10 x 22
+
+	{';', 0}:                   []int{3, 0}, // 10 x 23
+	{'\'', 0}:                  []int{3, 1}, // 10 x 24
+	{'\\', 0}:                  []int{3, 2}, // 10 x 25
+	{'/', 0}:                   []int{3, 3}, // 10 x 26
+	{0, termbox.KeyF9}:         []int{3, 4}, // 11 x 19
+	{0, termbox.KeyF10}:        []int{3, 5}, // 11 x 20
+	{0, termbox.KeyBackspace2}: []int{3, 6}, // 11 x 22
+	// 11 x 23 = \ ***
+	{0, termbox.KeyF5}:    []int{3, 7},  // 11 x 24
+	{0, termbox.KeyEnter}: []int{3, 8},  // 11 x 25
+	{0, termbox.KeySpace}: []int{3, 9},  // 11 x 26
+	{0, termbox.KeyF12}:   []int{3, 10}, // 12 x 20
+	// 12 x 21 = 8 ***
+	// 12 x 22 = 5 ***
+	// 12 x 23 = 2 ***
+	// 12 x 24 = 0 ***
+	// 12 x 25 = / ***
+	{0, termbox.KeyArrowRight}: []int{3, 11}, // 12 x 26
+	{0, termbox.KeyDelete}:     []int{3, 12}, // 13 x 19
+	// 13 x 20 = [fn f11]
+	// 13 x 21 = 7 ***
+	// 13 x 22 = 4 ***
+	// 13 x 23 = 1 ***
+	{0, termbox.KeyArrowDown}: []int{3, 13}, // 13 x 26
+	{0, termbox.KeyPgup}:      []int{3, 14}, // 14 x 19
+	{0, termbox.KeyPgdn}:      []int{3, 15}, // 14 x 20
+	// 14 x 21 = 9 ***
+	// 14 x 22 = 6 ***
+	// 14 x 23 = 3 ***
+	// 14 x 24 = . ***
+	// 14 x 25 = *
+	// 14 x 26 = - ***
+	// 15 x 19 = KeyHome
+	// 15 x 20 = KeyEnd
+	// 15 x 21 = +
+	// 15 x 23 = KeyEnter ***
+	// 15 x 24 = KeyArrowUp
+	// 15 x 25 = [brightness up]
+	// 15 x 26 = KeyArrowLeft
+	// 16 x 21 = [brightness down]
+	// 17 x 24 = [launch itunes?]
+	// 18 x 22 = [volume up]
 }
 
 // normal operation:
