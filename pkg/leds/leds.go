@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	BRIGHTNESS = 64 // 0-255
-	LED_COUNT  = 30
+	BRIGHTNESS = 64               // 0-255
+	LED_COUNT  = 30 * (1 + 5 + 5) // 30/m
 	GPIO_PIN   = 18
 	TICK_DELAY = 3 // match sound to LEDs
 )
@@ -24,6 +24,8 @@ var (
 	bluew  = binary.LittleEndian.Uint32([]byte{0x20, 0x00, 0x00, 0x10})
 	white  = binary.LittleEndian.Uint32([]byte{0x10, 0x10, 0x10, 0x00})
 	whitew = binary.LittleEndian.Uint32([]byte{0x10, 0x10, 0x10, 0x10})
+
+	colors = []uint32{red, redw, green, greenw, blue, bluew, white, whitew}
 )
 
 type Leds struct {
@@ -109,8 +111,106 @@ func (l *Leds) Run() {
 }
 
 /*
- * Standalone function to turn off all LEDs
+ * Standalone functions to test all LEDs
  */
+func Init() {
+	fmt.Printf("ws2811.Init()\n")
+	err := ws2811.Init(GPIO_PIN, LED_COUNT, BRIGHTNESS)
+	if err != nil {
+		fmt.Printf("ws2811.Init failed: %+v\n", err)
+		panic(err)
+	}
+
+	fmt.Printf("ws2811.Clear()\n")
+	ws2811.Clear()
+
+	fmt.Printf("ws2811.Render()\n")
+	err = ws2811.Render()
+	if err != nil {
+		fmt.Printf("ws2811.Render failed: %+v\n", err)
+		panic(err)
+	}
+
+	fmt.Printf("ws2811.Wait()\n")
+	err = ws2811.Wait()
+	if err != nil {
+		fmt.Printf("ws2811.Wait failed: %+v\n", err)
+		panic(err)
+	}
+}
+
+func SetLed(led int) {
+	fmt.Printf("ws2811.Clear()\n")
+	ws2811.Clear()
+
+	fmt.Printf("ws2811.SetLed(%+v)\n", led)
+	ws2811.SetLed(led, red)
+
+	fmt.Printf("ws2811.Render()\n")
+	err := ws2811.Render()
+	if err != nil {
+		fmt.Printf("ws2811.Render failed: %+v\n", err)
+		panic(err)
+	}
+
+	fmt.Printf("ws2811.Wait()\n")
+	err = ws2811.Wait()
+	if err != nil {
+		fmt.Printf("ws2811.Wait failed: %+v\n", err)
+		panic(err)
+	}
+}
+
+func SetLeds(led int) {
+	fmt.Printf("ws2811.Clear()\n")
+	ws2811.Clear()
+
+	for i, color := range colors {
+		for j := 0; j < 5; j++ {
+			index := (led + i + len(colors)*j) % LED_COUNT
+			fmt.Printf("ws2811.SetLed(%+v, %+v)\n", index, color)
+			ws2811.SetLed(index, color)
+		}
+	}
+
+	fmt.Printf("ws2811.Render()\n")
+	err := ws2811.Render()
+	if err != nil {
+		fmt.Printf("ws2811.Render failed: %+v\n", err)
+		panic(err)
+	}
+
+	fmt.Printf("ws2811.Wait()\n")
+	err = ws2811.Wait()
+	if err != nil {
+		fmt.Printf("ws2811.Wait failed: %+v\n", err)
+		panic(err)
+	}
+}
+
+func Shutdown() {
+	fmt.Printf("ws2811.Clear()\n")
+	ws2811.Clear()
+
+	fmt.Printf("ws2811.Render()\n")
+	err := ws2811.Render()
+	if err != nil {
+		fmt.Printf("ws2811.Render failed: %+v\n", err)
+		panic(err)
+	}
+
+	fmt.Printf("ws2811.Wait()\n")
+	err = ws2811.Wait()
+	if err != nil {
+		fmt.Printf("ws2811.Wait failed: %+v\n", err)
+		panic(err)
+	}
+
+	fmt.Printf("ws2811.Fini()\n")
+	ws2811.Fini()
+}
+
+// Turn off all LEDs
 func Clear() {
 	fmt.Printf("ws2811.Init()\n")
 	err := ws2811.Init(GPIO_PIN, LED_COUNT, BRIGHTNESS)
