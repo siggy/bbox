@@ -2,8 +2,13 @@ package bbox
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/nsf/termbox-go"
+)
+
+const (
+	DECAY = 2 * time.Second
 )
 
 var keymaps = map[string][]int{
@@ -79,6 +84,12 @@ var keymaps = map[string][]int{
 type Key struct {
 	Ch  rune        // a unicode character
 	Key termbox.Key // one of Key* constants, invalid if 'Ch' is not 0
+}
+
+type Button struct {
+	beat  int
+	tick  int
+	reset bool
 }
 
 // mapping from keyboard box
@@ -186,11 +197,13 @@ var keymaps_rpi = map[Key][]int{
 // normal operation:
 //   beats -> emit -> msgs
 // shtudown operation:
-//   q -> close(emit) -> close(msgs) -> termbox.Close()
+//   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
-	beats Beats
-	emit  chan Beats
-	msgs  []chan<- Beats
+	beats   Beats
+	timers  [BEATS][TICKS]*time.Timer
+	emit    chan Button
+	msgs    []chan<- Beats
+	closing chan struct{}
 }
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -209,9 +222,10 @@ func InitKeyboard(msgs []chan<- Beats) *Keyboard {
 	termbox.SetInputMode(termbox.InputAlt)
 
 	return &Keyboard{
-		beats: Beats{},
-		emit:  make(chan Beats),
-		msgs:  msgs,
+		beats:   Beats{},
+		msgs:    msgs,
+		emit:    make(chan Button),
+		closing: make(chan struct{}),
 	}
 }
 
@@ -219,15 +233,14 @@ func (kb *Keyboard) Run() {
 	var current string
 	var curev termbox.Event
 
-	defer close(kb.emit)
+	defer func() { kb.closing <- struct{}{} }()
 
 	data := make([]byte, 0, 64)
 
 	// starter beat
-	go kb.Emitter()
-	kb.beats[1][0] = true
-	kb.beats[1][8] = true
-	kb.Emit()
+	go kb.emitter()
+	kb.flip(1, 0)
+	kb.flip(1, 8)
 
 	for {
 		if cap(data)-len(data) < 32 {
@@ -247,12 +260,11 @@ func (kb *Keyboard) Run() {
 
 			key := keymaps[current]
 			if key != nil {
-				kb.beats[key[0]][key[1]] = !kb.beats[key[0]][key[1]]
-				kb.Emit()
+				kb.flip(key[0], key[1])
 			}
 
 			for {
-				// TODO: move kb.beats code to here
+				// TODO: move kb.flip code to here
 				ev := termbox.ParseEvent(data)
 				if ev.N == 0 {
 					break
@@ -261,9 +273,10 @@ func (kb *Keyboard) Run() {
 				copy(data, data[curev.N:])
 				data = data[:len(data)-curev.N]
 
-				tbprint(0, BEATS+1, termbox.ColorDefault, termbox.ColorDefault,
-					fmt.Sprintf("EventKey: k: %5d, c: %c", ev.Key, ev.Ch))
-				termbox.Flush()
+				// for debugging output
+				// tbprint(0, BEATS+1, termbox.ColorDefault, termbox.ColorDefault,
+				// 	fmt.Sprintf("EventKey: k: %5d, c: %c", ev.Key, ev.Ch))
+				// termbox.Flush()
 			}
 		case termbox.EventError:
 			panic(ev.Err)
@@ -271,24 +284,59 @@ func (kb *Keyboard) Run() {
 	}
 }
 
-func (kb *Keyboard) Emit() {
-	beats := kb.beats
-	kb.emit <- beats
+func (kb *Keyboard) flip(beat int, tick int) {
+	kb.button(beat, tick, false)
 }
 
-func (kb *Keyboard) Emitter() {
+func (kb *Keyboard) button(beat int, tick int, reset bool) {
+	kb.emit <- Button{beat: beat, tick: tick, reset: reset}
+}
+
+func (kb *Keyboard) emitter() {
 	for {
 		select {
-		case beats, more := <-kb.emit:
+		case <-kb.closing:
+			// ensure all timers are stopped before closing kb.emit
+			for _, arr := range kb.timers {
+				for _, t := range arr {
+					if t != nil {
+						t.Stop()
+					}
+				}
+			}
+			for _, msg := range kb.msgs {
+				close(msg)
+			}
+			close(kb.emit)
+			return
+		case button, more := <-kb.emit:
 			if more {
+				// todo: consider re-using timers
+				if kb.timers[button.beat][button.tick] != nil {
+					kb.timers[button.beat][button.tick].Stop()
+				}
+
+				if button.reset {
+					kb.beats[button.beat][button.tick] = false
+				} else {
+					kb.beats[button.beat][button.tick] = !kb.beats[button.beat][button.tick]
+
+					// if we're turning this button on, set a decay timer
+					if kb.beats[button.beat][button.tick] {
+						kb.timers[button.beat][button.tick] = time.AfterFunc(DECAY, func() {
+							kb.button(button.beat, button.tick, true)
+						})
+					}
+				}
+
+				// broadcast changes
 				for _, msg := range kb.msgs {
-					msg <- beats
+					msg <- kb.beats
 				}
 			} else {
-				for _, msg := range kb.msgs {
-					close(msg)
-				}
-				return
+				// we should never get here
+				fmt.Printf("closed on emit, invalid state")
+				panic(1)
 			}
 		}
 	}
