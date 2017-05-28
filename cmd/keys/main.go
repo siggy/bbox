@@ -1,21 +1,27 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
 )
 
 func main() {
+	defer termbox.Close()
+
+	var wg sync.WaitGroup
+
 	// beat changes
 	//   keyboard => []
 	msgs := []chan bbox.Beats{}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(writeonlyBeats(msgs))
+	keyboard := bbox.InitKeyboard(&wg, writeonlyBeats(msgs), true)
 
-	keyboard.Run()
+	go keyboard.Run()
 
-	termbox.Close()
+	wg.Wait()
 }
 
 // can't pass a slice of non-direction channels as a slice of directional

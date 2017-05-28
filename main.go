@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+	var wg sync.WaitGroup
+
 	// beat changes
 	//   keyboard => loop
 	//   keyboard => render
@@ -25,18 +27,17 @@ func main() {
 	}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(writeonlyBeats(msgs))
-
-	loop := bbox.InitLoop(msgs[0], writeonlyInt(ticks))
-	render := bbox.InitRender(msgs[1], ticks[0])
-	leds := leds.InitLeds(msgs[2], ticks[1])
+	keyboard := bbox.InitKeyboard(&wg, writeonlyBeats(msgs), false)
+	loop := bbox.InitLoop(&wg, msgs[0], writeonlyInt(ticks))
+	render := bbox.InitRender(&wg, msgs[1], ticks[0])
+	leds := leds.InitLeds(&wg, msgs[2], ticks[1])
 
 	go keyboard.Run()
 	go render.Run()
 	go leds.Run()
+	go loop.Run()
 
-	// loop.Run() blocks until close(msgs)
-	loop.Run()
+	wg.Wait()
 }
 
 // can't pass a slice of non-direction channels as a slice of directional

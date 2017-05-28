@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/pkg/leds"
 )
 
 func main() {
-	bbox.Clear()
+	leds.Clear()
 	return
 }

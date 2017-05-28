@@ -1,17 +1,23 @@
 package bbox
 
 import (
+	"sync"
+
 	"github.com/nsf/termbox-go"
 )
 
 type Render struct {
+	wg    *sync.WaitGroup
 	beats Beats
 	msgs  <-chan Beats
 	ticks <-chan int
 }
 
-func InitRender(msgs <-chan Beats, ticks <-chan int) *Render {
+func InitRender(wg *sync.WaitGroup, msgs <-chan Beats, ticks <-chan int) *Render {
+	wg.Add(1)
+
 	return &Render{
+		wg:    wg,
 		msgs:  msgs,
 		ticks: ticks,
 	}
@@ -33,6 +39,8 @@ func (r *Render) Draw() {
 }
 
 func (r *Render) Run() {
+	defer r.wg.Done()
+
 	// termbox.Init() called in InitKeyboard()
 	defer termbox.Close()
 
