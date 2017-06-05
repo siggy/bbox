@@ -149,7 +149,7 @@ func (kb *Keyboard) emitter() {
 			return
 		case button, more := <-kb.emit:
 			if more {
-				// todo: consider re-using timers
+				// TODO: consider re-using timers
 				if kb.timers[button.beat][button.tick] != nil {
 					kb.timers[button.beat][button.tick].Stop()
 				}
