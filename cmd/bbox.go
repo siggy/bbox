@@ -3,8 +3,8 @@ package main
 import (
 	"sync"
 
-	"github.com/siggy/bbox/pkg/bbox"
-	"github.com/siggy/bbox/pkg/leds"
+	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/bbox/leds"
 )
 
 func main() {

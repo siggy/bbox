@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/siggy/bbox/pkg/bbox"
+	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 

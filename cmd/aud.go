@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/siggy/bbox/pkg/bbox"
+	"github.com/siggy/bbox/bbox"
 )
 
 func main() {
