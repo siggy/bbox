@@ -122,5 +122,5 @@ func (w *Wavs) Close() {
 	w.stream.Close()
 	portaudio.Terminate()
 
-	fmt.Printf("Wavs closed\n")
+	fmt.Printf("Wavs closing\n")
 }

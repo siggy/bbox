@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	DECAY = 2 * time.Second
+	DECAY = 2 * time.Second // test
+	// DECAY = 3 * time.Minute // prod
 )
 
 type Button struct {
@@ -23,13 +24,13 @@ type Button struct {
 // shtudown operation:
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
-	wg      *sync.WaitGroup
 	beats   Beats
 	timers  [BEATS][TICKS]*time.Timer
-	emit    chan Button
-	msgs    []chan<- Beats
+	emit    chan Button    // single button press, keyboard->emitter
+	msgs    []chan<- Beats // all beats, emitter->msgs
 	closing chan struct{}
 	debug   bool
+	wg      *sync.WaitGroup
 }
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -40,6 +41,8 @@ func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 }
 
 func InitKeyboard(wg *sync.WaitGroup, msgs []chan<- Beats, debug bool) *Keyboard {
+	wg.Add(1)
+
 	// termbox.Close() called when Render.Run() exits
 	err := termbox.Init()
 	if err != nil {
@@ -47,15 +50,13 @@ func InitKeyboard(wg *sync.WaitGroup, msgs []chan<- Beats, debug bool) *Keyboard
 	}
 	termbox.SetInputMode(termbox.InputAlt)
 
-	wg.Add(1)
-
 	return &Keyboard{
-		wg:      wg,
 		beats:   Beats{},
 		msgs:    msgs,
 		emit:    make(chan Button),
 		closing: make(chan struct{}),
 		debug:   debug,
+		wg:      wg,
 	}
 }
 
@@ -69,8 +70,8 @@ func (kb *Keyboard) Run() {
 
 	data := make([]byte, 0, 64)
 
-	// starter beat
 	go kb.emitter()
+	// starter beat
 	kb.flip(1, 0)
 	kb.flip(1, 8)
 
@@ -87,16 +88,12 @@ func (kb *Keyboard) Run() {
 			data = data[:beg+ev.N]
 			current = fmt.Sprintf("%s", data)
 			if current == "`" {
+				// triggers a deferred kb.closing
+				fmt.Printf("Keyboard closing\n")
 				return
 			}
 
-			key := keymaps[current]
-			if key != nil {
-				kb.flip(key[0], key[1])
-			}
-
 			for {
-				// TODO: move kb.flip code to here
 				ev := termbox.ParseEvent(data)
 				if ev.N == 0 {
 					break
@@ -104,6 +101,12 @@ func (kb *Keyboard) Run() {
 				curev = ev
 				copy(data, data[curev.N:])
 				data = data[:len(data)-curev.N]
+
+				// key := keymaps[Key{ev.Ch, 0}]
+				key := keymaps_rpi[Key{ev.Ch, ev.Key}]
+				if key != nil {
+					kb.flip(key[0], key[1])
+				}
 
 				// for debugging output
 				if kb.debug {
@@ -139,9 +142,10 @@ func (kb *Keyboard) emitter() {
 				}
 			}
 			for _, msg := range kb.msgs {
-				close(msg)
+				close(msg) // signals to other processes to quit
 			}
 			close(kb.emit)
+			fmt.Printf("Keyboard emitter closing\n")
 			return
 		case button, more := <-kb.emit:
 			if more {

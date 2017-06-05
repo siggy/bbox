@@ -1,6 +1,7 @@
 package bbox
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -15,22 +16,22 @@ const (
 type Beats [BEATS][TICKS]bool
 
 type Loop struct {
-	wg    *sync.WaitGroup
 	beats Beats
 	msgs  <-chan Beats
-	wavs  *Wavs
 	ticks []chan<- int
+	wavs  *Wavs
+	wg    *sync.WaitGroup
 }
 
 func InitLoop(wg *sync.WaitGroup, msgs <-chan Beats, ticks []chan<- int) *Loop {
 	wg.Add(1)
 
 	return &Loop{
-		wg:    wg,
 		beats: Beats{},
 		msgs:  msgs,
-		wavs:  InitWavs(),
 		ticks: ticks,
+		wavs:  InitWavs(),
+		wg:    wg,
 	}
 }
 
@@ -50,6 +51,7 @@ func (l *Loop) Run() {
 			} else {
 				// closing
 				l.wavs.Close()
+				fmt.Printf("Loop closing\n")
 				return
 			}
 		case <-ticker.C: // for every time interval

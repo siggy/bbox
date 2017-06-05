@@ -1,25 +1,26 @@
 package bbox
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/nsf/termbox-go"
 )
 
 type Render struct {
-	wg    *sync.WaitGroup
 	beats Beats
 	msgs  <-chan Beats
 	ticks <-chan int
+	wg    *sync.WaitGroup
 }
 
 func InitRender(wg *sync.WaitGroup, msgs <-chan Beats, ticks <-chan int) *Render {
 	wg.Add(1)
 
 	return &Render{
-		wg:    wg,
 		msgs:  msgs,
 		ticks: ticks,
+		wg:    wg,
 	}
 }
 
@@ -66,6 +67,7 @@ func (r *Render) Run() {
 				r.Draw()
 			} else {
 				// closing
+				fmt.Printf("Render closing\n")
 				return
 			}
 		}

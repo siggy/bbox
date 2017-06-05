@@ -6,79 +6,79 @@ import (
 
 type Coord [2]int
 
-var keymaps = map[string]*Coord{
-	"1": &Coord{0, 0},
-	"2": &Coord{0, 1},
-	"3": &Coord{0, 2},
-	"4": &Coord{0, 3},
-	"5": &Coord{0, 4},
-	"6": &Coord{0, 5},
-	"7": &Coord{0, 6},
-	"8": &Coord{0, 7},
-	"!": &Coord{0, 8},
-	"@": &Coord{0, 9},
-	"#": &Coord{0, 10},
-	"$": &Coord{0, 11},
-	"%": &Coord{0, 12},
-	"^": &Coord{0, 13},
-	"&": &Coord{0, 14},
-	"*": &Coord{0, 15},
-
-	"w": &Coord{1, 0},
-	"e": &Coord{1, 1},
-	"r": &Coord{1, 2},
-	"t": &Coord{1, 3},
-	"y": &Coord{1, 4},
-	"u": &Coord{1, 5},
-	"i": &Coord{1, 6},
-	"o": &Coord{1, 7},
-	"W": &Coord{1, 8},
-	"E": &Coord{1, 9},
-	"R": &Coord{1, 10},
-	"T": &Coord{1, 11},
-	"Y": &Coord{1, 12},
-	"U": &Coord{1, 13},
-	"I": &Coord{1, 14},
-	"O": &Coord{1, 15},
-
-	"a": &Coord{2, 0},
-	"s": &Coord{2, 1},
-	"d": &Coord{2, 2},
-	"f": &Coord{2, 3},
-	"g": &Coord{2, 4},
-	"h": &Coord{2, 5},
-	"j": &Coord{2, 6},
-	"k": &Coord{2, 7},
-	"A": &Coord{2, 8},
-	"S": &Coord{2, 9},
-	"D": &Coord{2, 10},
-	"F": &Coord{2, 11},
-	"G": &Coord{2, 12},
-	"H": &Coord{2, 13},
-	"J": &Coord{2, 14},
-	"K": &Coord{2, 15},
-
-	"z": &Coord{3, 0},
-	"x": &Coord{3, 1},
-	"c": &Coord{3, 2},
-	"v": &Coord{3, 3},
-	"b": &Coord{3, 4},
-	"n": &Coord{3, 5},
-	"m": &Coord{3, 6},
-	",": &Coord{3, 7},
-	"Z": &Coord{3, 8},
-	"X": &Coord{3, 9},
-	"C": &Coord{3, 10},
-	"V": &Coord{3, 11},
-	"B": &Coord{3, 12},
-	"N": &Coord{3, 13},
-	"M": &Coord{3, 14},
-	"<": &Coord{3, 15},
-}
-
 type Key struct {
 	Ch  rune        // a unicode character
 	Key termbox.Key // one of Key* constants, invalid if 'Ch' is not 0
+}
+
+var keymaps = map[Key]*Coord{
+	{'1', 0}: &Coord{0, 0},
+	{'2', 0}: &Coord{0, 1},
+	{'3', 0}: &Coord{0, 2},
+	{'4', 0}: &Coord{0, 3},
+	{'5', 0}: &Coord{0, 4},
+	{'6', 0}: &Coord{0, 5},
+	{'7', 0}: &Coord{0, 6},
+	{'8', 0}: &Coord{0, 7},
+	{'!', 0}: &Coord{0, 8},
+	{'@', 0}: &Coord{0, 9},
+	{'#', 0}: &Coord{0, 10},
+	{'$', 0}: &Coord{0, 11},
+	{'%', 0}: &Coord{0, 12},
+	{'^', 0}: &Coord{0, 13},
+	{'&', 0}: &Coord{0, 14},
+	{'*', 0}: &Coord{0, 15},
+
+	{'q', 0}: &Coord{1, 0},
+	{'w', 0}: &Coord{1, 1},
+	{'e', 0}: &Coord{1, 2},
+	{'r', 0}: &Coord{1, 3},
+	{'t', 0}: &Coord{1, 4},
+	{'y', 0}: &Coord{1, 5},
+	{'u', 0}: &Coord{1, 6},
+	{'i', 0}: &Coord{1, 7},
+	{'Q', 0}: &Coord{1, 8},
+	{'W', 0}: &Coord{1, 9},
+	{'E', 0}: &Coord{1, 10},
+	{'R', 0}: &Coord{1, 11},
+	{'T', 0}: &Coord{1, 12},
+	{'Y', 0}: &Coord{1, 13},
+	{'U', 0}: &Coord{1, 14},
+	{'I', 0}: &Coord{1, 15},
+
+	{'a', 0}: &Coord{2, 0},
+	{'s', 0}: &Coord{2, 1},
+	{'d', 0}: &Coord{2, 2},
+	{'f', 0}: &Coord{2, 3},
+	{'g', 0}: &Coord{2, 4},
+	{'h', 0}: &Coord{2, 5},
+	{'j', 0}: &Coord{2, 6},
+	{'k', 0}: &Coord{2, 7},
+	{'A', 0}: &Coord{2, 8},
+	{'S', 0}: &Coord{2, 9},
+	{'D', 0}: &Coord{2, 10},
+	{'F', 0}: &Coord{2, 11},
+	{'G', 0}: &Coord{2, 12},
+	{'H', 0}: &Coord{2, 13},
+	{'J', 0}: &Coord{2, 14},
+	{'K', 0}: &Coord{2, 15},
+
+	{'z', 0}: &Coord{3, 0},
+	{'x', 0}: &Coord{3, 1},
+	{'c', 0}: &Coord{3, 2},
+	{'v', 0}: &Coord{3, 3},
+	{'b', 0}: &Coord{3, 4},
+	{'n', 0}: &Coord{3, 5},
+	{'m', 0}: &Coord{3, 6},
+	{',', 0}: &Coord{3, 7},
+	{'Z', 0}: &Coord{3, 8},
+	{'X', 0}: &Coord{3, 9},
+	{'C', 0}: &Coord{3, 10},
+	{'V', 0}: &Coord{3, 11},
+	{'B', 0}: &Coord{3, 12},
+	{'N', 0}: &Coord{3, 13},
+	{'M', 0}: &Coord{3, 14},
+	{'<', 0}: &Coord{3, 15},
 }
 
 // mapping from keyboard box
@@ -145,7 +145,7 @@ var keymaps_rpi = map[Key]*Coord{
 	{'/', 0}:                   &Coord{3, 3}, // 10 x 26
 	{0, termbox.KeyF9}:         &Coord{3, 4}, // 11 x 19
 	{0, termbox.KeyF10}:        &Coord{3, 5}, // 11 x 20
-	{0, termbox.KeyBackspace2}: &Coord{3, 6}, // 11 x 22
+	{0, termbox.KeyBackspace2}: &Coord{3, 6}, // 11 x 22 // 'delete' on mac keyboard
 	// 11 x 23 = \ ***
 	{0, termbox.KeyF5}:    &Coord{3, 7},  // 11 x 24
 	{0, termbox.KeyEnter}: &Coord{3, 8},  // 11 x 25
@@ -157,14 +157,14 @@ var keymaps_rpi = map[Key]*Coord{
 	// 12 x 24 = 0 ***
 	// 12 x 25 = / ***
 	{0, termbox.KeyArrowRight}: &Coord{3, 11}, // 12 x 26
-	{0, termbox.KeyDelete}:     &Coord{3, 12}, // 13 x 19
+	{0, termbox.KeyDelete}:     &Coord{3, 12}, // 13 x 19 // not on mac keyboard
 	// 13 x 20 = [fn f11]
 	// 13 x 21 = 7 ***
 	// 13 x 22 = 4 ***
 	// 13 x 23 = 1 ***
 	{0, termbox.KeyArrowDown}: &Coord{3, 13}, // 13 x 26
-	{0, termbox.KeyPgup}:      &Coord{3, 14}, // 14 x 19
-	{0, termbox.KeyPgdn}:      &Coord{3, 15}, // 14 x 20
+	{0, termbox.KeyPgup}:      &Coord{3, 14}, // 14 x 19 // not on mac keyboard
+	{0, termbox.KeyPgdn}:      &Coord{3, 15}, // 14 x 20 // not on mac keyboard
 	// 14 x 21 = 9 ***
 	// 14 x 22 = 6 ***
 	// 14 x 23 = 3 ***

@@ -3,6 +3,7 @@ package leds
 import (
 	"encoding/binary"
 	"fmt"
+	"sync"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
@@ -32,16 +33,22 @@ type Leds struct {
 	beats bbox.Beats
 	msgs  <-chan bbox.Beats
 	ticks <-chan int
+	wg    *sync.WaitGroup
 }
 
-func InitLeds(msgs <-chan bbox.Beats, ticks <-chan int) *Leds {
+func InitLeds(wg *sync.WaitGroup, msgs <-chan bbox.Beats, ticks <-chan int) *Leds {
+	wg.Add(1)
+
 	return &Leds{
 		msgs:  msgs,
 		ticks: ticks,
+		wg:    wg,
 	}
 }
 
 func (l *Leds) Run() {
+	defer kb.wg.Done()
+
 	err := ws2811.Init(GPIO_PIN, LED_COUNT, BRIGHTNESS)
 	if err != nil {
 		fmt.Printf("ws2811.Init failed: %+v\n", err)
