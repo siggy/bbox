@@ -7,6 +7,10 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+const (
+	TICK_DELAY = 2
+)
+
 type Render struct {
 	beats Beats
 	msgs  <-chan Beats
@@ -25,18 +29,6 @@ func InitRender(wg *sync.WaitGroup, msgs <-chan Beats, ticks <-chan int) *Render
 }
 
 func (r *Render) Draw() {
-	for i := 0; i < BEATS; i++ {
-		for j := 0; j < TICKS; j++ {
-			c := '-'
-			if r.beats[i][j] {
-				c = 'X'
-			}
-			termbox.SetCell(j*2, i+1, c, termbox.ColorDefault, termbox.ColorDefault)
-			termbox.SetCell(j*2+1, i+1, ' ', termbox.ColorDefault, termbox.ColorDefault)
-		}
-	}
-
-	termbox.Flush()
 }
 
 func (r *Render) Run() {
@@ -45,26 +37,69 @@ func (r *Render) Run() {
 	// termbox.Init() called in InitKeyboard()
 	defer termbox.Close()
 
-	for i := 0; i < BEATS+1; i++ {
-		for j := 0; j < TICKS*2; j++ {
-			termbox.SetCell(j, i, '-', termbox.ColorDefault, termbox.ColorDefault)
-		}
-	}
-
-	termbox.Flush()
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-
 	for {
 		select {
 		case tick := <-r.ticks:
-			termbox.SetCell((tick+TICKS-1)%TICKS*2, 0, ' ', termbox.ColorDefault, termbox.ColorDefault)
-			termbox.SetCell(tick*2, 0, 'O', termbox.ColorDefault, termbox.ColorDefault)
+			oldTick := (tick + TICK_DELAY - 1) % LED_TICKS
+			newTick := (tick + TICK_DELAY) % LED_TICKS
+			termbox.SetCell(oldTick, 0, ' ', termbox.ColorDefault, termbox.ColorDefault)
+			termbox.SetCell(newTick, 0, 'O', termbox.ColorBlack, termbox.ColorWhite)
+			for i := 0; i < BEATS; i++ {
+				oldRune := ' '
+				newRune := '.'
+
+				oldBack := termbox.ColorDefault
+				oldFore := termbox.ColorDefault
+				newBack := termbox.ColorWhite
+				newFore := termbox.ColorDefault
+				if oldTick%LEDS_PER_TICK == 0 {
+					// old tick is on a beat
+					if r.beats[i][oldTick/LEDS_PER_TICK] {
+						// not ticked, activated
+						oldRune = 'X'
+						oldBack = termbox.ColorRed
+						oldFore = termbox.ColorBlack
+					} else {
+						// not ticked, not activated
+						oldRune = '-'
+					}
+				} else if newTick%LEDS_PER_TICK == 0 {
+					// new tick is on a beat
+					if r.beats[i][newTick/LEDS_PER_TICK] {
+						// ticked, activated
+						newRune = '8'
+						newBack = termbox.ColorMagenta
+						newFore = termbox.ColorBlack
+					} else {
+						// ticked, not activated
+						newRune = '_'
+						newBack = termbox.ColorDefault
+					}
+				}
+				termbox.SetCell(oldTick, i+1, oldRune, oldFore, oldBack)
+				termbox.SetCell(newTick, i+1, newRune, newFore, newBack)
+			}
+
 			termbox.Flush()
 		case beats, more := <-r.msgs:
 			if more {
 				// incoming beat update from keyboard
 				r.beats = beats
-				r.Draw()
+				for i := 0; i < BEATS; i++ {
+					for j := 0; j < TICKS; j++ {
+						c := '-'
+						back := termbox.ColorDefault
+						fore := termbox.ColorDefault
+						if r.beats[i][j] {
+							c = 'X'
+							back = termbox.ColorRed
+							fore = termbox.ColorBlack
+						}
+						termbox.SetCell(j*LEDS_PER_TICK, i+1, c, fore, back)
+					}
+				}
+
+				termbox.Flush()
 			} else {
 				// closing
 				fmt.Printf("Render closing\n")

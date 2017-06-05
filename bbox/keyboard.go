@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	DECAY = 2 * time.Second // test
-	// DECAY = 3 * time.Minute // prod
+	// DECAY = 2 * time.Second // test
+	DECAY = 3 * time.Minute // prod
 )
 
 type Button struct {
@@ -102,8 +102,9 @@ func (kb *Keyboard) Run() {
 				copy(data, data[curev.N:])
 				data = data[:len(data)-curev.N]
 
-				// key := keymaps[Key{ev.Ch, 0}]
-				key := keymaps_rpi[Key{ev.Ch, ev.Key}]
+				// TODO: make settable
+				key := keymaps[Key{ev.Ch, 0}]
+				// key := keymaps_rpi[Key{ev.Ch, ev.Key}]
 				if key != nil {
 					kb.flip(key[0], key[1])
 				}

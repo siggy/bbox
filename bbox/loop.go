@@ -7,10 +7,12 @@ import (
 )
 
 const (
-	BPM      = 120
-	BEATS    = 4
-	TICKS    = 16
-	INTERVAL = 60 * time.Second / BPM / (TICKS / 4) // 4 beats per interval
+	BPM           = 120
+	BEATS         = 4
+	TICKS         = 16
+	LEDS_PER_TICK = 3
+	LED_TICKS     = TICKS * LEDS_PER_TICK
+	INTERVAL      = 60 * time.Second / BPM / (TICKS / 4) / LEDS_PER_TICK // 4 beats per interval
 )
 
 type Beats [BEATS][TICKS]bool
@@ -55,20 +57,22 @@ func (l *Loop) Run() {
 				return
 			}
 		case <-ticker.C: // for every time interval
-			// for each beat type
-			for i, beat := range l.beats {
-				if beat[tick] {
-					// initiate playback
-					l.wavs.Play(i)
-				}
-			}
-
 			// next interval
-			tick = (tick + 1) % TICKS
+			tick = (tick + 1) % LED_TICKS
 			tmp := tick
 
 			for _, ch := range l.ticks {
 				ch <- tmp
+			}
+
+			// for each beat type
+			if tick%LEDS_PER_TICK == 0 {
+				for i, beat := range l.beats {
+					if beat[tick/LEDS_PER_TICK] {
+						// initiate playback
+						l.wavs.Play(i)
+					}
+				}
 			}
 		}
 	}
