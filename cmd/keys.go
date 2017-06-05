@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/nsf/termbox-go"
-	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/pkg/bbox"
 )
 
 func main() {
