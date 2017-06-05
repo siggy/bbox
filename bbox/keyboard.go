@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	// DECAY = 2 * time.Second // test
-	DECAY = 3 * time.Minute // prod
+	DECAY = 2 * time.Second // test
+	// DECAY = 3 * time.Minute // prod
 )
 
 type Button struct {
 	beat  int
 	tick  int
-	reset bool
+	decay bool
 }
 
 // normal operation:
@@ -63,14 +63,13 @@ func InitKeyboard(wg *sync.WaitGroup, msgs []chan<- Beats, debug bool) *Keyboard
 func (kb *Keyboard) Run() {
 	defer kb.wg.Done()
 
+	defer func() { kb.closing <- struct{}{} }()
+	go kb.emitter()
+
 	var current string
 	var curev termbox.Event
-
-	defer func() { kb.closing <- struct{}{} }()
-
 	data := make([]byte, 0, 64)
 
-	go kb.emitter()
 	// starter beat
 	kb.flip(1, 0)
 	kb.flip(1, 8)
@@ -88,7 +87,7 @@ func (kb *Keyboard) Run() {
 			data = data[:beg+ev.N]
 			current = fmt.Sprintf("%s", data)
 			if current == "`" {
-				// triggers a deferred kb.closing
+				// triggers a deferred kb.closing, which closes the emitter
 				fmt.Printf("Keyboard closing\n")
 				return
 			}
@@ -126,8 +125,8 @@ func (kb *Keyboard) flip(beat int, tick int) {
 	kb.button(beat, tick, false)
 }
 
-func (kb *Keyboard) button(beat int, tick int, reset bool) {
-	kb.emit <- Button{beat: beat, tick: tick, reset: reset}
+func (kb *Keyboard) button(beat int, tick int, decay bool) {
+	kb.emit <- Button{beat: beat, tick: tick, decay: decay}
 }
 
 func (kb *Keyboard) emitter() {
@@ -155,17 +154,17 @@ func (kb *Keyboard) emitter() {
 					kb.timers[button.beat][button.tick].Stop()
 				}
 
-				if button.reset {
+				if button.decay || kb.beats[button.beat][button.tick] {
+					// turning off
 					kb.beats[button.beat][button.tick] = false
 				} else {
-					kb.beats[button.beat][button.tick] = !kb.beats[button.beat][button.tick]
+					// turning on
+					kb.beats[button.beat][button.tick] = true
 
-					// if we're turning this button on, set a decay timer
-					if kb.beats[button.beat][button.tick] {
-						kb.timers[button.beat][button.tick] = time.AfterFunc(DECAY, func() {
-							kb.button(button.beat, button.tick, true)
-						})
-					}
+					// set a decay timer
+					kb.timers[button.beat][button.tick] = time.AfterFunc(DECAY, func() {
+						kb.button(button.beat, button.tick, true)
+					})
 				}
 
 				// broadcast changes
