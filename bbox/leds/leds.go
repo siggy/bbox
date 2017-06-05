@@ -79,7 +79,7 @@ func (l *Leds) Run() {
 		select {
 		case tick := <-l.ticks:
 			// TODO: leds for all 4 beats
-			tick = (tick + bbox.TICKS - TICK_DELAY) % bbox.TICKS
+			tick = (tick + bbox.BEATS - TICK_DELAY) % bbox.BEATS
 			ws2811.Clear()
 			ws2811.SetLed(tick, whitew)
 

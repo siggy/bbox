@@ -17,7 +17,7 @@ const (
 )
 
 type Wavs struct {
-	wavs   [BEATS]*wavFile
+	wavs   [SOUNDS]*wavFile
 	stream *portaudio.Stream
 }
 
@@ -33,7 +33,7 @@ func InitWavs() *Wavs {
 	portaudio.Initialize()
 
 	files, _ := ioutil.ReadDir(WAVS)
-	if len(files) != BEATS {
+	if len(files) != SOUNDS {
 		panic(0)
 	}
 

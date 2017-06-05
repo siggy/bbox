@@ -25,7 +25,7 @@ type Button struct {
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
 	beats   Beats
-	timers  [BEATS][TICKS]*time.Timer
+	timers  [SOUNDS][BEATS]*time.Timer
 	emit    chan Button    // single button press, keyboard->emitter
 	msgs    []chan<- Beats // all beats, emitter->msgs
 	closing chan struct{}
@@ -111,7 +111,7 @@ func (kb *Keyboard) Run() {
 
 				// for debugging output
 				if kb.debug {
-					tbprint(0, BEATS+1, termbox.ColorDefault, termbox.ColorDefault,
+					tbprint(0, SOUNDS+1, termbox.ColorDefault, termbox.ColorDefault,
 						fmt.Sprintf("EventKey: k: %5d, c: %c", ev.Key, ev.Ch))
 					termbox.Flush()
 				}
