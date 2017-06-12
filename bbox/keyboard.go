@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	DECAY = 2 * time.Second // test
-	// DECAY = 3 * time.Minute // prod
+	// DECAY = 2 * time.Second // test
+	DECAY = 3 * time.Minute // prod
 )
 
 type Button struct {

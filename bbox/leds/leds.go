@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	BRIGHTNESS = 64               // 0-255
-	LED_COUNT  = 30 * (1 + 5 + 5) // 30/m
+	BRIGHTNESS = 64 // 0-255
+	LED_COUNT  = 30 // * (1 + 5 + 5) // 30/m
 	GPIO_PIN   = 18
 	TICK_DELAY = 3 // match sound to LEDs
 )
@@ -47,7 +47,7 @@ func InitLeds(wg *sync.WaitGroup, msgs <-chan bbox.Beats, ticks <-chan int) *Led
 }
 
 func (l *Leds) Run() {
-	defer kb.wg.Done()
+	defer l.wg.Done()
 
 	err := ws2811.Init(GPIO_PIN, LED_COUNT, BRIGHTNESS)
 	if err != nil {
