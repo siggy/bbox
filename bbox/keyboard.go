@@ -9,8 +9,13 @@ import (
 )
 
 const (
-	// DECAY = 2 * time.Second // test
-	DECAY = 3 * time.Minute // prod
+	// test
+	// DECAY      = 2 * time.Second
+	// KEEP_ALIVE = 5 * time.Second
+
+	// prod
+	DECAY      = 3 * time.Minute
+	KEEP_ALIVE = 14 * time.Minute
 )
 
 type Button struct {
@@ -24,13 +29,14 @@ type Button struct {
 // shtudown operation:
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
-	beats   Beats
-	timers  [SOUNDS][BEATS]*time.Timer
-	emit    chan Button    // single button press, keyboard->emitter
-	msgs    []chan<- Beats // all beats, emitter->msgs
-	closing chan struct{}
-	debug   bool
-	wg      *sync.WaitGroup
+	beats     Beats
+	timers    [SOUNDS][BEATS]*time.Timer
+	keepAlive *time.Timer    // ensure at least one beat is sent periodically to keep speaker alive
+	emit      chan Button    // single button press, keyboard->emitter
+	msgs      []chan<- Beats // all beats, emitter->msgs
+	closing   chan struct{}
+	debug     bool
+	wg        *sync.WaitGroup
 }
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -129,11 +135,27 @@ func (kb *Keyboard) button(beat int, tick int, decay bool) {
 	kb.emit <- Button{beat: beat, tick: tick, decay: decay}
 }
 
+func (kb *Keyboard) allOff() bool {
+	for _, row := range kb.beats {
+		for _, beat := range row {
+			if beat {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func (kb *Keyboard) emitter() {
 	for {
 		select {
 		case <-kb.closing:
 			// ensure all timers are stopped before closing kb.emit
+			if kb.keepAlive != nil {
+				kb.keepAlive.Stop()
+			}
+
 			for _, arr := range kb.timers {
 				for _, t := range arr {
 					if t != nil {
@@ -157,6 +179,14 @@ func (kb *Keyboard) emitter() {
 				if button.decay || kb.beats[button.beat][button.tick] {
 					// turning off
 					kb.beats[button.beat][button.tick] = false
+
+					// check for all beats off, if so, set a keepalive timer
+					if kb.allOff() {
+						kb.keepAlive = time.AfterFunc(KEEP_ALIVE, func() {
+							// enable a beat to keep the speaker alive
+							kb.flip(1, 0)
+						})
+					}
 				} else {
 					// turning on
 					kb.beats[button.beat][button.tick] = true
@@ -165,6 +195,11 @@ func (kb *Keyboard) emitter() {
 					kb.timers[button.beat][button.tick] = time.AfterFunc(DECAY, func() {
 						kb.button(button.beat, button.tick, true)
 					})
+
+					// we've enabled a beat, kill keepAlive
+					if kb.keepAlive != nil {
+						kb.keepAlive.Stop()
+					}
 				}
 
 				// broadcast changes
