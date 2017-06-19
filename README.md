@@ -29,6 +29,12 @@ cp rpi_ws281x/libws2811.a /usr/local/lib/
 go build -o beatboxer cmd/bbox.go && sudo ./beatboxer
 ```
 
+LEDs Only
+
+```bash
+go build cmd/leds.go && sudo ./leds
+```
+
 Clear LEDs
 
 ```bash
