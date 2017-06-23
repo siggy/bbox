@@ -91,18 +91,18 @@ var keymaps_rpi = map[Key]*Coord{
 	{'q', 0}:            &Coord{0, 1}, // 3 x 21
 	{0, termbox.KeyTab}: &Coord{0, 2}, // 3 x 22
 	{'a', 0}:            &Coord{0, 3}, // 3 x 23
-	{'z', 0}:            &Coord{0, 4}, // 3 x 24
+	{'z', 0}:            &Coord{0, 4}, // 3 x 25
 	{0, termbox.KeyF1}:  &Coord{0, 5}, // 4 x 19
 	{'2', 0}:            &Coord{0, 6}, // 4 x 20
 	{'w', 0}:            &Coord{0, 7}, // 4 x 21
-	{'S', 0}:            &Coord{0, 8}, // 4 x 23
+	{'s', 0}:            &Coord{0, 8}, // 4 x 23
 	// 4 x 24 = §
 	{'x', 0}:           &Coord{0, 9},  // 4 x 25
 	{0, termbox.KeyF2}: &Coord{0, 10}, // 5 x 19
 	{'3', 0}:           &Coord{0, 11}, // 5 x 20
 	{'e', 0}:           &Coord{0, 12}, // 5 x 21
-	{'d', 0}:           &Coord{0, 13}, // 5 x 22
-	{'c', 0}:           &Coord{0, 14}, // 5 x 23
+	{0, termbox.KeyF3}: &Coord{0, 13}, // 5 x 22
+	{'d', 0}:           &Coord{0, 14}, // 5 x 23
 	{0, termbox.KeyF4}: &Coord{0, 15}, // 5 x 24
 
 	{'5', 0}: &Coord{1, 0},  // 6 x 19
@@ -126,45 +126,45 @@ var keymaps_rpi = map[Key]*Coord{
 	{'8', 0}:           &Coord{2, 1},  // 8 x 20
 	{'i', 0}:           &Coord{2, 2},  // 8 x 21
 	{']', 0}:           &Coord{2, 3},  // 8 x 22
-	{'K', 0}:           &Coord{2, 4},  // 8 x 23
+	{'k', 0}:           &Coord{2, 4},  // 8 x 23
 	{0, termbox.KeyF6}: &Coord{2, 5},  // 8 x 24
 	{',', 0}:           &Coord{2, 6},  // 8 x 25
 	{0, termbox.KeyF8}: &Coord{2, 7},  // 9 x 19
 	{'9', 0}:           &Coord{2, 8},  // 9 x 20
 	{'o', 0}:           &Coord{2, 9},  // 9 x 21
-	{'l', 0}:           &Coord{2, 10}, // 9 x 23
-	{'.', 0}:           &Coord{2, 11}, // 9 x 25
-	{'-', 0}:           &Coord{2, 12}, // 10 x 19
-	{'0', 0}:           &Coord{2, 13}, // 10 x 20
-	{'p', 0}:           &Coord{2, 14}, // 10 x 21
-	{'[', 0}:           &Coord{2, 15}, // 10 x 22
+	{0, termbox.KeyF7}: &Coord{2, 10}, // 9 x 22
+	{'l', 0}:           &Coord{2, 11}, // 9 x 23
+	{'.', 0}:           &Coord{2, 12}, // 9 x 25
+	{'-', 0}:           &Coord{2, 13}, // 10 x 19
+	{'0', 0}:           &Coord{2, 14}, // 10 x 20
+	{'p', 0}:           &Coord{2, 15}, // 10 x 21
 
-	{';', 0}:                   &Coord{3, 0}, // 10 x 23
-	{'\'', 0}:                  &Coord{3, 1}, // 10 x 24
-	{'\\', 0}:                  &Coord{3, 2}, // 10 x 25
-	{'/', 0}:                   &Coord{3, 3}, // 10 x 26
-	{0, termbox.KeyF9}:         &Coord{3, 4}, // 11 x 19
-	{0, termbox.KeyF10}:        &Coord{3, 5}, // 11 x 20
-	{0, termbox.KeyBackspace2}: &Coord{3, 6}, // 11 x 22 // 'delete' on mac keyboard
+	{'[', 0}:                   &Coord{3, 0}, // 10 x 22
+	{';', 0}:                   &Coord{3, 1}, // 10 x 23
+	{'\'', 0}:                  &Coord{3, 2}, // 10 x 24
+	{'\\', 0}:                  &Coord{3, 3}, // 10 x 25
+	{'/', 0}:                   &Coord{3, 4}, // 10 x 26
+	{0, termbox.KeyF9}:         &Coord{3, 5}, // 11 x 19
+	{0, termbox.KeyF10}:        &Coord{3, 6}, // 11 x 20
+	{0, termbox.KeyBackspace2}: &Coord{3, 7}, // 11 x 22 // 'delete' on mac keyboard
 	// 11 x 23 = \ ***
-	{0, termbox.KeyF5}:    &Coord{3, 7},  // 11 x 24
-	{0, termbox.KeyEnter}: &Coord{3, 8},  // 11 x 25
-	{0, termbox.KeySpace}: &Coord{3, 9},  // 11 x 26
-	{0, termbox.KeyF12}:   &Coord{3, 10}, // 12 x 20
+	{0, termbox.KeyF5}:    &Coord{3, 8},  // 11 x 24
+	{0, termbox.KeyEnter}: &Coord{3, 9},  // 11 x 25
+	{0, termbox.KeySpace}: &Coord{3, 10}, // 11 x 26
+	{0, termbox.KeyF12}:   &Coord{3, 11}, // 12 x 20
 	// 12 x 21 = 8 ***
 	// 12 x 22 = 5 ***
 	// 12 x 23 = 2 ***
 	// 12 x 24 = 0 ***
 	// 12 x 25 = / ***
-	{0, termbox.KeyArrowRight}: &Coord{3, 11}, // 12 x 26
-	{0, termbox.KeyDelete}:     &Coord{3, 12}, // 13 x 19 // not on mac keyboard
+	{0, termbox.KeyArrowRight}: &Coord{3, 12}, // 12 x 26
+	{0, termbox.KeyDelete}:     &Coord{3, 13}, // 13 x 19
 	// 13 x 20 = [fn f11]
 	// 13 x 21 = 7 ***
 	// 13 x 22 = 4 ***
 	// 13 x 23 = 1 ***
-	{0, termbox.KeyArrowDown}: &Coord{3, 13}, // 13 x 26
-	{0, termbox.KeyPgup}:      &Coord{3, 14}, // 14 x 19 // not on mac keyboard
-	{0, termbox.KeyPgdn}:      &Coord{3, 15}, // 14 x 20 // not on mac keyboard
+	{0, termbox.KeyArrowDown}: &Coord{3, 14}, // 13 x 26
+	{0, termbox.KeyF11}:       &Coord{3, 15}, // 14 x 20
 	// 14 x 21 = 9 ***
 	// 14 x 22 = 6 ***
 	// 14 x 23 = 3 ***
