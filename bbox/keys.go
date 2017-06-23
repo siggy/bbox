@@ -164,14 +164,14 @@ var keymaps_rpi = map[Key]*Coord{
 	// 13 x 22 = 4 ***
 	// 13 x 23 = 1 ***
 	{0, termbox.KeyArrowDown}: &Coord{3, 14}, // 13 x 26
-	{0, termbox.KeyF11}:       &Coord{3, 15}, // 14 x 20
+	// {0, termbox.KeyF11}:       &Coord{3, 15}, // 14 x 20
 	// 14 x 21 = 9 ***
 	// 14 x 22 = 6 ***
 	// 14 x 23 = 3 ***
 	// 14 x 24 = . ***
 	// 14 x 25 = *
 	// 14 x 26 = - ***
-	// 15 x 19 = KeyHome
+	{0, termbox.KeyHome}: &Coord{3,15}, // 15 x 19 = KeyHome
 	// 15 x 20 = KeyEnd
 	// 15 x 21 = +
 	// 15 x 23 = KeyEnter ***
