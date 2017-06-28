@@ -44,10 +44,18 @@ import (
 	"unsafe"
 )
 
-func Init(gpioPin int, ledCount int, brightness int) error {
-	C.ledstring.channel[0].gpionum = C.int(gpioPin)
-	C.ledstring.channel[0].count = C.int(ledCount)
-	C.ledstring.channel[0].brightness = C.uint8_t(brightness)
+func Init(
+	gpioPin1 int, ledCount1 int, brightness1 int,
+	gpioPin2 int, ledCount2 int, brightness2 int,
+) error {
+	C.ledstring.channel[0].gpionum = C.int(gpioPin1)
+	C.ledstring.channel[0].count = C.int(ledCount1)
+	C.ledstring.channel[0].brightness = C.uint8_t(brightness1)
+
+	C.ledstring.channel[1].gpionum = C.int(gpioPin2)
+	C.ledstring.channel[1].count = C.int(ledCount2)
+	C.ledstring.channel[1].brightness = C.uint8_t(brightness2)
+
 	res := int(C.ws2811_init(&C.ledstring))
 	if res == 0 {
 		return nil
@@ -78,8 +86,8 @@ func Wait() error {
 	}
 }
 
-func SetLed(index int, value uint32) {
-	C.ws2811_set_led(&C.ledstring, C.int(index), C.uint32_t(value))
+func SetLed(channel int, index int, value uint32) {
+	C.ws2811_set_led(&C.ledstring, C.int(channel), C.int(index), C.uint32_t(value))
 }
 
 func Clear() {

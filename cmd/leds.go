@@ -11,7 +11,7 @@ func main() {
 	for j := 0; j < 10000; j++ {
 		for i := 0; i < leds.LED_COUNT; i++ {
 			leds.SetLeds(i)
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 	leds.Shutdown()
