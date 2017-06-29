@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	GPIO_PIN1  = 18      // PWM0, must be 18 or 12
+	GPIO_PIN1A = 18      // PWM0, must be 18 or 12
+	GPIO_PIN1B = 12      // PWM0, must be 18 or 12
 	GPIO_PIN2  = 13      // PWM1, must be 13 for rPI 3
 	LED_COUNT1 = 144 * 5 // 144 * 5 // * 5 // * (1 + 5 + 5) // 30/m
 	LED_COUNT2 = 30      // 144 * 5 // * 5 // * (1 + 5 + 5) // 30/m
@@ -31,9 +32,29 @@ func scale(x float64) uint32 {
 }
 
 func initLeds() {
+
+	// init once for each PIN1 (PWM0)
 	fmt.Printf("ws2811.Init()\n")
 	err := ws2811.Init(
-		GPIO_PIN1, LED_COUNT1, leds.BRIGHTNESS,
+		GPIO_PIN1A, LED_COUNT1, leds.BRIGHTNESS,
+		GPIO_PIN2, LED_COUNT2, leds.BRIGHTNESS,
+	)
+	if err != nil {
+		fmt.Printf("ws2811.Init failed: %+v\n", err)
+		panic(err)
+	}
+
+	fmt.Printf("ws2811.Wait()\n")
+	err = ws2811.Wait()
+	if err != nil {
+		fmt.Printf("ws2811.Wait failed: %+v\n", err)
+		panic(err)
+	}
+
+	ws2811.Fini()
+
+	err = ws2811.Init(
+		GPIO_PIN1B, LED_COUNT1, leds.BRIGHTNESS,
 		GPIO_PIN2, LED_COUNT2, leds.BRIGHTNESS,
 	)
 	if err != nil {
