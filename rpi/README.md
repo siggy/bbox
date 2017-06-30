@@ -37,9 +37,9 @@ git clone https://github.com/siggy/bbox.git ~/code/go/src/github.com/siggy/bbox
 
 ```bash
 # external sound card
-cp ~/code/go/src/github.com/siggy/bbox/asound.conf /etc/
+sudo cp ~/code/go/src/github.com/siggy/bbox/rpi/asound.conf /etc/
 
 # set bootup and shell env
-cp .local.bash ~/
+cp ~/code/go/src/github.com/siggy/bbox/rpi/.local.bash ~/
 echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.bashrc
 ```

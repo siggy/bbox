@@ -7,7 +7,17 @@ Beatboxer in Go
 ### portaudio
 
 ```bash
+# OSX
 brew install portaudio
+
+# Raspbian
+wget http://portaudio.com/archives/pa_stable_v190600_20161030.tgz -O /tmp/pa_stable_v190600_20161030.tgz
+cd /tmp
+tar -xzf pa_stable_v190600_20161030.tgz
+cd portaudio
+./configure
+make
+sudo make install
 ```
 
 ### rpi_ws281x
@@ -16,11 +26,11 @@ Beatboxer depends on a fork of (https://github.com/jgarff/rpi_ws281x). See that
 repo for complete instructions.
 
 ```bash
-cp rpi_ws281x/rpihw.h  /usr/local/include/
-cp rpi_ws281x/ws2811.h /usr/local/include/
-cp rpi_ws281x/pwm.h    /usr/local/include/
+sudo cp rpi_ws281x/rpihw.h  /usr/local/include/
+sudo cp rpi_ws281x/ws2811.h /usr/local/include/
+sudo cp rpi_ws281x/pwm.h    /usr/local/include/
 
-cp rpi_ws281x/libws2811.a /usr/local/lib/
+sudo cp rpi_ws281x/libws2811.a /usr/local/lib/
 ```
 
 ## Run
