@@ -19,7 +19,7 @@ passwd
 sudo apt-get update
 sudo apt-get install tmux
 
-# set static PI
+# set static IP address
 echo $'\n# set static ip\ninterface wlan0\nstatic ip_address=192.168.1.141/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1' | sudo tee --append /etc/dhcpcd.conf
 ```
 
