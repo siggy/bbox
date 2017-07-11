@@ -17,7 +17,7 @@ passwd
 
 # install packages
 sudo apt-get update
-sudo apt-get install tmux
+sudo apt-get install tmux vim
 
 # set static IP address
 echo $'\n# set static ip\ninterface wlan0\nstatic ip_address=192.168.1.141/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1' | sudo tee --append /etc/dhcpcd.conf
@@ -34,6 +34,12 @@ git clone https://github.com/siggy/bbox.git ~/code/go/src/github.com/siggy/bbox
 ```
 
 ## Env / bootup
+
+
+```bash
+# git config
+git config --global core.editor "vim"
+```
 
 ```bash
 # external sound card
