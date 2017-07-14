@@ -15,7 +15,7 @@ const (
 	GPIO_PIN1B = 12      // PWM0, must be 18 or 12
 	GPIO_PIN2  = 13      // PWM1, must be 13 for rPI 3
 	LED_COUNT1 = 144 * 5 // 144 * 5 // * 5 // * (1 + 5 + 5) // 30/m
-	LED_COUNT2 = 30      // 144 * 5 // * 5 // * (1 + 5 + 5) // 30/m
+	LED_COUNT2 = 60 * 10 // 60 * 10 // * 5 // * (4 + 2 + 4) // 60/m
 
 	PI_FACTOR = math.Pi / (255. * 2.)
 )
@@ -138,8 +138,9 @@ func run() {
 		}
 
 		for i := 0; i < LED_COUNT2; i++ {
-			color := leds.Colors[(iter+i)%len(leds.Colors)]
-			ws2811.SetLed(1, i, color)
+			// color := leds.Colors[(iter+i)%len(leds.Colors)]
+			// ws2811.SetLed(1, i, color)
+			ws2811.SetLed(1, i, randColors[(i+iter)%LED_COUNT1])
 		}
 
 		err := ws2811.Render()

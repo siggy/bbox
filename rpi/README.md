@@ -17,7 +17,7 @@ passwd
 
 # install packages
 sudo apt-get update
-sudo apt-get install tmux
+sudo apt-get install tmux vim
 ```
 
 ### Pi Zero / Raspbian Lite
@@ -30,7 +30,7 @@ Enable ssh on Pi Zero:
 sudo raspi-config
 ```
 
-```
+```bash
 sudo apt-get install git
 ```
 
@@ -52,6 +52,12 @@ git clone https://github.com/siggy/bbox.git ~/code/go/src/github.com/siggy/bbox
 ```
 
 ## Env / bootup
+
+
+```bash
+# git config
+git config --global core.editor "vim"
+```
 
 ```bash
 # external sound card
