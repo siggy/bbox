@@ -18,7 +18,25 @@ passwd
 # install packages
 sudo apt-get update
 sudo apt-get install tmux
+```
 
+### Pi Zero / Raspbian Lite
+
+On Mac, enable Internet Connection sharing from Wifi to USB/Ethernet adapter
+
+Enable ssh on Pi Zero:
+
+```bash
+sudo raspi-config
+```
+
+```
+sudo apt-get install git
+```
+
+### Pi 3 / Raspbian
+
+```bash
 # set static IP address
 echo $'\n# set static ip\ninterface wlan0\nstatic ip_address=192.168.1.141/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1' | sudo tee --append /etc/dhcpcd.conf
 ```
@@ -43,3 +61,8 @@ sudo cp ~/code/go/src/github.com/siggy/bbox/rpi/asound.conf /etc/
 cp ~/code/go/src/github.com/siggy/bbox/rpi/.local.bash ~/
 echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.bashrc
 ```
+
+# *output of raspi-config after forcing audio to hdmi*
+numid=3,iface=MIXER,name='Mic Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=on

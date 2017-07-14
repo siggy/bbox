@@ -18,6 +18,7 @@ cd portaudio
 ./configure
 make
 sudo make install
+sudo ldconfig
 ```
 
 ### rpi_ws281x

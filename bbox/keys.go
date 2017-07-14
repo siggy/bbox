@@ -95,7 +95,8 @@ var keymaps_rpi = map[Key]*Coord{
 	{0, termbox.KeyF1}:  &Coord{0, 5}, // 4 x 19
 	{'2', 0}:            &Coord{0, 6}, // 4 x 20
 	{'w', 0}:            &Coord{0, 7}, // 4 x 21
-	{'s', 0}:            &Coord{0, 8}, // 4 x 23
+	//{0, CAPS_LOCK}:    &Coord{0, 7}, // 4 x 22
+	{'s', 0}: &Coord{0, 8}, // 4 x 23
 	// 4 x 24 = §
 	{'x', 0}:           &Coord{0, 9},  // 4 x 25
 	{0, termbox.KeyF2}: &Coord{0, 10}, // 5 x 19
@@ -182,3 +183,37 @@ var keymaps_rpi = map[Key]*Coord{
 	// 17 x 24 = [launch itunes?]
 	// 18 x 22 = [volume up]
 }
+
+// pin counts
+// * => >6, requires double bridge
+// - => 0, no bridge
+// 1   0 -
+// 2   0 -
+// 3   6
+// 4   5
+// 5   6
+// 6   8 *
+// 7   8 *
+// 8   7 *
+// 9   6
+// 10  8 *
+// 11  6
+// 12  2
+// 13  2
+// 14  0
+// 15  1
+// 16  0 -
+// 17  0 -
+// 18  0 -
+// 19 11 *
+// 20 10 *
+// 21  8 *
+// 22  8 *
+// 23  8 *
+// 24  6
+// 25  8 *
+// 26  6
+// 27  0 -
+// 28  0 -
+// 29  0 -
+// 30  0 -
