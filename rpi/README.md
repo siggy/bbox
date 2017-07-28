@@ -53,7 +53,6 @@ git clone https://github.com/siggy/bbox.git ~/code/go/src/github.com/siggy/bbox
 
 ## Env / bootup
 
-
 ```bash
 # git config
 git config --global core.editor "vim"
@@ -72,3 +71,12 @@ echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.bashrc
 numid=3,iface=MIXER,name='Mic Playback Switch'
   ; type=BOOLEAN,access=rw------,values=1
   : values=on
+
+## Editing SD card
+
+Launch Ubuntu in VirtualBox
+
+```bash
+sudo mount /dev/sdb7 ~/usb
+sudo umount /dev/sdb7
+```
