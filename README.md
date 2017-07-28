@@ -32,6 +32,10 @@ sudo cp rpi_ws281x/ws2811.h /usr/local/include/
 sudo cp rpi_ws281x/pwm.h    /usr/local/include/
 
 sudo cp rpi_ws281x/libws2811.a /usr/local/lib/
+
+# osx
+export CGO_CFLAGS="$CGO_CFLAGS -I/usr/local/include"
+export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/local/lib"
 ```
 
 ## Run
