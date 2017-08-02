@@ -31,7 +31,7 @@
 
 ws2811_t ledstring = {
    .freq = 800000,
-   .dmanum = 5,
+   .dmanum = 10,
    .channel = {
 	   [0] = {
 		   .gpionum = 18,
@@ -61,6 +61,6 @@ void ws2811_clear(ws2811_t *ws2811) {
 	}
 }
 
-void ws2811_set_bitmap(ws2811_t *ws2811, void* a, int len) {
-	memcpy(ws2811->channel[0].leds, a, len);
+void ws2811_set_bitmap(ws2811_t *ws2811, int channel, void* a, int len) {
+	memcpy(ws2811->channel[channel].leds, a, len);
 }

@@ -94,6 +94,6 @@ func Clear() {
 	C.ws2811_clear(&C.ledstring)
 }
 
-func SetBitmap(a []uint32) {
-	C.ws2811_set_bitmap(&C.ledstring, unsafe.Pointer(&a[0]), C.int(len(a)*4))
+func SetBitmap(channel int, a []uint32) {
+	C.ws2811_set_bitmap(&C.ledstring, C.int(channel), unsafe.Pointer(&a[0]), C.int(len(a)*4))
 }

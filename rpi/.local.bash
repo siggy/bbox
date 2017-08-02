@@ -1,6 +1,7 @@
 export GOPATH=$HOME/code/go
 export GOROOT=/usr/local/go
 export PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
+export GIT_EDITOR=vim
 
 # Increase volume by 5%
 alias volu='sudo amixer set Speaker -- $[$(amixer get Speaker|grep -o [0-9]*%|sed 's/%//'|head -n1)+5]%'

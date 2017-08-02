@@ -3,21 +3,23 @@ package main
 import (
 	"fmt"
 	"math"
-	"math/rand"
-	// "time"
 
 	"github.com/siggy/bbox/bbox/leds"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
 const (
-	GPIO_PIN1A = 18      // PWM0, must be 18 or 12
-	GPIO_PIN1B = 12      // PWM0, must be 18 or 12
-	GPIO_PIN2  = 13      // PWM1, must be 13 for rPI 3
-	LED_COUNT1 = 144 * 5 // 144 * 5 // * 5 // * (1 + 5 + 5) // 30/m
-	LED_COUNT2 = 60 * 10 // 60 * 10 // * 5 // * (4 + 2 + 4) // 60/m
+	GPIO_PIN1A = 18 // PWM0, must be 18 or 12
+	GPIO_PIN1B = 12 // PWM0, must be 18 or 12
+	GPIO_PIN2  = 13 // PWM1, must be 13 for rPI 3
 
-	PI_FACTOR = math.Pi / (255. * 2.)
+	STRAND_COUNT1 = 5
+	STRAND_LEN1   = 144
+	STRAND_COUNT2 = 10
+	STRAND_LEN2   = 60
+
+	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 5*144 // * 2x(5) // 144/m
+	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 10*60 // * 1x(4 + 2 + 4) // 60/m
 )
 
 // expects 0 <= [r,g,b,w] <= 255
@@ -25,14 +27,26 @@ func mkColor(r uint32, g uint32, b uint32, w uint32) uint32 {
 	return uint32(b + g<<8 + r<<16 + w<<24)
 }
 
-// maps midpoint 128 => 32 for brightness
-func scale(x float64) uint32 {
-	// y = 1000*(0.005333 * 4002473^(x/1000)-0.005333)
-	return uint32(1000 * (0.005333*math.Pow(4002473., x/1000.) - 0.005333))
+func colorWeight(color1 uint32, color2 uint32, weight float64) uint32 {
+	b1 := color1 & 0x000000ff
+	g1 := (color1 & 0x0000ff00) >> 8
+	r1 := (color1 & 0x00ff0000) >> 16
+	w1 := (color1 & 0xff000000) >> 24
+
+	b2 := color2 & 0x000000ff
+	g2 := (color2 & 0x0000ff00) >> 8
+	r2 := (color2 & 0x00ff0000) >> 16
+	w2 := (color2 & 0xff000000) >> 24
+
+	return mkColor(
+		uint32(float64(r1)+float64(int32(r2)-int32(r1))*math.Min(1, weight*2)),
+		uint32(float64(g1)+float64(int32(g2)-int32(g1))*math.Max(0, weight*2-1)),
+		uint32(float64(b1)+float64(int32(b2)-int32(b1))*weight),
+		uint32(float64(w1)+float64(int32(w2)-int32(w1))*weight),
+	)
 }
 
 func initLeds() {
-
 	// init once for each PIN1 (PWM0)
 	fmt.Printf("ws2811.Init()\n")
 	err := ws2811.Init(
@@ -116,32 +130,61 @@ func initLeds() {
 	}
 }
 
+var (
+	pink      = mkColor(159, 0, 159, 93)
+	trueBlue  = mkColor(0, 0, 255, 0)
+	red       = mkColor(210, 0, 50, 40)
+	green     = mkColor(0, 181, 115, 43)
+	trueRed   = mkColor(255, 0, 0, 0)
+	purple    = mkColor(82, 0, 197, 52)
+	mint      = mkColor(0, 27, 0, 228)
+	trueGreen = mkColor(0, 255, 0, 0)
+
+	colors = []uint32{
+		pink,
+		trueBlue,
+		red,
+		green,
+		trueRed,
+		purple,
+		mint,
+		trueGreen,
+	}
+)
+
 func run() {
 	fmt.Printf("ws2811.Clear()\n")
 	ws2811.Clear()
 
 	iter := 0
+	weight := float64(0)
 
-	// precompute random color rotation
-	randColors := make([]uint32, LED_COUNT1)
-	for i := 0; i < LED_COUNT1; i++ {
-		randColors[i] = mkColor(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(256)))
-	}
+	strand1 := make([]uint32, LED_COUNT1)
+	strand2 := make([]uint32, LED_COUNT2)
 
 	for {
-		for i := 0; i < LED_COUNT1; i++ {
-			// blue := scale(255 * math.Sin(PI_FACTOR*float64(i+iter%256)))
-			// fmt.Printf("BLUE: %+v\n", blue)
-			// fmt.Printf("ITER: %+v\n", iter)
-			// color := mkColor(0, uint32(rand.Int31n(256/8)), uint32(rand.Int31n(256)), uint32(rand.Int31n(256/8)))
-			ws2811.SetLed(0, i, randColors[(i+iter)%LED_COUNT1])
+		for i := 0; i < STRAND_COUNT1; i++ {
+			color1 := colors[(iter+i)%len(colors)]
+			color2 := colors[(iter+i+1)%len(colors)]
+			color := colorWeight(color1, color2, weight)
+
+			for j := 0; j < STRAND_LEN1; j++ {
+				strand1[i*STRAND_LEN1+j] = color
+			}
 		}
 
-		for i := 0; i < LED_COUNT2; i++ {
-			// color := leds.Colors[(iter+i)%len(leds.Colors)]
-			// ws2811.SetLed(1, i, color)
-			ws2811.SetLed(1, i, randColors[(i+iter)%LED_COUNT1])
+		for i := 0; i < STRAND_COUNT2; i++ {
+			color1 := colors[(iter+i)%len(colors)]
+			color2 := colors[(iter+i+1)%len(colors)]
+			color := colorWeight(color1, color2, weight)
+
+			for j := 0; j < STRAND_LEN2; j++ {
+				strand2[i*STRAND_LEN2+j] = color
+			}
 		}
+
+		ws2811.SetBitmap(0, strand1)
+		ws2811.SetBitmap(1, strand2)
 
 		err := ws2811.Render()
 		if err != nil {
@@ -155,9 +198,12 @@ func run() {
 			panic(err)
 		}
 
-		// time.Sleep(1 * time.Millisecond)
-
-		iter++
+		if weight < 1 {
+			weight += 0.01
+		} else {
+			weight = 0
+			iter = (iter + 1) % len(colors)
+		}
 	}
 }
 
