@@ -32,6 +32,7 @@ sudo raspi-config
 
 ```bash
 sudo apt-get install git
+git config --global push.default simple
 ```
 
 ### Pi 3 / Raspbian
