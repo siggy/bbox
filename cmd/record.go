@@ -74,7 +74,7 @@ func main() {
 	for {
 		chk(stream.Read())
 		// fmt.Println(in)
-		amp = math.Max(max(in), amp*0.95)
+		amp = math.Max(rms(in), amp*0.95)
 		db := 20 * math.Log10(amp/math.MaxInt32)
 		// fmt.Printf("\r%s", strings.Repeat(" ", 100))
 		level := int(db + 50)
@@ -82,7 +82,7 @@ func main() {
 			fmt.Printf("%s\n", strings.Repeat("#", level))
 		}
 		if last < db {
-			fmt.Printf("%s\n", db-last)
+			// fmt.Printf("%s\n", db-last)
 		}
 		last = db
 

@@ -153,6 +153,6 @@ func run() {
 }
 
 func main() {
-	leds.Init(LED_COUNT1, LED_COUNT2)
+	leds.InitLeds(LED_COUNT1, LED_COUNT2)
 	run()
 }

@@ -81,6 +81,6 @@ func run() {
 }
 
 func main() {
-	leds.Init(LED_COUNT1, 0)
+	leds.InitLeds(LED_COUNT1, 0)
 	run()
 }
