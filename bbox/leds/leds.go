@@ -16,6 +16,37 @@ const (
 	PI_FACTOR  = math.Pi / 2.
 )
 
+const (
+	STANDARD = iota
+	FLICKER
+	AUDIO
+	NUM_MODES
+)
+
+var (
+	pink       = MkColor(159, 0, 159, 93)
+	trueBlue   = MkColor(0, 0, 255, 0)
+	red        = MkColor(210, 0, 50, 40)
+	lightGreen = MkColor(0, 181, 115, 43)
+	trueRed    = MkColor(255, 0, 0, 0)
+	trueWhite  = MkColor(0, 0, 0, 255)
+	purple     = MkColor(82, 0, 197, 52)
+	mint       = MkColor(0, 27, 0, 228)
+	trueGreen  = MkColor(0, 255, 0, 0)
+
+	Colors = []uint32{
+		pink,
+		trueBlue,
+		red,
+		lightGreen,
+		trueRed,
+		trueWhite,
+		purple,
+		mint,
+		trueGreen,
+	}
+)
+
 var (
 	Red    = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x20, 0x00})
 	redw   = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x20, 0x10})
@@ -26,7 +57,7 @@ var (
 	white  = binary.LittleEndian.Uint32([]byte{0x20, 0x20, 0x20, 0x00})
 	whitew = binary.LittleEndian.Uint32([]byte{0x20, 0x20, 0x20, 0x10})
 
-	Colors = []uint32{Red, redw, green, greenw, blue, bluew, white, whitew}
+	testColors = []uint32{Red, redw, green, greenw, blue, bluew, white, whitew}
 )
 
 func SineScale(weight float64) float64 {

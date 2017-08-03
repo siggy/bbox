@@ -8,36 +8,36 @@ import (
 )
 
 const (
-	// 2x side fins
-	STRAND_COUNT1 = 5
-	STRAND_LEN1   = 144
+	// 2x undercarriage strands
+	CRAWLER_STRAND_COUNT1 = 4
+	CRAWLER_STRAND_LEN1   = 60
 
-	// 1x top and back fins
-	STRAND_COUNT2 = 10
-	STRAND_LEN2   = 60
+	CRAWLER_LED_COUNT1 = CRAWLER_STRAND_COUNT1 * CRAWLER_STRAND_LEN1 // 4*60 // * 2x(4) // 60/m
 
-	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 5*144 // * 2x(5) // 144/m
-	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 10*60 // * 1x(4 + 2 + 4) // 60/m
+	// TODO: make transition time-based rather than fast as possible?
+	// lower weight == slower transitions
+	// crawler has fewer LEDs than fish == faster iterations
+	CRAWLER_COLOR_WEIGHT = 0.005
 )
 
-type Fish struct {
+type Crawler struct {
 	ampLevel float64
 	closing  chan struct{}
 	level    <-chan float64
 	press    <-chan struct{}
 }
 
-func InitFish(level <-chan float64, press <-chan struct{}) *Fish {
-	InitLeds(LED_COUNT1, LED_COUNT2)
+func InitCrawler(level <-chan float64, press <-chan struct{}) *Crawler {
+	InitLeds(CRAWLER_LED_COUNT1, 0)
 
-	return &Fish{
+	return &Crawler{
 		closing: make(chan struct{}),
 		level:   level,
 		press:   press,
 	}
 }
 
-func (f *Fish) Run() {
+func (f *Crawler) Run() {
 	defer func() {
 		ws2811.Clear()
 		ws2811.Render()
@@ -47,8 +47,7 @@ func (f *Fish) Run() {
 
 	ws2811.Clear()
 
-	strand1 := make([]uint32, LED_COUNT1)
-	strand2 := make([]uint32, LED_COUNT2)
+	strand1 := make([]uint32, CRAWLER_LED_COUNT1)
 
 	mode := STANDARD
 
@@ -60,8 +59,8 @@ func (f *Fish) Run() {
 	flickerIter := 0
 
 	// precompute random color rotation
-	randColors := make([]uint32, LED_COUNT1)
-	for i := 0; i < LED_COUNT1; i++ {
+	randColors := make([]uint32, CRAWLER_LED_COUNT1)
+	for i := 0; i < CRAWLER_LED_COUNT1; i++ {
 		randColors[i] = MkColor(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(256)))
 	}
 
@@ -87,30 +86,18 @@ func (f *Fish) Run() {
 			ampLevel := uint32(255.0 * f.ampLevel)
 			switch mode {
 			case STANDARD:
-				for i := 0; i < STRAND_COUNT1; i++ {
+				for i := 0; i < CRAWLER_STRAND_COUNT1; i++ {
 					color1 := Colors[(iter+i)%len(Colors)]
 					color2 := Colors[(iter+i+1)%len(Colors)]
 					color := MkColorWeight(color1, color2, weight)
 					ampColor := AmpColor(color, ampLevel)
 
-					for j := 0; j < STRAND_LEN1; j++ {
-						strand1[i*STRAND_LEN1+j] = ampColor
-					}
-				}
-
-				for i := 0; i < STRAND_COUNT2; i++ {
-					color1 := Colors[(iter+i)%len(Colors)]
-					color2 := Colors[(iter+i+1)%len(Colors)]
-					color := MkColorWeight(color1, color2, weight)
-					ampColor := AmpColor(color, ampLevel)
-
-					for j := 0; j < STRAND_LEN2; j++ {
-						strand2[i*STRAND_LEN2+j] = ampColor
+					for j := 0; j < CRAWLER_STRAND_LEN1; j++ {
+						strand1[i*CRAWLER_STRAND_LEN1+j] = ampColor
 					}
 				}
 
 				ws2811.SetBitmap(0, strand1)
-				ws2811.SetBitmap(1, strand2)
 
 				err := ws2811.Render()
 				if err != nil {
@@ -119,19 +106,15 @@ func (f *Fish) Run() {
 				}
 
 				if weight < 1 {
-					weight += 0.01
+					weight += CRAWLER_COLOR_WEIGHT
 				} else {
 					weight = 0
 					iter = (iter + 1) % len(Colors)
 				}
 
 			case FLICKER:
-				for i := 0; i < LED_COUNT1; i++ {
-					ws2811.SetLed(0, i, AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
-				}
-
-				for i := 0; i < LED_COUNT2; i++ {
-					ws2811.SetLed(1, i, AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
+				for i := 0; i < CRAWLER_LED_COUNT1; i++ {
+					ws2811.SetLed(0, i, AmpColor(randColors[(i+flickerIter)%CRAWLER_LED_COUNT1], ampLevel))
 				}
 
 				err := ws2811.Render()
@@ -140,17 +123,11 @@ func (f *Fish) Run() {
 					panic(err)
 				}
 
-				// time.Sleep(1 * time.Millisecond)
-
 				flickerIter++
 			case AUDIO:
 				ampColor := AmpColor(trueBlue, ampLevel)
-				for i := 0; i < LED_COUNT1; i++ {
+				for i := 0; i < CRAWLER_LED_COUNT1; i++ {
 					ws2811.SetLed(0, i, ampColor)
-				}
-
-				for i := 0; i < LED_COUNT2; i++ {
-					ws2811.SetLed(1, i, ampColor)
 				}
 
 				err := ws2811.Render()
@@ -163,7 +140,7 @@ func (f *Fish) Run() {
 	}
 }
 
-func (f *Fish) Close() {
+func (f *Crawler) Close() {
 	// TODO: this doesn't block?
 	close(f.closing)
 }
