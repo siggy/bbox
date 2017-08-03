@@ -119,7 +119,11 @@ defaults.pcm.card 0
 # Stop bbox process
 
 ```bash
+# the systemd way
 sudo systemctl stop bbox
+
+# send SIGINT to turn off LEDs
+sudo kill -2 <PID>
 ```
 
 ## Editing SD card
