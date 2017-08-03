@@ -14,12 +14,13 @@ type Amplitude struct {
 }
 
 const (
-	SMOOTHING = 0.99
+	MIN_MAX_VOL = 0.1
+	SMOOTHING   = 0.99
 )
 
 var (
-	volMax        = 0.001
-	stereoVol     = float64(0)
+	vol           = float64(0)
+	volMax        = MIN_MAX_VOL
 	MAX_SMOOTHING = math.Pow(SMOOTHING, 1.0/100)
 )
 
@@ -31,13 +32,12 @@ func amp(slice []int32) float64 {
 	sum := float64(0)
 	for _, n := range slice {
 		x := math.Abs(float64(n) / math.MaxInt32)
-		sum += math.Pow(math.Max(math.Min(float64(x)/volMax, 1), -1), 2)
+		sum += math.Pow(math.Min(float64(x)/volMax, 1), 2)
 	}
 	rms := math.Sqrt(sum / bufLength)
-	stereoVol = math.Max(rms, stereoVol*SMOOTHING)
-	volMax = math.Max(stereoVol, volMax*MAX_SMOOTHING)
-	stereoVolNorm := math.Max(math.Min(stereoVol/volMax, 1), 0)
-	return stereoVolNorm
+	vol = math.Max(rms, vol*SMOOTHING)
+	volMax = math.Max(math.Max(vol, volMax*MAX_SMOOTHING), MIN_MAX_VOL)
+	return vol / volMax
 }
 
 func InitAmplitude(level chan<- float64) *Amplitude {
@@ -80,8 +80,6 @@ func (a *Amplitude) Run() {
 			}
 		case a.level <- amp(in):
 		case <-time.After(1 * time.Millisecond):
-			// default:
-			// fmt.Printf("Amplitude: No message send\n")
 		}
 	}
 }

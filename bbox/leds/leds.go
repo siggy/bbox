@@ -63,6 +63,20 @@ func MkColorWeight(color1 uint32, color2 uint32, weight float64) uint32 {
 	)
 }
 
+func AmpColor(color uint32, ampLevel uint32) uint32 {
+	b := color & 0x000000ff
+	g := (color & 0x0000ff00) >> 8
+	r := (color & 0x00ff0000) >> 16
+	w := (color & 0xff000000) >> 24
+
+	return MkColor(
+		uint32(math.Min(float64(r+ampLevel), 255)),
+		g,
+		b,
+		w,
+	)
+}
+
 /*
  * Standalone functions to test all LEDs
  */

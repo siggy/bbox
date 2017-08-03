@@ -3,7 +3,6 @@ package leds
 import (
 	"fmt"
 	"math/rand"
-	"strings"
 
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
@@ -24,6 +23,7 @@ const (
 const (
 	STANDARD = iota
 	FLICKER
+	AUDIO
 	NUM_MODES
 )
 
@@ -52,7 +52,7 @@ var (
 )
 
 type Fish struct {
-	curLevel float64
+	ampLevel float64
 	closing  chan struct{}
 	level    <-chan float64
 	press    <-chan struct{}
@@ -74,7 +74,6 @@ func (f *Fish) Run() {
 		ws2811.Render()
 		ws2811.Wait()
 		ws2811.Fini()
-		fmt.Printf("FISH CLOSING2\n")
 	}()
 
 	ws2811.Clear()
@@ -107,11 +106,7 @@ func (f *Fish) Run() {
 			}
 		case level, more := <-f.level:
 			if more {
-				// fmt.Printf("\r%s", strings.Repeat(" ", 100))
-				// fmt.Printf("\r%s", strings.Repeat("#", int(100*level)))
-				// fmt.Printf("FISH LEVEL\n")
-				fmt.Printf("%s\n", strings.Repeat("#", int(100*level)))
-				f.curLevel = level
+				f.ampLevel = level
 			} else {
 				return
 			}
@@ -120,16 +115,17 @@ func (f *Fish) Run() {
 				return
 			}
 		default:
-			// fmt.Printf("FISH DEFAULT\n")
+			ampLevel := uint32(255.0 * f.ampLevel)
 			switch mode {
 			case STANDARD:
 				for i := 0; i < STRAND_COUNT1; i++ {
 					color1 := colors[(iter+i)%len(colors)]
 					color2 := colors[(iter+i+1)%len(colors)]
 					color := MkColorWeight(color1, color2, weight)
+					ampColor := AmpColor(color, ampLevel)
 
 					for j := 0; j < STRAND_LEN1; j++ {
-						strand1[i*STRAND_LEN1+j] = color
+						strand1[i*STRAND_LEN1+j] = ampColor
 					}
 				}
 
@@ -137,9 +133,10 @@ func (f *Fish) Run() {
 					color1 := colors[(iter+i)%len(colors)]
 					color2 := colors[(iter+i+1)%len(colors)]
 					color := MkColorWeight(color1, color2, weight)
+					ampColor := AmpColor(color, ampLevel)
 
 					for j := 0; j < STRAND_LEN2; j++ {
-						strand2[i*STRAND_LEN2+j] = color
+						strand2[i*STRAND_LEN2+j] = ampColor
 					}
 				}
 
@@ -152,12 +149,6 @@ func (f *Fish) Run() {
 					panic(err)
 				}
 
-				err = ws2811.Wait()
-				if err != nil {
-					fmt.Printf("ws2811.Wait failed: %+v\n", err)
-					panic(err)
-				}
-
 				if weight < 1 {
 					weight += 0.01
 				} else {
@@ -167,11 +158,11 @@ func (f *Fish) Run() {
 
 			case FLICKER:
 				for i := 0; i < LED_COUNT1; i++ {
-					ws2811.SetLed(0, i, randColors[(i+flickerIter)%LED_COUNT1])
+					ws2811.SetLed(0, i, AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
 				}
 
 				for i := 0; i < LED_COUNT2; i++ {
-					ws2811.SetLed(1, i, randColors[(i+flickerIter)%LED_COUNT1])
+					ws2811.SetLed(1, i, AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
 				}
 
 				err := ws2811.Render()
@@ -180,15 +171,24 @@ func (f *Fish) Run() {
 					panic(err)
 				}
 
-				err = ws2811.Wait()
-				if err != nil {
-					fmt.Printf("ws2811.Wait failed: %+v\n", err)
-					panic(err)
-				}
-
 				// time.Sleep(1 * time.Millisecond)
 
 				flickerIter++
+			case AUDIO:
+				ampColor := AmpColor(trueBlue, ampLevel)
+				for i := 0; i < LED_COUNT1; i++ {
+					ws2811.SetLed(0, i, ampColor)
+				}
+
+				for i := 0; i < LED_COUNT2; i++ {
+					ws2811.SetLed(1, i, ampColor)
+				}
+
+				err := ws2811.Render()
+				if err != nil {
+					fmt.Printf("ws2811.Render failed: %+v\n", err)
+					panic(err)
+				}
 			}
 		}
 	}
