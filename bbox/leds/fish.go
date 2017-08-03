@@ -3,7 +3,7 @@ package leds
 import (
 	"fmt"
 	"math/rand"
-	"sync"
+	"strings"
 
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
@@ -53,31 +53,28 @@ var (
 
 type Fish struct {
 	curLevel float64
+	closing  chan struct{}
 	level    <-chan float64
 	press    <-chan struct{}
-	wg       *sync.WaitGroup
 }
 
-func InitFish(wg *sync.WaitGroup, level <-chan float64, press <-chan struct{}) *Fish {
-	wg.Add(1)
-
+func InitFish(level <-chan float64, press <-chan struct{}) *Fish {
 	InitLeds(LED_COUNT1, LED_COUNT2)
 
 	return &Fish{
-		level: level,
-		press: press,
-		wg:    wg,
+		closing: make(chan struct{}),
+		level:   level,
+		press:   press,
 	}
 }
 
 func (f *Fish) Run() {
-	defer f.wg.Done()
-
 	defer func() {
 		ws2811.Clear()
 		ws2811.Render()
 		ws2811.Wait()
 		ws2811.Fini()
+		fmt.Printf("FISH CLOSING2\n")
 	}()
 
 	ws2811.Clear()
@@ -108,14 +105,22 @@ func (f *Fish) Run() {
 			} else {
 				return
 			}
-		case _, level := <-f.level:
+		case level, more := <-f.level:
 			if more {
-				fmt.printf("CURRENT LEVEL: %+v\n", level)
+				// fmt.Printf("\r%s", strings.Repeat(" ", 100))
+				// fmt.Printf("\r%s", strings.Repeat("#", int(100*level)))
+				// fmt.Printf("FISH LEVEL\n")
+				fmt.Printf("%s\n", strings.Repeat("#", int(100*level)))
 				f.curLevel = level
 			} else {
 				return
 			}
+		case _, more := <-f.closing:
+			if !more {
+				return
+			}
 		default:
+			// fmt.Printf("FISH DEFAULT\n")
 			switch mode {
 			case STANDARD:
 				for i := 0; i < STRAND_COUNT1; i++ {
@@ -187,4 +192,9 @@ func (f *Fish) Run() {
 			}
 		}
 	}
+}
+
+func (f *Fish) Close() {
+	// TODO: this doesn't block?
+	close(f.closing)
 }

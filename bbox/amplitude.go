@@ -3,14 +3,14 @@ package bbox
 import (
 	"fmt"
 	"math"
-	"sync"
+	"time"
 
 	"github.com/gordonklaus/portaudio"
 )
 
 type Amplitude struct {
-	level chan<- float64
-	wg    *sync.WaitGroup
+	closing chan struct{}
+	level   chan<- float64
 }
 
 const (
@@ -40,21 +40,17 @@ func amp(slice []int32) float64 {
 	return stereoVolNorm
 }
 
-func InitAmplitude(wg *sync.WaitGroup, level chan<- float64) *Amplitude {
-	wg.Add(1)
-
+func InitAmplitude(level chan<- float64) *Amplitude {
 	return &Amplitude{
-		level: level,
-		wg:    wg,
+		closing: make(chan struct{}),
+		level:   level,
 	}
 }
 
 func (a *Amplitude) Run() {
-	defer a.wg.Done()
-
 	err := portaudio.Initialize()
 	if err != nil {
-		fmt.Printf("portaudio.Initialize failed: %+v", err)
+		fmt.Printf("portaudio.Initialize failed: %+v\n", err)
 		panic(err)
 	}
 	defer portaudio.Terminate()
@@ -62,14 +58,14 @@ func (a *Amplitude) Run() {
 	in := make([]int32, 64)
 	stream, err := portaudio.OpenDefaultStream(1, 0, 44100, len(in), in)
 	if err != nil {
-		fmt.Printf("OpenDefaultStream failed: %+v", err)
+		fmt.Printf("OpenDefaultStream failed: %+v\n", err)
 		panic(err)
 	}
 	defer stream.Close()
 
 	err = stream.Start()
 	if err != nil {
-		fmt.Printf("stream.Start failed: %+v", err)
+		fmt.Printf("stream.Start failed: %+v\n", err)
 		panic(err)
 	}
 	defer stream.Stop()
@@ -77,6 +73,19 @@ func (a *Amplitude) Run() {
 	for {
 		// this returns `Input overflowed` sometimes, ignore it
 		stream.Read()
-		a.level <- amp(in)
+		select {
+		case _, more := <-a.closing:
+			if !more {
+				return
+			}
+		case a.level <- amp(in):
+		case <-time.After(1 * time.Millisecond):
+			// default:
+			// fmt.Printf("Amplitude: No message send\n")
+		}
 	}
+}
+
+func (a *Amplitude) Close() {
+	close(a.closing)
 }

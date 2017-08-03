@@ -1,24 +1,36 @@
 package main
 
 import (
-	"sync"
+	"os"
+	"os/signal"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/bbox/leds"
 )
 
 func main() {
-	var wg sync.WaitGroup
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	level := make(chan float64)
 	press := make(chan struct{})
 
-	amplitude := bbox.InitAmplitude(&wg, level)
-	gpio := bbox.InitGpio(&wg, press)
-	fish := leds.InitFish(&wg, level, press)
+	amplitude := bbox.InitAmplitude(level)
+	gpio := bbox.InitGpio(press)
+	fish := leds.InitFish(level, press)
 
+	go amplitude.Run()
 	go gpio.Run()
 	go fish.Run()
 
-	wg.Wait()
+	defer amplitude.Close()
+	defer gpio.Close()
+	defer fish.Close()
+
+	for {
+		select {
+		case <-sig:
+			return
+		}
+	}
 }

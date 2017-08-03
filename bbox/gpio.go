@@ -1,42 +1,36 @@
 package bbox
 
 import (
-	"os"
-	"os/signal"
-	"sync"
 	"time"
 
 	"github.com/stianeikeland/go-rpio"
 )
 
+const (
+	DEBOUNCE_TIME = 500 * time.Millisecond
+)
+
 type Gpio struct {
+	closing   chan struct{}
 	debounce  chan struct{}
 	debounced bool
 	press     chan<- struct{} // single button press, gpio->emitter
-	wg        *sync.WaitGroup
 }
 
-func InitGpio(wg *sync.WaitGroup, press chan<- struct{}) *Gpio {
-	wg.Add(1)
-
+func InitGpio(press chan<- struct{}) *Gpio {
 	return &Gpio{
 		debounce:  make(chan struct{}),
 		debounced: true,
+		closing:   make(chan struct{}),
 		press:     press,
-		wg:        wg,
 	}
 }
 
 func (g *Gpio) Run() {
-	defer g.wg.Done()
-
 	if err := rpio.Open(); err != nil {
 		panic(err)
 	}
 	defer rpio.Close()
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	pin := rpio.Pin(22)
 	pin.Input()
@@ -53,15 +47,21 @@ func (g *Gpio) Run() {
 			if res == rpio.Low && g.debounced {
 				g.debounced = false
 				g.press <- struct{}{}
-				time.AfterFunc(time.Second, func() {
+				time.AfterFunc(DEBOUNCE_TIME, func() {
 					g.debounce <- struct{}{}
 				})
 			}
 		case <-g.debounce:
 			g.debounced = true
-		case <-sig:
-			return
+		case _, more := <-g.closing:
+			if !more {
+				return
+			}
 		default:
 		}
 	}
+}
+
+func (g *Gpio) Close() {
+	close(g.closing)
 }
