@@ -1,0 +1,12 @@
+[Unit]
+Description=Starts BBox
+DefaultDependencies=false
+
+[Service]
+Type=simple
+ExecStart=/home/pi/bboxgo.sh
+WorkingDirectory=/home/pi/
+
+[Install]
+WantedBy=local-fs.target
+#WantedBy=multi-user.target
