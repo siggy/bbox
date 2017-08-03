@@ -67,7 +67,7 @@ func MkColorWeight(color1 uint32, color2 uint32, weight float64) uint32 {
  * Standalone functions to test all LEDs
  */
 
-func Init(ledCount1 int, ledCount2 int) {
+func InitLeds(ledCount1 int, ledCount2 int) {
 	// init once for each PIN1 (PWM0)
 	fmt.Printf("ws2811.Init()\n")
 	err := ws2811.Init(

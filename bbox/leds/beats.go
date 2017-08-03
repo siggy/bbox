@@ -21,7 +21,7 @@ type Leds struct {
 	wg    *sync.WaitGroup
 }
 
-func InitLeds(wg *sync.WaitGroup, msgs <-chan bbox.Beats, ticks <-chan int) *Leds {
+func InitLedBeats(wg *sync.WaitGroup, msgs <-chan bbox.Beats, ticks <-chan int) *Leds {
 	wg.Add(1)
 
 	return &Leds{
