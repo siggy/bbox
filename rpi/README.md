@@ -11,11 +11,6 @@ touch /Volumes/boot/ssh
 
 ### In Raspbian GUI
 
-- Setup Wifi
-- Enable SSH
-- Set to boot to CLI
-- Reboot
-
 ## First Boot
 
 ```bash
