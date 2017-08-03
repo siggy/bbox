@@ -37,7 +37,7 @@ func InitCrawler(level <-chan float64, press <-chan struct{}) *Crawler {
 	}
 }
 
-func (f *Crawler) Run() {
+func (c *Crawler) Run() {
 	defer func() {
 		ws2811.Clear()
 		ws2811.Render()
@@ -66,24 +66,24 @@ func (f *Crawler) Run() {
 
 	for {
 		select {
-		case _, more := <-f.press:
+		case _, more := <-c.press:
 			if more {
 				mode = (mode + 1) % NUM_MODES
 			} else {
 				return
 			}
-		case level, more := <-f.level:
+		case level, more := <-c.level:
 			if more {
-				f.ampLevel = level
+				c.ampLevel = level
 			} else {
 				return
 			}
-		case _, more := <-f.closing:
+		case _, more := <-c.closing:
 			if !more {
 				return
 			}
 		default:
-			ampLevel := uint32(255.0 * f.ampLevel)
+			ampLevel := uint32(255.0 * c.ampLevel)
 			switch mode {
 			case STANDARD:
 				for i := 0; i < CRAWLER_STRAND_COUNT1; i++ {
@@ -140,7 +140,7 @@ func (f *Crawler) Run() {
 	}
 }
 
-func (f *Crawler) Close() {
+func (c *Crawler) Close() {
 	// TODO: this doesn't block?
-	close(f.closing)
+	close(c.closing)
 }
