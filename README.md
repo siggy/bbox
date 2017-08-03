@@ -11,6 +11,8 @@ Beatboxer in Go
 brew install portaudio
 
 # Raspbian
+sudo apt-get install -y libasound-dev
+
 wget http://portaudio.com/archives/pa_stable_v190600_20161030.tgz -O /tmp/pa_stable_v190600_20161030.tgz
 cd /tmp
 tar -xzf pa_stable_v190600_20161030.tgz

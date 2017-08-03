@@ -74,9 +74,6 @@ go build ~/code/go/src/github.com/siggy/bbox/cmd/fish.go
 ## Env / bootup
 
 ```bash
-# external sound card
-sudo cp ~/code/go/src/github.com/siggy/bbox/rpi/asound.conf /etc/
-
 # set bootup and shell env
 cp ~/code/go/src/github.com/siggy/bbox/rpi/.local.bash ~/
 cp ~/code/go/src/github.com/siggy/bbox/rpi/bboxgo.sh ~/
@@ -85,13 +82,15 @@ sudo systemctl enable bbox
 
 echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.bashrc
 
+# audio setup
+
+# external sound card
+sudo cp ~/code/go/src/github.com/siggy/bbox/rpi/asound.conf /etc/
+
 # *output of raspi-config after forcing audio to hdmi*
 numid=3,iface=MIXER,name='Mic Playback Switch'
   ; type=BOOLEAN,access=rw------,values=1
   : values=on
-
-# audio setup
-
 # *also this might work*
 amixer cset numid=3 2
 # OR:
@@ -103,6 +102,18 @@ echo "hdmi_force_hotplug=1" | sudo tee --append /boot/config.txt
 hdmi_force_hotplug=1
 echo "hdmi_force_edid_audio=1" | sudo tee --append /boot/config.txt
 hdmi_force_edid_audio=1
+
+# make usb audio card #0
+sudo vi /lib/modprobe.d/aliases.conf
+#options snd-usb-audio index=-2
+
+# reboot
+
+aplay -l
+# ... should match the contents of asound.conf, and also:
+sudo vi /usr/share/alsa/alsa.conf
+defaults.ctl.card 0
+defaults.pcm.card 0
 ```
 
 # Stop bbox process

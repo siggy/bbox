@@ -30,7 +30,10 @@ type wavFile struct {
 }
 
 func InitWavs() *Wavs {
-	portaudio.Initialize()
+	err := portaudio.Initialize()
+	if err != nil {
+		panic(err)
+	}
 
 	files, _ := ioutil.ReadDir(WAVS)
 	if len(files) != SOUNDS {
@@ -43,7 +46,6 @@ func InitWavs() *Wavs {
 		wavs.wavs[i] = initWav(f)
 	}
 
-	var err error
 	wavs.stream, err = portaudio.OpenDefaultStream(0, 1, 44100, BUF, wavs.cb)
 	if err != nil {
 		panic(err)
