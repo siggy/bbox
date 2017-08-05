@@ -53,6 +53,33 @@ func median(slice []int32) float64 {
 	return result
 }
 
+const (
+	SMOOTHING = 0.99
+)
+
+var (
+	volMax        = 0.001
+	stereoVol     = float64(0)
+	MAX_SMOOTHING = math.Pow(SMOOTHING, 1.0/100)
+)
+
+// taken from:
+// https://github.com/processing/p5.js/blob/master/lib/addons/p5.sound.js#L2305
+func amp(slice []int32) float64 {
+	bufLength := float64(len(slice))
+
+	sum := float64(0)
+	for _, n := range slice {
+		x := math.Abs(float64(n) / math.MaxInt32)
+		sum += math.Pow(math.Max(math.Min(float64(x)/volMax, 1), -1), 2)
+	}
+	rms := math.Sqrt(sum / bufLength)
+	stereoVol = math.Max(rms, stereoVol*SMOOTHING)
+	volMax = math.Max(stereoVol, volMax*MAX_SMOOTHING)
+	stereoVolNorm := math.Max(math.Min(stereoVol/volMax, 1), 0)
+	return stereoVolNorm
+}
+
 func main() {
 	fmt.Println("Press Ctrl-C to stop.")
 
@@ -66,25 +93,12 @@ func main() {
 	chk(err)
 	defer stream.Close()
 
-	// -2147483648 to 2147483647
-	amp := float64(0)
-	last := float64(0)
-
 	chk(stream.Start())
 	for {
 		chk(stream.Read())
-		// fmt.Println(in)
-		amp = math.Max(rms(in), amp*0.95)
-		db := 20 * math.Log10(amp/math.MaxInt32)
-		// fmt.Printf("\r%s", strings.Repeat(" ", 100))
-		level := int(db + 50)
-		if level > 0 {
-			fmt.Printf("%s\n", strings.Repeat("#", level))
-		}
-		if last < db {
-			// fmt.Printf("%s\n", db-last)
-		}
-		last = db
+		level := amp(in)
+		fmt.Printf("\r%s", strings.Repeat(" ", 100))
+		fmt.Printf("\r%s", strings.Repeat("#", int(100*level)))
 
 		select {
 		case <-sig:
@@ -97,6 +111,6 @@ func main() {
 
 func chk(err error) {
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 }
