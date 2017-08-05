@@ -10,10 +10,12 @@ import (
 func main() {
 	var wg sync.WaitGroup
 
+	level := make(chan float64)
 	press := make(chan struct{})
 
+	amplitude := bbox.InitAmplitude(&wg, level)
 	gpio := bbox.InitGpio(&wg, press)
-	fish := leds.InitFish(&wg, press)
+	fish := leds.InitFish(&wg, level, press)
 
 	go gpio.Run()
 	go fish.Run()

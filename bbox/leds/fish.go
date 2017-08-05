@@ -52,16 +52,19 @@ var (
 )
 
 type Fish struct {
-	press <-chan struct{}
-	wg    *sync.WaitGroup
+	curLevel float64
+	level    <-chan float64
+	press    <-chan struct{}
+	wg       *sync.WaitGroup
 }
 
-func InitFish(wg *sync.WaitGroup, press <-chan struct{}) *Fish {
+func InitFish(wg *sync.WaitGroup, level <-chan float64, press <-chan struct{}) *Fish {
 	wg.Add(1)
 
 	InitLeds(LED_COUNT1, LED_COUNT2)
 
 	return &Fish{
+		level: level,
 		press: press,
 		wg:    wg,
 	}
@@ -102,6 +105,13 @@ func (f *Fish) Run() {
 		case _, more := <-f.press:
 			if more {
 				mode = (mode + 1) % NUM_MODES
+			} else {
+				return
+			}
+		case _, level := <-f.level:
+			if more {
+				fmt.printf("CURRENT LEVEL: %+v\n", level)
+				f.curLevel = level
 			} else {
 				return
 			}
