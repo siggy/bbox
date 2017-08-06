@@ -17,7 +17,8 @@ const (
 )
 
 const (
-	STANDARD = iota
+	EQUALIZE = iota
+	STANDARD
 	FLICKER
 	AUDIO
 	NUM_MODES

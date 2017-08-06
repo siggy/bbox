@@ -49,7 +49,7 @@ func (c *Crawler) Run() {
 
 	strand1 := make([]uint32, CRAWLER_LED_COUNT1)
 
-	mode := STANDARD
+	mode := EQUALIZE
 
 	// STANDARD mode
 	iter := 0
@@ -85,6 +85,39 @@ func (c *Crawler) Run() {
 		default:
 			ampLevel := uint32(255.0 * c.ampLevel)
 			switch mode {
+			case EQUALIZE:
+				ampLevel1 := int(CRAWLER_LED_COUNT1 * c.ampLevel)
+
+				for i := 0; i < CRAWLER_STRAND_COUNT1; i++ {
+					color1 := Colors[(iter+i)%len(Colors)]
+					color2 := Colors[(iter+i+1)%len(Colors)]
+					color := MkColorWeight(color1, color2, weight)
+					ampColor := AmpColor(color, 255)
+
+					for j := 0; j < CRAWLER_STRAND_LEN1; j++ {
+						idx := i*CRAWLER_STRAND_LEN1 + j
+						if idx < ampLevel1 {
+							strand1[idx] = ampColor
+						} else {
+							strand1[idx] = color
+						}
+					}
+				}
+
+				ws2811.SetBitmap(0, strand1)
+
+				err := ws2811.Render()
+				if err != nil {
+					fmt.Printf("ws2811.Render failed: %+v\n", err)
+					panic(err)
+				}
+
+				if weight < 1 {
+					weight += CRAWLER_COLOR_WEIGHT
+				} else {
+					weight = 0
+					iter = (iter + 1) % len(Colors)
+				}
 			case STANDARD:
 				for i := 0; i < CRAWLER_STRAND_COUNT1; i++ {
 					color1 := Colors[(iter+i)%len(Colors)]
