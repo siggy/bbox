@@ -46,7 +46,7 @@ export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/local/lib"
 go build -o beatboxer cmd/bbox.go && sudo ./beatboxer
 ```
 
-LEDs Only
+LED Testing
 
 ```bash
 go build cmd/leds.go && sudo ./leds
