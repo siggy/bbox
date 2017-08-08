@@ -8,14 +8,31 @@ import (
 )
 
 const (
+	ROW0_START = 33
+	ROW0_END   = 0
+	ROW1_START = 35
+	ROW1_END   = 69
+	ROW2_START = 43
+	ROW2_END   = 0
+	ROW3_START = 45
+	ROW3_END   = 87
+
+	// ROWS       = 4
 	LED_COUNT  = 150
 	TICK_DELAY = 3 // match sound to LEDs
 )
+
+type Row struct {
+	start   uint32
+	end     uint32
+	buttons [bbox.BEATS]uint32
+}
 
 type LedBeats struct {
 	beats   bbox.Beats
 	closing chan struct{}
 	msgs    <-chan bbox.Beats
+	rows    [bbox.SOUNDS]Row
 	ticks   <-chan int
 }
 
@@ -26,6 +43,24 @@ func InitLedBeats(msgs <-chan bbox.Beats, ticks <-chan int) *LedBeats {
 		closing: make(chan struct{}),
 		msgs:    msgs,
 		ticks:   ticks,
+		rows: [bbox.SOUNDS]Row{
+			Row{
+				start: ROW0_START,
+				end:   ROW0_END,
+			},
+			Row{
+				start: ROW1_START,
+				end:   ROW1_END,
+			},
+			Row{
+				start: ROW2_START,
+				end:   ROW2_END,
+			},
+			Row{
+				start: ROW3_START,
+				end:   ROW3_END,
+			},
+		},
 	}
 }
 
