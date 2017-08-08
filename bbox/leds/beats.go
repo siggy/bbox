@@ -10,7 +10,7 @@ import (
 
 const (
 	LED_COUNT  = 150
-	TICK_DELAY = 0 // match sound to LEDs
+	TICK_DELAY = 17 // match sound to LEDs
 )
 
 type Row struct {
@@ -19,11 +19,11 @@ type Row struct {
 	buttons [bbox.BEATS]int
 }
 
-func (r *Row) TickToLed(tick int) int {
+func (r *Row) TickToLed(tick int) (led int, buttonIdx int) {
 	// determine where we are in the buttons array
 	// 0 <= tick < 160
 	// 0 <= beat < 16
-	floatBeat := float64(tick) / float64(bbox.TICKS_PER_BEAT) // 12.7 => 0.7
+	floatBeat := float64(tick) / float64(bbox.TICKS_PER_BEAT) // 127 => 12.7
 	f := math.Floor(floatBeat)                                // 12
 	c := math.Ceil(floatBeat)                                 // 13
 
@@ -44,9 +44,16 @@ func (r *Row) TickToLed(tick int) int {
 		ceil = r.buttons[int(c)]
 	}
 
-	percentAhead := floatBeat - f
+	percentAhead := floatBeat - f // 12.7 - 12 => 0.7
 	diff := percentAhead * (float64(ceil) - float64(floor))
-	return floor + int(diff)
+
+	led = floor + int(diff)
+	buttonIdx = -1
+	if led == floor {
+		buttonIdx = int(f)
+	}
+
+	return
 }
 
 type LedBeats struct {
@@ -74,7 +81,7 @@ var (
 			},
 		},
 
-		// rows 1 and 2 are LED strip 1
+		// rows 2 and 3 are LED strip 1
 		Row{
 			start: 43,
 			end:   0,
@@ -130,33 +137,46 @@ func (l *LedBeats) Run() {
 				return
 			}
 		case tick := <-l.ticks:
-			// TODO: leds for all 4 beats
 			tick = (tick + bbox.TICKS - TICK_DELAY) % bbox.TICKS
 			ws2811.Clear()
-			// cur := tick / bbox.TICKS_PER_BEAT
+
+			ledIdxs := [len(rows)]int{}
+			buttonIdxs := [len(rows)]int{}
+			for i, r := range rows {
+				ledIdxs[i], buttonIdxs[i] = r.TickToLed(tick)
+			}
 
 			// light all leds at current position
-			for _, r := range rows[0:2] {
-				ws2811.SetLed(0, r.TickToLed(tick), trueWhite)
+			for i, _ := range rows[0:2] {
+				ws2811.SetLed(0, ledIdxs[i], trueWhite)
 			}
-			for _, r := range rows[2:4] {
-				ws2811.SetLed(1, r.TickToLed(tick), trueWhite)
+			for i, _ := range rows[2:4] {
+				ws2811.SetLed(1, ledIdxs[i+2], trueWhite)
 			}
 
 			// light active beats
-			// for _, beat := range l.beats {
-			// 	for j, t := range beat {
-			// 		if t {
-			// 			for _, r := range rows {
-			// 				if j == cur {
-			// 					ws2811.SetLed(0, r.buttons[j], redWhite)
-			// 				} else {
-			// 					ws2811.SetLed(0, r.buttons[j], trueRed)
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
+			for i, beat := range l.beats[0:2] {
+				for j, t := range beat {
+					if t {
+						if j == buttonIdxs[i] {
+							ws2811.SetLed(0, rows[i].buttons[j], purple)
+						} else {
+							ws2811.SetLed(0, rows[i].buttons[j], trueRed)
+						}
+					}
+				}
+			}
+			for i, beat := range l.beats[2:4] {
+				for j, t := range beat {
+					if t {
+						if j == buttonIdxs[i+2] {
+							ws2811.SetLed(1, rows[i+2].buttons[j], purple)
+						} else {
+							ws2811.SetLed(1, rows[i+2].buttons[j], trueRed)
+						}
+					}
+				}
+			}
 
 			err = ws2811.Render()
 			if err != nil {
