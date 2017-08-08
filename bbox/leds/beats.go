@@ -60,15 +60,15 @@ func (l *LedBeats) Run() {
 			// TODO: leds for all 4 beats
 			tick = (tick + bbox.BEATS - TICK_DELAY) % bbox.BEATS
 			ws2811.Clear()
-			ws2811.SetLed(0, tick, whitew)
+			ws2811.SetLed(0, tick, trueWhite)
 
 			for _, beat := range l.beats {
 				for j, t := range beat {
 					if t {
 						if j == tick {
-							ws2811.SetLed(0, j, redw)
+							ws2811.SetLed(0, j, redWhite)
 						} else {
-							ws2811.SetLed(0, j, Red)
+							ws2811.SetLed(0, j, trueRed)
 						}
 					}
 				}

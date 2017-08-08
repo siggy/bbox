@@ -46,6 +46,8 @@ var (
 		mint,
 		trueGreen,
 	}
+
+	redWhite = MkColor(255, 0, 0, 255)
 )
 
 var (
