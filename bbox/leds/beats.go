@@ -2,44 +2,34 @@ package leds
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
 const (
-	GPIO_PIN   = 18 // PWM0, must be 18 or 12
-	LED_COUNT  = 30 // 144 * 5 // * 5 // * (1 + 5 + 5) // 30/m
-	TICK_DELAY = 3  // match sound to LEDs
+	LED_COUNT  = 150
+	TICK_DELAY = 3 // match sound to LEDs
 )
 
-type Leds struct {
-	beats bbox.Beats
-	msgs  <-chan bbox.Beats
-	ticks <-chan int
-	wg    *sync.WaitGroup
+type LedBeats struct {
+	beats   bbox.Beats
+	closing chan struct{}
+	msgs    <-chan bbox.Beats
+	ticks   <-chan int
 }
 
-func InitLedBeats(wg *sync.WaitGroup, msgs <-chan bbox.Beats, ticks <-chan int) *Leds {
-	wg.Add(1)
+func InitLedBeats(msgs <-chan bbox.Beats, ticks <-chan int) *LedBeats {
+	InitLeds(LED_COUNT, LED_COUNT)
 
-	return &Leds{
-		msgs:  msgs,
-		ticks: ticks,
-		wg:    wg,
+	return &LedBeats{
+		closing: make(chan struct{}),
+		msgs:    msgs,
+		ticks:   ticks,
 	}
 }
 
-func (l *Leds) Run() {
-	defer l.wg.Done()
-
-	err := ws2811.Init(GPIO_PIN, LED_COUNT, BRIGHTNESS, 0, 0, 0)
-	if err != nil {
-		fmt.Printf("ws2811.Init failed: %+v\n", err)
-		panic(err)
-	}
-
+func (l *LedBeats) Run() {
 	defer func() {
 		ws2811.Clear()
 		ws2811.Render()
@@ -47,9 +37,8 @@ func (l *Leds) Run() {
 		ws2811.Fini()
 	}()
 
-	fmt.Printf("calling Clear()\n")
 	ws2811.Clear()
-	err = ws2811.Render()
+	err := ws2811.Render()
 	if err != nil {
 		fmt.Printf("ws2811.Render failed: %+v\n", err)
 		panic(err)
@@ -62,6 +51,11 @@ func (l *Leds) Run() {
 
 	for {
 		select {
+		case _, more := <-l.closing:
+			if !more {
+				fmt.Printf("LEDs closing\n")
+				return
+			}
 		case tick := <-l.ticks:
 			// TODO: leds for all 4 beats
 			tick = (tick + bbox.BEATS - TICK_DELAY) % bbox.BEATS
@@ -101,4 +95,9 @@ func (l *Leds) Run() {
 			}
 		}
 	}
+}
+
+func (l *LedBeats) Close() {
+	// TODO: this doesn't block?
+	close(l.closing)
 }

@@ -2,7 +2,6 @@ package bbox
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/nsf/termbox-go"
 )
@@ -12,20 +11,18 @@ const (
 )
 
 type Render struct {
-	beats Beats
-	msgs  <-chan Beats
-	tick  int
-	ticks <-chan int
-	wg    *sync.WaitGroup
+	beats   Beats
+	closing chan struct{}
+	msgs    <-chan Beats
+	tick    int
+	ticks   <-chan int
 }
 
-func InitRender(wg *sync.WaitGroup, msgs <-chan Beats, ticks <-chan int) *Render {
-	wg.Add(1)
-
+func InitRender(msgs <-chan Beats, ticks <-chan int) *Render {
 	return &Render{
-		msgs:  msgs,
-		ticks: ticks,
-		wg:    wg,
+		closing: make(chan struct{}),
+		msgs:    msgs,
+		ticks:   ticks,
 	}
 }
 
@@ -87,13 +84,15 @@ func (r *Render) Draw() {
 }
 
 func (r *Render) Run() {
-	defer r.wg.Done()
-
 	// termbox.Init() called in InitKeyboard()
 	defer termbox.Close()
 
 	for {
 		select {
+		case _, more := <-r.closing:
+			if !more {
+				return
+			}
 		case tick := <-r.ticks:
 			r.tick = tick
 			r.Draw()
@@ -109,4 +108,9 @@ func (r *Render) Run() {
 			}
 		}
 	}
+}
+
+func (r *Render) Close() {
+	// TODO: this doesn't block?
+	close(r.closing)
 }

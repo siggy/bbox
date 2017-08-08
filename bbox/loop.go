@@ -2,7 +2,6 @@ package bbox
 
 import (
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -18,34 +17,35 @@ const (
 type Beats [SOUNDS][BEATS]bool
 
 type Loop struct {
-	beats Beats
-	msgs  <-chan Beats
-	ticks []chan<- int
-	wavs  *Wavs
-	wg    *sync.WaitGroup
+	beats   Beats
+	closing chan struct{}
+	msgs    <-chan Beats
+	ticks   []chan<- int
+	wavs    *Wavs
 }
 
-func InitLoop(wg *sync.WaitGroup, msgs <-chan Beats, ticks []chan<- int) *Loop {
-	wg.Add(1)
-
+func InitLoop(msgs <-chan Beats, ticks []chan<- int) *Loop {
 	return &Loop{
-		beats: Beats{},
-		msgs:  msgs,
-		ticks: ticks,
-		wavs:  InitWavs(),
-		wg:    wg,
+		beats:   Beats{},
+		closing: make(chan struct{}),
+		msgs:    msgs,
+		ticks:   ticks,
+		wavs:    InitWavs(),
 	}
 }
 
 func (l *Loop) Run() {
-	defer l.wg.Done()
-
 	ticker := time.NewTicker(INTERVAL)
 	defer ticker.Stop()
 
 	tick := 0
 	for {
 		select {
+		case _, more := <-l.closing:
+			if !more {
+				fmt.Printf("Loop trying to close\n")
+				// return
+			}
 		case beats, more := <-l.msgs:
 			if more {
 				// incoming beat update from keyboard
@@ -76,4 +76,9 @@ func (l *Loop) Run() {
 			}
 		}
 	}
+}
+
+func (l *Loop) Close() {
+	// TODO: this doesn't block?
+	close(l.closing)
 }
