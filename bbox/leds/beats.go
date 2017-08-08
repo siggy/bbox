@@ -3,14 +3,16 @@ package leds
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
 const (
-	LED_COUNT  = 150
-	TICK_DELAY = 17 // match sound to LEDs
+	LED_COUNT    = 150
+	FREEFORM_IDX = 100
+	TICK_DELAY   = 17 // match sound to LEDs
 )
 
 type Row struct {
@@ -19,6 +21,7 @@ type Row struct {
 	buttons [bbox.BEATS]int
 }
 
+// TODO: cache?
 func (r *Row) TickToLed(tick int) (led int, buttonIdx int) {
 	// determine where we are in the buttons array
 	// 0 <= tick < 160
@@ -154,11 +157,14 @@ func (l *LedBeats) Run() {
 				ws2811.SetLed(1, ledIdxs[i+2], trueWhite)
 			}
 
+			actives := 0
+
 			// light active beats
 			for i, beat := range l.beats[0:2] {
 				for j, t := range beat {
 					if t {
 						if j == buttonIdxs[i] {
+							actives++
 							ws2811.SetLed(0, rows[i].buttons[j], purple)
 						} else {
 							ws2811.SetLed(0, rows[i].buttons[j], trueRed)
@@ -170,12 +176,26 @@ func (l *LedBeats) Run() {
 				for j, t := range beat {
 					if t {
 						if j == buttonIdxs[i+2] {
+							actives++
 							ws2811.SetLed(1, rows[i+2].buttons[j], purple)
 						} else {
 							ws2811.SetLed(1, rows[i+2].buttons[j], trueRed)
 						}
 					}
 				}
+			}
+
+			// light freeform leds based on beat activity
+			for i := 0; i < actives; i++ {
+				r := rand.Intn(LED_COUNT - FREEFORM_IDX)
+				ws2811.SetLed(0,
+					r+FREEFORM_IDX,
+					Colors[r%len(Colors)],
+				)
+				ws2811.SetLed(1,
+					r+FREEFORM_IDX,
+					Colors[(r+1)%len(Colors)],
+				)
 			}
 
 			err = ws2811.Render()
