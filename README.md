@@ -78,5 +78,5 @@ go run -race cmd/keys.go
 
 ## Credits
 
-[wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
-[rpi_ws281x](rpi_ws281x) courtesy of (https://github.com/jgarff/rpi_ws281x)
+- [wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
+- [rpi_ws281x](rpi_ws281x) courtesy of (https://github.com/jgarff/rpi_ws281x)
