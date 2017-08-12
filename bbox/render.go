@@ -2,7 +2,6 @@ package bbox
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/nsf/termbox-go"
 )
@@ -12,20 +11,18 @@ const (
 )
 
 type Render struct {
-	beats Beats
-	msgs  <-chan Beats
-	tick  int
-	ticks <-chan int
-	wg    *sync.WaitGroup
+	beats   Beats
+	closing chan struct{}
+	msgs    <-chan Beats
+	tick    int
+	ticks   <-chan int
 }
 
-func InitRender(wg *sync.WaitGroup, msgs <-chan Beats, ticks <-chan int) *Render {
-	wg.Add(1)
-
+func InitRender(msgs <-chan Beats, ticks <-chan int) *Render {
 	return &Render{
-		msgs:  msgs,
-		ticks: ticks,
-		wg:    wg,
+		closing: make(chan struct{}),
+		msgs:    msgs,
+		ticks:   ticks,
 	}
 }
 
@@ -46,7 +43,7 @@ func (r *Render) Draw() {
 				back = termbox.ColorRed
 				fore = termbox.ColorBlack
 			}
-			termbox.SetCell(j*LEDS_PER_BEAT, i+1, c, fore, back)
+			termbox.SetCell(j*TICKS_PER_BEAT, i+1, c, fore, back)
 		}
 
 		// render all runes in old and new columns
@@ -57,9 +54,9 @@ func (r *Render) Draw() {
 		newRune := '.'
 		newBack := termbox.ColorWhite
 		newFore := termbox.ColorBlack
-		if oldTick%LEDS_PER_BEAT == 0 {
+		if oldTick%TICKS_PER_BEAT == 0 {
 			// old tick is on a beat
-			if r.beats[i][oldTick/LEDS_PER_BEAT] {
+			if r.beats[i][oldTick/TICKS_PER_BEAT] {
 				// not ticked, activated
 				oldRune = 'X'
 				oldBack = termbox.ColorRed
@@ -68,9 +65,9 @@ func (r *Render) Draw() {
 				// not ticked, not activated
 				oldRune = '-'
 			}
-		} else if newTick%LEDS_PER_BEAT == 0 {
+		} else if newTick%TICKS_PER_BEAT == 0 {
 			// new tick is on a beat
-			if r.beats[i][newTick/LEDS_PER_BEAT] {
+			if r.beats[i][newTick/TICKS_PER_BEAT] {
 				// ticked, activated
 				newRune = '8'
 				newBack = termbox.ColorMagenta
@@ -87,13 +84,15 @@ func (r *Render) Draw() {
 }
 
 func (r *Render) Run() {
-	defer r.wg.Done()
-
 	// termbox.Init() called in InitKeyboard()
 	defer termbox.Close()
 
 	for {
 		select {
+		case _, more := <-r.closing:
+			if !more {
+				return
+			}
 		case tick := <-r.ticks:
 			r.tick = tick
 			r.Draw()
@@ -109,4 +108,9 @@ func (r *Render) Run() {
 			}
 		}
 	}
+}
+
+func (r *Render) Close() {
+	// TODO: this doesn't block?
+	close(r.closing)
 }
