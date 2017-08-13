@@ -2,7 +2,6 @@ package bbox
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/nsf/termbox-go"
@@ -36,7 +35,6 @@ type Keyboard struct {
 	msgs      []chan<- Beats // all beats, emitter->msgs
 	closing   chan struct{}
 	debug     bool
-	wg        *sync.WaitGroup
 }
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -46,9 +44,7 @@ func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 	}
 }
 
-func InitKeyboard(wg *sync.WaitGroup, msgs []chan<- Beats, debug bool) *Keyboard {
-	wg.Add(1)
-
+func InitKeyboard(msgs []chan<- Beats, debug bool) *Keyboard {
 	// termbox.Close() called when Render.Run() exits
 	err := termbox.Init()
 	if err != nil {
@@ -62,13 +58,10 @@ func InitKeyboard(wg *sync.WaitGroup, msgs []chan<- Beats, debug bool) *Keyboard
 		emit:    make(chan Button),
 		closing: make(chan struct{}),
 		debug:   debug,
-		wg:      wg,
 	}
 }
 
 func (kb *Keyboard) Run() {
-	defer kb.wg.Done()
-
 	defer func() { kb.closing <- struct{}{} }()
 	go kb.emitter()
 
@@ -213,4 +206,9 @@ func (kb *Keyboard) emitter() {
 			}
 		}
 	}
+}
+
+func (kb *Keyboard) Close() {
+	// TODO: this doesn't block?
+	close(kb.closing)
 }

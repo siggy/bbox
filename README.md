@@ -46,7 +46,7 @@ export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/local/lib"
 go build -o beatboxer cmd/bbox.go && sudo ./beatboxer
 ```
 
-LEDs Only
+LED Testing
 
 ```bash
 go build cmd/leds.go && sudo ./leds
@@ -78,5 +78,5 @@ go run -race cmd/keys.go
 
 ## Credits
 
-[wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
-[rpi_ws281x](rpi_ws281x) courtesy of (https://github.com/jgarff/rpi_ws281x)
+- [wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
+- [rpi_ws281x](rpi_ws281x) courtesy of (https://github.com/jgarff/rpi_ws281x)

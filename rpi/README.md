@@ -4,7 +4,8 @@
 
 1. Download Raspian Lite: https://downloads.raspberrypi.org/raspbian_lite_latest
 2. Flash `2017-07-05-raspbian-jessie-lite.zip` using Etcher
-3. Add `ssh` file:
+3. Remove/reinsert flash drive
+4. Add `ssh` file:
 ```bash
 touch /Volumes/boot/ssh
 ```
@@ -66,9 +67,6 @@ mkdir -p ~/code/go/src/github.com/siggy
 git clone https://github.com/siggy/bbox.git ~/code/go/src/github.com/siggy/bbox
 
 # complete steps in [`../README.md`](`../README.md`), then:
-cd ~/code/go/src/github.com/siggy/bbox/
-go build ~/code/go/src/github.com/siggy/bbox/cmd/clear.go
-go build ~/code/go/src/github.com/siggy/bbox/cmd/fish.go
 ```
 
 ## Env / bootup
@@ -76,6 +74,11 @@ go build ~/code/go/src/github.com/siggy/bbox/cmd/fish.go
 ```bash
 # set bootup and shell env
 cp ~/code/go/src/github.com/siggy/bbox/rpi/.local.bash ~/
+source ~/.local.bash
+cd ~/code/go/src/github.com/siggy/bbox/
+go build ~/code/go/src/github.com/siggy/bbox/cmd/clear.go
+go build ~/code/go/src/github.com/siggy/bbox/cmd/fish.go
+
 cp ~/code/go/src/github.com/siggy/bbox/rpi/bboxgo.sh ~/
 sudo cp ~/code/go/src/github.com/siggy/bbox/rpi/bbox.service /etc/systemd/system/bbox.service
 sudo systemctl enable bbox
@@ -99,9 +102,7 @@ sudo raspi-config nonint do_audio 2
 echo "blacklist snd_bcm2835" | sudo tee --append /etc/modprobe.d/snd-blacklist.conf
 
 echo "hdmi_force_hotplug=1" | sudo tee --append /boot/config.txt
-hdmi_force_hotplug=1
 echo "hdmi_force_edid_audio=1" | sudo tee --append /boot/config.txt
-hdmi_force_edid_audio=1
 
 # make usb audio card #0
 sudo vi /lib/modprobe.d/aliases.conf

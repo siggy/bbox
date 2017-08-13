@@ -2,50 +2,50 @@ package bbox
 
 import (
 	"fmt"
-	"sync"
 	"time"
 )
 
 const (
-	BPM           = 120
-	SOUNDS        = 4
-	BEATS         = 16
-	LEDS_PER_BEAT = 3
-	TICKS         = BEATS * LEDS_PER_BEAT
-	INTERVAL      = 60 * time.Second / BPM / (BEATS / 4) / LEDS_PER_BEAT // 4 beats per interval
+	BPM            = 120
+	SOUNDS         = 4
+	BEATS          = 16
+	TICKS_PER_BEAT = 10
+	TICKS          = BEATS * TICKS_PER_BEAT
+	INTERVAL       = 60 * time.Second / BPM / (BEATS / 4) / TICKS_PER_BEAT // 4 beats per interval
 )
 
 type Beats [SOUNDS][BEATS]bool
 
 type Loop struct {
-	beats Beats
-	msgs  <-chan Beats
-	ticks []chan<- int
-	wavs  *Wavs
-	wg    *sync.WaitGroup
+	beats   Beats
+	closing chan struct{}
+	msgs    <-chan Beats
+	ticks   []chan<- int
+	wavs    *Wavs
 }
 
-func InitLoop(wg *sync.WaitGroup, msgs <-chan Beats, ticks []chan<- int) *Loop {
-	wg.Add(1)
-
+func InitLoop(msgs <-chan Beats, ticks []chan<- int) *Loop {
 	return &Loop{
-		beats: Beats{},
-		msgs:  msgs,
-		ticks: ticks,
-		wavs:  InitWavs(),
-		wg:    wg,
+		beats:   Beats{},
+		closing: make(chan struct{}),
+		msgs:    msgs,
+		ticks:   ticks,
+		wavs:    InitWavs(),
 	}
 }
 
 func (l *Loop) Run() {
-	defer l.wg.Done()
-
 	ticker := time.NewTicker(INTERVAL)
 	defer ticker.Stop()
 
 	tick := 0
 	for {
 		select {
+		case _, more := <-l.closing:
+			if !more {
+				fmt.Printf("Loop trying to close\n")
+				// return
+			}
 		case beats, more := <-l.msgs:
 			if more {
 				// incoming beat update from keyboard
@@ -66,9 +66,9 @@ func (l *Loop) Run() {
 			}
 
 			// for each beat type
-			if tick%LEDS_PER_BEAT == 0 {
+			if tick%TICKS_PER_BEAT == 0 {
 				for i, beat := range l.beats {
-					if beat[tick/LEDS_PER_BEAT] {
+					if beat[tick/TICKS_PER_BEAT] {
 						// initiate playback
 						l.wavs.Play(i)
 					}
@@ -76,4 +76,9 @@ func (l *Loop) Run() {
 			}
 		}
 	}
+}
+
+func (l *Loop) Close() {
+	// TODO: this doesn't block?
+	close(l.closing)
 }
