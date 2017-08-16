@@ -18,6 +18,8 @@ const (
 
 	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 5*144 // * 2x(5) // 144/m
 	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 10*60 // * 1x(4 + 2 + 4) // 60/m
+
+	AMPLITUDE_FACTOR = 0.75
 )
 
 type Fish struct {
@@ -62,7 +64,7 @@ func (f *Fish) Run() {
 	// precompute random color rotation
 	randColors := make([]uint32, LED_COUNT1)
 	for i := 0; i < LED_COUNT1; i++ {
-		randColors[i] = MkColor(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(256)))
+		randColors[i] = MkColor(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(128)))
 	}
 
 	for {
@@ -84,7 +86,7 @@ func (f *Fish) Run() {
 				return
 			}
 		default:
-			ampLevel := uint32(255.0 * f.ampLevel)
+			ampLevel := uint32(255.0 * f.ampLevel * AMPLITUDE_FACTOR)
 
 			switch mode {
 			case EQUALIZE:
