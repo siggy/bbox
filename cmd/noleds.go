@@ -1,13 +1,15 @@
 package main
 
 import (
-	"sync"
+	"os"
+	"os/signal"
 
 	"github.com/siggy/bbox/bbox"
 )
 
 func main() {
-	var wg sync.WaitGroup
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	// beat changes
 	//   keyboard => loop
@@ -24,13 +26,22 @@ func main() {
 	}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(&wg, bbox.WriteonlyBeats(msgs), false)
-	loop := bbox.InitLoop(&wg, msgs[0], bbox.WriteonlyInt(ticks))
-	render := bbox.InitRender(&wg, msgs[1], ticks[0])
+	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), false)
+	loop := bbox.InitLoop(msgs[0], bbox.WriteonlyInt(ticks))
+	render := bbox.InitRender(msgs[1], ticks[0])
 
 	go keyboard.Run()
 	go loop.Run()
 	go render.Run()
 
-	wg.Wait()
+	defer keyboard.Close()
+	defer loop.Close()
+	defer render.Close()
+
+	for {
+		select {
+		case <-sig:
+			return
+		}
+	}
 }
