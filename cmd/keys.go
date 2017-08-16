@@ -1,8 +1,6 @@
 package main
 
 import (
-	"sync"
-
 	"github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
 )
@@ -10,16 +8,24 @@ import (
 func main() {
 	defer termbox.Close()
 
-	var wg sync.WaitGroup
-
 	// beat changes
-	//   keyboard => []
-	msgs := []chan bbox.Beats{}
+	//   keyboard => [main]
+	msgs := []chan bbox.Beats{
+		make(chan bbox.Beats),
+	}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(&wg, bbox.WriteonlyBeats(msgs), true)
+	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), true)
 
 	go keyboard.Run()
+	defer keyboard.Close()
 
-	wg.Wait()
+	for {
+		select {
+		case _, more := <-msgs[0]:
+			if !more {
+				return
+			}
+		}
+	}
 }
