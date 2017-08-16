@@ -12,6 +12,7 @@ Beatboxer in Go
 4. Add `ssh` file:
 ```bash
 touch /Volumes/boot/ssh
+diskutil umount /Volumes/boot
 ```
 
 ### First Boot
@@ -94,6 +95,7 @@ Beatboxer depends on a fork of (https://github.com/jgarff/rpi_ws281x). See that
 repo for complete instructions.
 
 ```bash
+cd ~/code/go/src/github.com/siggy/bbox
 sudo cp rpi_ws281x/rpihw.h  /usr/local/include/
 sudo cp rpi_ws281x/ws2811.h /usr/local/include/
 sudo cp rpi_ws281x/pwm.h    /usr/local/include/
@@ -105,37 +107,16 @@ export CGO_CFLAGS="$CGO_CFLAGS -I/usr/local/include"
 export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/local/lib"
 ```
 
-## Build
-
-```bash
-go build -o beatboxer cmd/bbox.go && go build cmd/amplitude.go && go build cmd/aud.go && go build cmd/clear.go && go build cmd/crane.go && go build cmd/crawler.go && go build cmd/fish.go && go build cmd/keys.go && go build cmd/leds.go && go build cmd/noleds.go && go build cmd/record.go
-```
-
-## Run
-
-All programs that use LEDs must be run with `sudo`.
-
-```bash
-sudo ./beatboxer # main program
-sudo ./leds # led testing
-sudo ./clear # clear LEDs
-./noleds # beatboxer without LEDs (for testing without pi)
-./aud # audio testing
-./keys # keyboard test
-```
-
 ## Env / bootup
 
 ```bash
 # set bootup and shell env
-cp ~/code/go/src/github.com/siggy/bbox/rpi/.local.bash ~/
+cd ~/code/go/src/github.com/siggy/bbox
+cp rpi/.local.bash ~/
 source ~/.local.bash
-cd ~/code/go/src/github.com/siggy/bbox/
-go build ~/code/go/src/github.com/siggy/bbox/cmd/clear.go
-go build ~/code/go/src/github.com/siggy/bbox/cmd/fish.go
 
-cp ~/code/go/src/github.com/siggy/bbox/rpi/bboxgo.sh ~/
-sudo cp ~/code/go/src/github.com/siggy/bbox/rpi/bbox.service /etc/systemd/system/bbox.service
+cp rpi/bboxgo.sh ~/
+sudo cp rpi/bbox.service /etc/systemd/system/bbox.service
 sudo systemctl enable bbox
 
 echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.bashrc
@@ -143,7 +124,7 @@ echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.bashrc
 # audio setup
 
 # external sound card
-sudo cp ~/code/go/src/github.com/siggy/bbox/rpi/asound.conf /etc/
+sudo cp rpi/asound.conf /etc/
 
 # *output of raspi-config after forcing audio to hdmi*
 numid=3,iface=MIXER,name='Mic Playback Switch'
@@ -170,6 +151,25 @@ aplay -l
 sudo vi /usr/share/alsa/alsa.conf
 defaults.ctl.card 0
 defaults.pcm.card 0
+```
+
+## Build
+
+```bash
+go build -o beatboxer cmd/bbox.go && go build cmd/amplitude.go && go build cmd/aud.go && go build cmd/clear.go && go build cmd/crane.go && go build cmd/crawler.go && go build cmd/fish.go && go build cmd/keys.go && go build cmd/leds.go && go build cmd/noleds.go && go build cmd/record.go
+```
+
+## Run
+
+All programs that use LEDs must be run with `sudo`.
+
+```bash
+sudo ./beatboxer # main program
+sudo ./leds # led testing
+sudo ./clear # clear LEDs
+./noleds # beatboxer without LEDs (for testing without pi)
+./aud # audio testing
+./keys # keyboard test
 ```
 
 ## Stop bbox process
