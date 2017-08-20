@@ -63,6 +63,13 @@ var (
 	testColors = []uint32{Red, redw, green, greenw, blue, bluew, white, whitew}
 )
 
+const (
+	SINE_AMPLITUDE   = 127
+	SINE_SHIFT       = 127
+	SINE_PERIOD      = 3
+	SINE_HALF_PERIOD = float64(SINE_PERIOD) / 2.0
+)
+
 // TODO: cache?
 func getSineVals(ledCount int, floatBeat float64) (sineVals map[int]int) {
 	first := int(math.Ceil(floatBeat - SINE_HALF_PERIOD)) // 12.7 - 1.5 => 11.2 => 12

@@ -21,13 +21,6 @@ type Row struct {
 	buttons [bbox.BEATS]int
 }
 
-const (
-	SINE_AMPLITUDE   = 127
-	SINE_SHIFT       = 127
-	SINE_PERIOD      = 3
-	SINE_HALF_PERIOD = float64(SINE_PERIOD) / 2.0
-)
-
 // TODO: cache?
 func (r *Row) TickToLed(tick int) (buttonIdx int) {
 	// determine where we are in the buttons array
