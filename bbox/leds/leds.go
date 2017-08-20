@@ -58,6 +58,7 @@ var (
 	}
 
 	redWhite = MkColor(255, 0, 0, 255)
+	black    = MkColor(0, 0, 0, 0)
 )
 
 var (
@@ -124,6 +125,15 @@ func GetSineVals(ledCount int, floatBeat float64, period int) (sineVals map[int]
 // TODO: cache?
 func SineScale(weight float64) float64 {
 	return math.Sin(PI_FACTOR * weight)
+}
+
+func contains(s []uint32, e uint32) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 // maps midpoint 128 => 32 for brightness

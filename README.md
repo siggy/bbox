@@ -156,7 +156,18 @@ defaults.pcm.card 0
 ## Build
 
 ```bash
-go build -o beatboxer cmd/bbox.go && go build cmd/amplitude.go && go build cmd/aud.go && go build cmd/clear.go && go build cmd/crane.go && go build cmd/crawler.go && go build cmd/fish.go && go build cmd/keys.go && go build cmd/leds.go && go build cmd/noleds.go && go build cmd/record.go
+go build -o beatboxer cmd/bbox.go && \
+    go build cmd/amplitude.go && \
+    go build cmd/aud.go &&       \
+    go build cmd/aux.go &&       \
+    go build cmd/clear.go &&     \
+    go build cmd/crane.go &&     \
+    go build cmd/crawler.go &&   \
+    go build cmd/fish.go &&      \
+    go build cmd/keys.go &&      \
+    go build cmd/leds.go &&      \
+    go build cmd/noleds.go &&    \
+    go build cmd/record.go
 ```
 
 ## Run

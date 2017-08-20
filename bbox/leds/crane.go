@@ -35,18 +35,7 @@ const (
 
 var (
 	RED_LIGHT_RANGE = []uint32{0, 1, 2, 3, 4}
-
-	black = MkColor(0, 0, 0, 0)
 )
-
-func contains(s []uint32, e uint32) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
 
 type Crane struct {
 	ampLevel float64
