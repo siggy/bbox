@@ -63,6 +63,32 @@ var (
 	testColors = []uint32{Red, redw, green, greenw, blue, bluew, white, whitew}
 )
 
+// TODO: cache?
+func getSineVals(ledCount int, floatBeat float64) (sineVals map[int]int) {
+	first := int(math.Ceil(floatBeat - SINE_HALF_PERIOD)) // 12.7 - 1.5 => 11.2 => 12
+	last := int(math.Floor(floatBeat + SINE_HALF_PERIOD)) // 12.7 + 1.5 => 14.2 => 14
+
+	sineFunc := func(x int) int {
+		// y = a * sin((x-h)/b) + k
+		h := floatBeat - SINE_PERIOD/4.0
+		b := SINE_PERIOD / (2 * math.Pi)
+		return int(
+			SINE_AMPLITUDE*math.Sin((float64(x)-h)/b) +
+				SINE_SHIFT,
+		)
+	}
+
+	for i := first; i <= last; i++ {
+		y := sineFunc(i)
+		if y != 0 {
+			sineVals[(i+ledCount)%ledCount] = sineFunc(i)
+		}
+	}
+
+	return
+}
+
+// TODO: cache?
 func SineScale(weight float64) float64 {
 	return math.Sin(PI_FACTOR * weight)
 }
