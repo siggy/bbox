@@ -45,9 +45,12 @@ import (
 )
 
 func Init(
+	freq int,
 	gpioPin1 int, ledCount1 int, brightness1 int,
 	gpioPin2 int, ledCount2 int, brightness2 int,
 ) error {
+	C.ledstring.freq = C.uint32_t(freq)
+
 	C.ledstring.channel[0].gpionum = C.int(gpioPin1)
 	C.ledstring.channel[0].count = C.int(ledCount1)
 	C.ledstring.channel[0].brightness = C.uint8_t(brightness1)

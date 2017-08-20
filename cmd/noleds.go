@@ -29,10 +29,16 @@ func main() {
 		make(chan int),
 	}
 
+	// interval changes
+	//   loop => render
+	intervals := []chan bbox.Interval{
+		make(chan bbox.Interval),
+	}
+
 	// keyboard broadcasts quit with close(msgs)
 	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, false)
-	loop := bbox.InitLoop(msgs[0], tempo, bbox.WriteonlyInt(ticks))
-	render := bbox.InitRender(msgs[1], ticks[0])
+	loop := bbox.InitLoop(msgs[0], tempo, bbox.WriteonlyInt(ticks), bbox.WriteonlyInterval(intervals))
+	render := bbox.InitRender(msgs[1], ticks[0], intervals[0])
 
 	go keyboard.Run()
 	go loop.Run()

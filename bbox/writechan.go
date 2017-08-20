@@ -17,3 +17,11 @@ func WriteonlyInt(channels []chan int) []chan<- int {
 	}
 	return ret
 }
+
+func WriteonlyInterval(channels []chan Interval) []chan<- Interval {
+	ret := make([]chan<- Interval, len(channels))
+	for n, ch := range channels {
+		ret[n] = ch
+	}
+	return ret
+}

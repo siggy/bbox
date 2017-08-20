@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	LED_COUNT    = 150
-	FREEFORM_IDX = 100
+	LED_FREQ     = 1200000
+	LED_COUNT    = 300
+	FREEFORM_IDX = 250
 	TICK_DELAY   = 17 // match sound to LEDs
 	SINE_PERIOD  = 5
 )
@@ -23,13 +24,13 @@ type Row struct {
 }
 
 // TODO: cache?
-func (r *Row) TickToLed(tick int) (buttonIdx int, peak float64) {
+func (r *Row) TickToLed(tick int, ticksPerBeat int) (buttonIdx int, peak float64) {
 	// determine where we are in the buttons array
 	// 0 <= tick < 160
 	// 0 <= beat < 16
-	floatBeat := float64(tick) / float64(bbox.TICKS_PER_BEAT) // 127 => 12.7
-	f := math.Floor(floatBeat)                                // 12
-	c := math.Ceil(floatBeat)                                 // 13
+	floatBeat := float64(tick) / float64(ticksPerBeat) // 127 => 12.7
+	f := math.Floor(floatBeat)                         // 12
+	c := math.Ceil(floatBeat)                          // 13
 
 	var floor int
 	var ceil int
@@ -65,6 +66,9 @@ type LedBeats struct {
 	closing chan struct{}
 	msgs    <-chan bbox.Beats
 	ticks   <-chan int
+
+	iv         bbox.Interval
+	intervalCh <-chan bbox.Interval
 }
 
 var (
@@ -115,13 +119,23 @@ var (
 	}
 )
 
-func InitLedBeats(msgs <-chan bbox.Beats, ticks <-chan int) *LedBeats {
-	InitLeds(LED_COUNT, LED_COUNT)
+func InitLedBeats(
+	msgs <-chan bbox.Beats,
+	ticks <-chan int,
+	intervalCh <-chan bbox.Interval,
+) *LedBeats {
+	InitLeds(LED_FREQ, LED_COUNT, LED_COUNT)
 
 	return &LedBeats{
 		closing: make(chan struct{}),
 		msgs:    msgs,
 		ticks:   ticks,
+
+		iv: bbox.Interval{
+			TicksPerBeat: bbox.DEFAULT_TICKS_PER_BEAT,
+			Ticks:        bbox.DEFAULT_TICKS,
+		},
+		intervalCh: intervalCh,
 	}
 }
 
@@ -153,13 +167,13 @@ func (l *LedBeats) Run() {
 				return
 			}
 		case tick := <-l.ticks:
-			tick = (tick + bbox.TICKS - TICK_DELAY) % bbox.TICKS
+			tick = (tick + l.iv.Ticks - TICK_DELAY) % l.iv.Ticks
 			ws2811.Clear()
 
 			buttonIdxs := [len(rows)]int{}
 			peakVals := [len(rows)]float64{}
 			for i, r := range rows {
-				buttonIdxs[i], peakVals[i] = r.TickToLed(tick)
+				buttonIdxs[i], peakVals[i] = r.TickToLed(tick, l.iv.TicksPerBeat)
 			}
 
 			// light all leds around current position
@@ -222,11 +236,6 @@ func (l *LedBeats) Run() {
 				fmt.Printf("ws2811.Render failed: %+v\n", err)
 				panic(err)
 			}
-			err = ws2811.Wait()
-			if err != nil {
-				fmt.Printf("ws2811.Wait failed: %+v\n", err)
-				panic(err)
-			}
 		case beats, more := <-l.msgs:
 			if more {
 				// incoming beat update from keyboard
@@ -234,6 +243,15 @@ func (l *LedBeats) Run() {
 			} else {
 				// closing
 				fmt.Printf("LEDs closing\n")
+				return
+			}
+		case iv, more := <-l.intervalCh:
+			if more {
+				// incoming interval update from loop
+				l.iv = iv
+			} else {
+				// we should never get here
+				fmt.Printf("unexpected: intervalCh return no more\n")
 				return
 			}
 		}
