@@ -22,7 +22,7 @@ type Row struct {
 }
 
 // TODO: cache?
-func (r *Row) TickToLed(tick int) (buttonIdx int) {
+func (r *Row) TickToLed(tick int) (buttonIdx int, peak float64) {
 	// determine where we are in the buttons array
 	// 0 <= tick < 160
 	// 0 <= beat < 16
@@ -50,9 +50,9 @@ func (r *Row) TickToLed(tick int) (buttonIdx int) {
 	percentAhead := floatBeat - f // 12.7 - 12 => 0.7
 	diff := percentAhead * (float64(ceil) - float64(floor))
 
-	led = floor + int(diff)
+	peak = float64(floor) + diff
 	buttonIdx = -1
-	if led == floor {
+	if int(diff) == 0 {
 		buttonIdx = int(f)
 	}
 
@@ -156,19 +156,20 @@ func (l *LedBeats) Run() {
 			ws2811.Clear()
 
 			buttonIdxs := [len(rows)]int{}
+			peakVals := [len(rows)]float64{}
 			for i, r := range rows {
-				buttonIdxs[i] = r.TickToLed(tick)
+				buttonIdxs[i], peakVals[i] = r.TickToLed(tick)
 			}
 
 			// light all leds around current position
 			for i, _ := range rows[0:2] {
-				sineMap = leds.getSineVals(LED_COUNT, leds.float64(tick)/float64(bbox.TICKS_PER_BEAT))
+				sineMap := leds.getSineVals(LED_COUNT, peakVals[i])
 				for led, value := range sineMap {
 					ws2811.SetLed(0, led, MkColor(0, 0, 0, value))
 				}
 			}
 			for i, _ := range rows[2:4] {
-				sineMap = leds.getSineVals(LED_COUNT, leds.float64(tick)/float64(bbox.TICKS_PER_BEAT))
+				sineMap := leds.getSineVals(LED_COUNT, peakVals[i+2])
 				for led, value := range sineMap {
 					ws2811.SetLed(1, led, MkColor(0, 0, 0, value))
 				}
