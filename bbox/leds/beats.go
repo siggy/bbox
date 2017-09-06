@@ -13,6 +13,7 @@ const (
 	LED_COUNT    = 150
 	FREEFORM_IDX = 100
 	TICK_DELAY   = 17 // match sound to LEDs
+	SINE_PERIOD  = 5
 )
 
 type Row struct {
@@ -163,15 +164,15 @@ func (l *LedBeats) Run() {
 
 			// light all leds around current position
 			for i, _ := range rows[0:2] {
-				sineMap := leds.getSineVals(LED_COUNT, peakVals[i])
+				sineMap := GetSineVals(LED_COUNT, peakVals[i], SINE_PERIOD)
 				for led, value := range sineMap {
-					ws2811.SetLed(0, led, MkColor(0, 0, 0, value))
+					ws2811.SetLed(0, led, MkColor(0, 0, 0, uint32(value)))
 				}
 			}
 			for i, _ := range rows[2:4] {
-				sineMap := leds.getSineVals(LED_COUNT, peakVals[i+2])
+				sineMap := GetSineVals(LED_COUNT, peakVals[i+2], SINE_PERIOD)
 				for led, value := range sineMap {
-					ws2811.SetLed(1, led, MkColor(0, 0, 0, value))
+					ws2811.SetLed(1, led, MkColor(0, 0, 0, uint32(value)))
 				}
 			}
 

@@ -9,8 +9,9 @@ import (
 )
 
 const (
+	// TODO: bbox testing
 	// 2x structure
-	CRANE_STRAND_COUNT1 = 10
+	CRANE_STRAND_COUNT1 = 5
 	CRANE_STRAND_LEN1   = 30
 
 	// 1x heart
@@ -25,11 +26,16 @@ const (
 
 	LIGHT_COUNT = 18 // 2 x 18 == 36 total trueWhite lights turned on at a time
 
+	STREAK_LENGTH = 30
+	STREAK_STEP   = 0.1
+
 	// TODO: unused?
 	CRANE_COLOR_WEIGHT = 0.01
 )
 
 var (
+	RED_LIGHT_RANGE = []uint32{0, 1, 2, 3, 4}
+
 	black = MkColor(0, 0, 0, 0)
 )
 
@@ -68,24 +74,26 @@ func (c *Crane) Run() {
 	fmt.Printf("ws2811.Clear()\n")
 	ws2811.Clear()
 
-	strand1 := make([]uint32, LED_COUNT1) // structure
-	strand2 := make([]uint32, LED_COUNT2) // heart
+	strand1 := make([]uint32, CRANE_LED_COUNT1) // structure
+	strand2 := make([]uint32, CRANE_LED_COUNT2) // heart
 
 	// 18 lights at trueWhite (36 total between two strands)
 	lights := make([]uint32, LIGHT_COUNT)
 	for i, _ := range lights {
-		r := uint32(rand.Int31n(LED_COUNT1))
-		for contains(lights, r) {
-			r = uint32(rand.Int31n(LED_COUNT1))
+		r := uint32(rand.Int31n(CRANE_LED_COUNT1))
+		for contains(append(lights, RED_LIGHT_RANGE...), r) {
+			r = uint32(rand.Int31n(CRANE_LED_COUNT1))
 		}
 		lights[i] = r
 	}
 
 	lightIter := 0
-	nextLight := uint32(rand.Int31n(LED_COUNT1))
-	for contains(lights, nextLight) {
-		nextLight = uint32(rand.Int31n(LED_COUNT1))
+	nextLight := uint32(rand.Int31n(CRANE_LED_COUNT1))
+	for contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
+		nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
 	}
+
+	streakLoc := 0.0
 
 	heartColor1 := trueRed
 	heartColor2 := trueWhite
@@ -117,9 +125,9 @@ func (c *Crane) Run() {
 				lights[lightIter] = nextLight
 				lightIter = (lightIter + 1) % len(lights)
 
-				nextLight = uint32(rand.Int31n(LED_COUNT1))
-				for contains(lights, nextLight) {
-					nextLight = uint32(rand.Int31n(LED_COUNT1))
+				nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
+				for contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
+					nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
 				}
 
 				// heart iters
@@ -138,9 +146,23 @@ func (c *Crane) Run() {
 				}
 			}
 
+			// streaks
+			sineMap := GetSineVals(CRANE_LED_COUNT1, streakLoc, STREAK_LENGTH)
+			for led, value := range sineMap {
+				if !contains(append(lights, RED_LIGHT_RANGE...), uint32(led)) {
+                                        mag := float64(value) / 254.0
+					strand1[led] = MkColor(0, uint32(float64(123)*mag), uint32(float64(55)*mag), 0)
+				}
+			}
+
+			streakLoc += STREAK_STEP
+			if streakLoc >= CRANE_LED_COUNT1 {
+				streakLoc = 0
+			}
+
 			// heart
 			heartColor := MkColorWeight(heartColor1, heartColor2, weight)
-			for i := 0; i < LED_COUNT2; i++ {
+			for i := 0; i < CRANE_LED_COUNT2; i++ {
 				strand2[i] = heartColor
 			}
 

@@ -101,8 +101,8 @@ func (kb *Keyboard) Run() {
 				data = data[:len(data)-curev.N]
 
 				// TODO: make settable
-				key := keymaps[Key{ev.Ch, 0}]
-				// key := keymaps_rpi[Key{ev.Ch, ev.Key}]
+				// key := keymaps[Key{ev.Ch, 0}]
+				key := keymaps_rpi[Key{ev.Ch, ev.Key}]
 				if key != nil {
 					kb.flip(key[0], key[1])
 				}

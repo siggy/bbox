@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	LED_COUNT1 = 150
-	LED_COUNT2 = 150
+	LED_COUNT1 = 600
+	LED_COUNT2 = 600
 )
 
 func main() {
