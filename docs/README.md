@@ -48,7 +48,7 @@ I cannot emphasize enough how helpful [Adafruit](https://www.adafruit.com/) is f
 
 Controlling [NeoPixels](https://www.adafruit.com/category/168) from a Raspberry Pi is not quite as simple as plugging in a USB device. It requires building a circuit board, something I had zero experience with. I again enlisted [@yet](https://twitter.com/yet)'s help to learn how to solder wires, chips, and resistors. In short order we had a Raspberry Pi controlling [NeoPixels](https://www.adafruit.com/category/168).
 
-### Keyboard Hacking
+### Keyboard hacking
 
 With proof of concepts for LEDs and audio playback in place, next was user input. I wanted to use large buttons to toggle beats. Most Raspberry Pi tutorials document how to wire up a few buttons, I needed 64. The Raspberry Pi does not have enough pins to handle that many button inputs without other chips or boards. An alternative was to simply hack apart a regular computer keyboard and wire 64 external buttons into it, which I had read about on [Instructables](https://www.instructables.com/) in two articles: [Hacking a USB Keyboard](https://www.instructables.com/id/Hacking-a-USB-Keyboard/) and [Create External Buttons For Your Keyboard](https://www.instructables.com/id/Create-External-Buttons-For-Your-Keyboard/). This was a compelling option, as the software was already built to accept keyboard inputs, no additional coding or GPIO programming required. In hindsight this was probably the worst design decision of the entire project. Though it's a fun hack, wiring 64 buttons into a keyboard PCB yields this:
 
@@ -60,7 +60,7 @@ Determined to hack this keyboard, I against enlisted much soldering help from [@
 
 While all this was going on, I described to my good friend [Jhon](https://www.instagram.com/yesjhon/) what I was working on. Jhon's background in electronics and industrial design exceeds anyone I know, and he immediately suggested I consider a pyramid shape rather than a phone booth. I loved the idea. At the time I did not realize the added complexity a shape like this would require, but in the end it was definitely worth it.
 
-To build a pyramid, I naively thought I could simply design four triangles, do some linear calculations for the angles, and all would fit together. Fortunately my good friend and owner of Three Bears Furniture, [@jneaderhouser](https://twitter.com/jneaderhouser) pointed me to this excellent [compound miter calculator](http://www.pdxtex.com/canoe/compound.htm). This helped me determine that, based on triangles 6 feet tall by 2.5 feet wide, I needed 46.244° side bevels and 77.975° base bevels. I was able to confirm this all worked by building Beatboxer in SketchUp:
+To build a pyramid, I naively thought I could simply design four triangles, do some linear calculations for the angles, and all would fit together. Fortunately my good friend and owner of Three Bears Furniture, [@jneaderhouser](https://twitter.com/jneaderhouser), pointed me to this excellent [compound miter calculator](http://www.pdxtex.com/canoe/compound.htm). This helped me determine that, based on triangles 6 feet tall by 2.5 feet wide, I needed 46.244° side bevels and 77.975° base bevels. I was able to confirm this all worked by building Beatboxer in SketchUp:
 
 (triangle images)
 
@@ -100,7 +100,7 @@ After a couple days of testing Beatboxer in our camp, we loaded it onto Brian's 
 
 (trailer driving video)
 
-The rest of the week was spent swapping and charging batteries and speakers, which proved a bit more challenging due to Beatboxer getting a lot more use than anticipated (an exciting problem to have). In the end it was fully functional roughly 90% of the week, with outages only due to batteries. The structure, buttons, and electronics held up to the elements. Including a Mad Max-style dust and rain storm:
+The rest of the week was spent swapping and charging batteries and speakers, which proved a bit more challenging due to Beatboxer getting a lot more use than anticipated (an exciting problem to have). In the end it was fully functional roughly 90% of the week, with outages only due to batteries. The structure, buttons, and electronics held up to the elements, including a Mad Max-style dust and rain storm:
 
 (photo of dust storm)
 
@@ -114,7 +114,7 @@ As I learned to work with LEDs, I found opportunities to work with friends to he
 
 (tom's wiring diagram)
 
-With additional components and design complexity, my friend [@oceanphoto](https://twitter.com/oceanphoto) jumped back in and 3D printed some awesome enclosures to keep everything safe from the elements, and even included ethernet ports to be able to update the Raspberry Pi's without open the enclosures:
+With additional components and design complexity, my friend [@oceanphoto](https://twitter.com/oceanphoto) jumped back in and 3D printed some awesome enclosures to keep everything safe from the elements, and even included ethernet ports to be able to update the Raspberry Pi's without opening the enclosures:
 
 (enclosure photo)
 
