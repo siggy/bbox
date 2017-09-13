@@ -1,1 +1,16 @@
+title: "Beatboxer"
+email: andrew@sig.gy
+description: >
+  Raspberry Pi, LEDs, and Go
+baseurl: "/bbox"
+url: "https://sig.gy"
+twitter_username: siggy
+github_username:  siggy
+markdown: kramdown
 theme: jekyll-theme-dinky
+google_analytics: true
+github:
+  is_project_page: true
+  repository_url: https://github.com/siggy/bbox
+  owner_url: https://github.com/siggy
+  owner_name: siggy

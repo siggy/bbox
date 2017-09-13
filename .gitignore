@@ -9,3 +9,6 @@
 /leds
 /noleds
 /record
+.sass-cache/
+_site/
+assets/
