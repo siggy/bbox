@@ -1,14 +1,14 @@
 ---
 layout: default
-title: "Beatboxer: Raspberry Pi, LEDs, and Go"
+title: "Beatboxer: A human-sized beat machine built with a Raspberry Pi, LEDs, and Go"
 permalink: /
 ---
 
 **DRAFT**
 
-# Beatboxer: Raspberry Pi, LEDs, and Go
+# Beatboxer: A human-sized beat machine built with a Raspberry Pi, LEDs, and Go
 
-This is the story of building Beatboxer, a human-sized beat machine:
+This is the story of building Beatboxer:
 
 (youtube)
 
@@ -24,9 +24,9 @@ It occurred to me I'd love to try to build something like this.
 
 ### Beatboxer in JavaScript
 
-About a year ago I attempted to replicate Nine Inch Nails' beat machine on a web page, using as little code as possible. The result was a JavaScript app called [Beatboxer](https://github.com/siggy/beatboxer):
+About a year ago I attempted to replicate Nine Inch Nails' beat machine on a web page, using as little code as possible. The result was a JavaScript app called [Beatboxer](https://sig.gy/beatboxer/):
 
-<iframe width="900" height="315" src="https://sig.gy/beatboxer/" frameborder="0" allowfullscreen></iframe>
+<iframe width="900" height="315" src="//beatboxer/" frameborder="0" allowfullscreen></iframe>
 
 This was a fun little project, where I learned a bit about [AudioContext](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext) and [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
 
@@ -35,6 +35,8 @@ This was a fun little project, where I learned a bit about [AudioContext](https:
 [Go](https://golang.org/) has recently become my favorite programming language. Rewriting Beatboxer in Go was a great excuse to play with the language a bit more.
 
 Reading and playing back audio files in Go turned out to be more work than in JavaScript. I eventually found a pair of excellent Go libraries, [youpy's go-wav](https://github.com/youpy/go-wav) for reading wavs, and [gordonklaus' Go bindings](https://github.com/gordonklaus/portaudio) for [PortAudio](http://portaudio.com/) for outputting sound.
+
+99 sounds
 
 The Beatboxer software requires input from a keyboard, which then transmits beat changes to a renderer and a drum loop. The Go language really shines here in allowing explicit definition of these concurrent threads, with communication via Go Channels. This whole architecture is summarized nicely in [BeatBoxer's main](https://github.com/siggy/bbox/blob/master/cmd/bbox.go).
 
@@ -55,6 +57,13 @@ I cannot emphasize enough how helpful [Adafruit](https://www.adafruit.com/) is f
 Controlling [NeoPixels](https://www.adafruit.com/category/168) from a Raspberry Pi is not quite as simple as plugging in a USB device. It requires building a circuit board, something I had zero experience with. I again enlisted [@yet](https://twitter.com/yet)'s help to learn how to solder wires, chips, and resistors. In short order we had a Raspberry Pi controlling [NeoPixels](https://www.adafruit.com/category/168):
 
 (led vid)
+
+### Audio out
+
+jgarff's rpi_ws281x
+PWM
+sound card
+audio config files
 
 ### Keyboard hacking
 
@@ -125,6 +134,8 @@ As I learned to work with LEDs, I found opportunities to work with other artists
 With additional components and design complexity, my friend [@oceanphoto](https://twitter.com/oceanphoto) jumped back in and 3D printed some awesome enclosures to keep everything safe from the elements, and even included ethernet ports to be able to update the Raspberry Pi's without opening the enclosures:
 
 (enclosure photo)
+
+boot time / files
 
 We were now ready to apply these LEDs to three more projects.
 
