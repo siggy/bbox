@@ -34,11 +34,11 @@ This was a fun little project, where I learned a bit about [AudioContext](https:
 
 [Go](https://golang.org/) has recently become my favorite programming language. Rewriting Beatboxer in Go was a great excuse to play with the language a bit more.
 
+The Beatboxer software requires input from a keyboard, which then transmits beat changes to a renderer and a drum loop. The Go language really shines here in allowing explicit definition of these concurrent threads, with communication via Go Channels. This whole architecture is summarized nicely in [BeatBoxer's main](https://github.com/siggy/bbox/blob/master/cmd/bbox.go).
+
 Reading and playing back audio files in Go turned out to be more work than in JavaScript. I eventually found a pair of excellent Go libraries, [youpy's go-wav](https://github.com/youpy/go-wav) for reading wavs, and [gordonklaus' Go bindings](https://github.com/gordonklaus/portaudio) for [PortAudio](http://portaudio.com/) for outputting sound.
 
-99 sounds
-
-The Beatboxer software requires input from a keyboard, which then transmits beat changes to a renderer and a drum loop. The Go language really shines here in allowing explicit definition of these concurrent threads, with communication via Go Channels. This whole architecture is summarized nicely in [BeatBoxer's main](https://github.com/siggy/bbox/blob/master/cmd/bbox.go).
+I also found myself wanting higher quality drum samples. I found an awesome collection at [99sounds.org](http://99sounds.org/drum-samples/). It's free for download, but definitely throw them a donation if you appreciate their work. I found their 808 beats to be just want I needed. I reached out to confirm they were ok with me using their samples in a public art project, and [Tomislav](https://twitter.com/bpblog) replied a few hours later with full support.
 
 ## Back to the project
 
@@ -58,12 +58,9 @@ Controlling [NeoPixels](https://www.adafruit.com/category/168) from a Raspberry 
 
 (led vid)
 
-### Audio out
+### Pulse width modulation and onboard audio
 
-jgarff's rpi_ws281x
-PWM
-sound card
-audio config files
+The [rpi_ws281 LED library](https://github.com/jgarff/rpi_ws281) uses hardware PWM on the Raspberyy Pi to communicate with the LEDs. Unfortunately this [conflicts](https://github.com/jgarff/rpi_ws281x#pwm) with the Pi's onboard sound card. To get around this, I disabled the onboard sound and installed a [Plugable USB Audio Adapter](https://www.amazon.com/gp/product/B00NMXY2MO). For more details on the config changes, have a look at the `external sound card` section of [this repo's README.md](https://github.com/siggy/bbox#env--bootup).
 
 ### Keyboard hacking
 
@@ -135,9 +132,9 @@ With additional components and design complexity, my friend [@oceanphoto](https:
 
 (enclosure photo)
 
-boot time / files
+Another requirement for these projects was faster boot time. With vanilla Raspian I was seeing 30 second boot times before the LED programs would start. This was fine for Beatboxer where it was left running all night, but much too long for a mutant vehicle that should be illuminated as soon as possible when it's turned on. I switched to Raspbian Lite and disabled as many services as I could, eventually getting boot time down to around 7 seconds. For full details on these config changes, have a look at the [First Boot section of this repo's README.md](https://github.com/siggy/bbox#first-boot).
 
-We were now ready to apply these LEDs to three more projects.
+With power and boot time sorted, we were ready to apply these LEDs to three more projects.
 
 ### The Krawler
 
