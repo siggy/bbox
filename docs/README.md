@@ -26,7 +26,7 @@ It occurred to me I'd love to try to build something like this.
 
 About a year ago I attempted to replicate Nine Inch Nails' beat machine on a web page, using as little code as possible. The result was a JavaScript app called [Beatboxer](https://sig.gy/beatboxer/):
 
-<iframe width="900" height="315" src="//beatboxer/" frameborder="0" allowfullscreen></iframe>
+<iframe width="900" height="315" src="/beatboxer/" frameborder="0" allowfullscreen></iframe>
 
 This was a fun little project, where I learned a bit about [AudioContext](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext) and [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
 
