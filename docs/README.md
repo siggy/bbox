@@ -60,7 +60,7 @@ Controlling [NeoPixels](https://www.adafruit.com/category/168) from a Raspberry 
 
 ### Pulse width modulation and onboard audio
 
-The [rpi_ws281 LED library](https://github.com/jgarff/rpi_ws281) uses hardware PWM on the Raspberyy Pi to communicate with the LEDs. Unfortunately this [conflicts](https://github.com/jgarff/rpi_ws281x#pwm) with the Pi's onboard sound card. To get around this, I disabled the onboard sound and installed a [Plugable USB Audio Adapter](https://www.amazon.com/gp/product/B00NMXY2MO). For more details on the config changes, have a look at the `external sound card` section of [this repo's README.md](https://github.com/siggy/bbox#env--bootup).
+The [rpi_ws281x LED library](https://github.com/jgarff/rpi_ws281x) uses hardware PWM on the Raspberyy Pi to communicate with the LEDs. Unfortunately this [conflicts](https://github.com/jgarff/rpi_ws281x#pwm) with the Pi's onboard sound card. To get around this, I disabled the onboard sound and installed a [Plugable USB Audio Adapter](https://www.amazon.com/gp/product/B00NMXY2MO). For more details on the config changes, have a look at the `external sound card` section of [this repo's README.md](https://github.com/siggy/bbox#env--bootup).
 
 ### Keyboard hacking
 
