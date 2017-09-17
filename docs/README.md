@@ -10,7 +10,7 @@ permalink: /
 
 This is the story of building Beatboxer:
 
-<iframe width="560" height="315" src="https://www.youtube.com/watch?v=Pbo0mBi7B7w" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Pbo0mBi7B7w" frameborder="0" allowfullscreen></iframe>
 
 ## Prior Art
 
