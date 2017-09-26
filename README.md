@@ -191,6 +191,13 @@ sudo mount /dev/sdb7 ~/usb
 sudo umount /dev/sdb7
 ```
 
+## Docs
+
+```bash
+jekyll serve -s docs
+open http://127.0.0.1:4000/bbox
+```
+
 ## Credits
 
 - [wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)

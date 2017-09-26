@@ -3,6 +3,8 @@
 
 @import "{{ site.theme }}";
 
+@import "lightbox.min.css";
+
 h1, h2, h3, h4, h5, h6, body {
   color: #111;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -34,4 +36,28 @@ body {
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: subpixel-antialiased;
+}
+
+img {
+  padding: 0px;
+}
+
+img.thumbnail {
+  border-radius: 4px;
+  height: 250px;
+  padding: 2px;
+  transition: background-color 0.5s ease-out;
+}
+
+img.thumbnail.mid {
+  height: 183px;
+}
+
+img.thumbnail.narrow {
+  height: 109px;
+}
+
+img.thumbnail:hover {
+  background-color: #4ae;
+  transition: none;
 }
