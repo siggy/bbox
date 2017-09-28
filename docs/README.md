@@ -1,12 +1,12 @@
 ---
 layout: default
-title: "Beatboxer: A human-sized beat machine built with a Raspberry Pi, LEDs, and Go"
+title: "Beatboxer: A human-sized drum machine built with a Raspberry Pi, LEDs, and Go"
 permalink: /
 ---
 
 **DRAFT**
 
-# Beatboxer: A human-sized beat machine built with a Raspberry Pi, LEDs, and Go
+# Beatboxer: A human-sized drum machine built with a Raspberry Pi, LEDs, and Go
 
 This is the story of building Beatboxer:
 
@@ -18,39 +18,39 @@ This is the story of building Beatboxer:
 
 ### Nine Inch Nails
 
-Around 2008 I saw Nine Inch Nails perform Echoplex using a beat machine that occupied the entire stage:
+Around 2008 I saw Nine Inch Nails perform Echoplex using a drum machine that occupied the entire stage:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/6O_92BTrUcA" frameborder="0" allowfullscreen></iframe>
 
-It occurred to me I'd love to try to build something like this.
+I loved it, and I wanted to build it.
 
 ### Beatboxer in JavaScript
 
-In 2016 I attempted to replicate Nine Inch Nails' beat machine on a web page, using as little code as possible. The result was a JavaScript app called [Beatboxer](https://sig.gy/beatboxer/):
+In 2016 I attempted to replicate Nine Inch Nails' drum machine on a web page, using as little code as possible. The result was a few hundred lines of JavaScript, HTML, and CSS, I called it [Beatboxer](https://sig.gy/beatboxer/):
 
 <iframe width="900" height="315" src="https://sig.gy/beatboxer/" frameborder="0" allowfullscreen></iframe>
 
-This was a fun little project, where I learned a bit about [AudioContext](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext) and [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
+This was a fun little project, I learned a bit about [AudioContext](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext) for playing sounds and [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) for timing.
 
 ## A rewrite in Go
 
 [Go](https://golang.org/) has recently become my favorite programming language. Rewriting Beatboxer in Go was a great excuse to play with the language a bit more.
 
-Beatboxer requires input from a keyboard, which then transmits beat changes to LEDs, a console renderer, and a drum loop. The Go language really shines here in allowing explicit definition of these concurrent threads, with communication via Go Channels. This whole architecture is summarized nicely in [BeatBoxer's main](https://github.com/siggy/bbox/blob/master/cmd/bbox.go).
+Beatboxer transmits input from a keyboard to LEDs, a console renderer, and a drum loop. The Go language really shines here in allowing explicit definition of these concurrent threads, with communication via Go Channels. This whole architecture is summarized nicely in [BeatBoxer's main](https://github.com/siggy/bbox/blob/master/cmd/bbox.go).
 
 Reading and playing back audio files in Go turned out to be more work than in JavaScript. I eventually found a pair of excellent Go libraries, [youpy's go-wav](https://github.com/youpy/go-wav) for reading wavs, and [gordonklaus' Go bindings](https://github.com/gordonklaus/portaudio) for [PortAudio](http://portaudio.com/) for outputting sound.
 
-I found an awesome collection of high quality drum samples at [99sounds.org](http://99sounds.org/drum-samples/). It's free for download, but definitely throw them a donation if you appreciate their work. I found their 808 beats to be just want I needed. I reached out to confirm they were ok with me using their samples in a public art project, and [Tomislav](https://twitter.com/bpblog) replied a few hours later with full support.
+I found an awesome collection of high quality drum samples at [99sounds.org](http://99sounds.org/drum-samples/). It's free for download, but throw them a donation if you appreciate their work. I found their 808 beats to be just want I needed. I reached out to confirm they were OK with me using their samples in a public art project, [Tomislav](https://twitter.com/bpblog) replied a few hours later with full support.
 
 ## Back to the project
 
-With a working prototype in Go, I returned to thinking about building a physical beat machine. [Burning Man](https://burningman.org/) seemed like a reasonable destination for a project like this, and provided a concrete deadline for added motivation.
+With a working prototype in Go, I returned to thinking about building a physical drum machine. [Burning Man](https://burningman.org/) seemed like a reasonable destination for a project like this, and provided a concrete deadline for added motivation.
 
-I began brainstorming a structure with my good friend [@yet](https://twitter.com/yet), who pointed out that a long, flat structure like the one used by Nine Inch Nails would not fare well in the gale-force winds of the Black Rock Desert. He suggested wrapping the beat machine into the shape of a phone booth, as a more compact structure would be much easier to build, transport, and support.
+I began brainstorming a structure with my good friend [@yet](https://twitter.com/yet), who pointed out that a long, flat structure like the one used by Nine Inch Nails would not fare well in the gale-force winds of the Black Rock Desert. He suggested wrapping the drum machine into the shape of a phone booth, as a more compact structure would be much easier to build, transport, and support.
 
 ### Addressable LEDs
 
-As the physical form continued to coalesce, I knew I'd need buttons to enable beats, and LEDs to provide feedback. I began researching addressable LEDs. Like Go, this was another domain where I was looking for a personal project to enable learning more about. Arduino seemed to be the platform of choice for working with LEDs. I was not very familiar with Arduino or Raspberry Pi. I recalled a conversation I had with my friend [Nick](https://github.com/hebnern), who had integrated an Arduino in [The Krawler](https://www.facebook.com/thekrawler/)'s fire poofers. He mentioned the lack of library support being a pain point that would not exist on a Pi, since it's basically just a Linux computer. I opted to build the project around a Pi for this very reason, though aware that I was going a bit against the grain for an addressable LED project.
+As the physical form continued to coalesce, I knew I'd need buttons to enable beats, and LEDs to provide feedback. I began researching addressable LEDs. Like Go, this was another domain where I was looking for a personal project to enable learning more about. Arduino seemed to be the platform of choice for working with LEDs. I was not very familiar with Arduino or Raspberry Pi. I recalled a conversation I had with my friend [Nick](https://github.com/hebnern), who had integrated an Arduino into [The Krawler](https://www.facebook.com/thekrawler/)'s fire poofers. He mentioned the lack of library support being a pain point that would not exist on a Pi, since it's basically just a Linux computer. I opted to build the project around a Pi for this very reason, though aware that I was going a bit against the grain for an addressable LED project.
 
 Fortunately the amazing folks at [Adafruit](https://www.adafruit.com/) had a tutorial on [controlling NeoPixel LEDs with a Raspberry Pi](https://learn.adafruit.com/neopixels-on-raspberry-pi). Even more fortuitious, the library used in the tutorial, [jgarff's rpi_ws281x](https://github.com/jgarff/rpi_ws281x), came with a Go wrapper!
 
@@ -62,11 +62,11 @@ Controlling [NeoPixels](https://www.adafruit.com/category/168) from a Pi require
 
 ### Pulse width modulation and onboard audio
 
-The [rpi_ws281x LED library](https://github.com/jgarff/rpi_ws281x) uses hardware PWM on the Raspberyy Pi to communicate with the LEDs. Unfortunately this [conflicts](https://github.com/jgarff/rpi_ws281x#pwm) with the Pi's onboard sound card. To get around this, I disabled the onboard sound and installed a [Plugable USB Audio Adapter](https://www.amazon.com/gp/product/B00NMXY2MO). For more details on the config changes, have a look at the `external sound card` section of [this repo's README.md](https://github.com/siggy/bbox#env--bootup).
+The [rpi_ws281x LED library](https://github.com/jgarff/rpi_ws281x) uses hardware PWM on the Raspbery Pi to communicate with the LEDs. Unfortunately this [conflicts](https://github.com/jgarff/rpi_ws281x#pwm) with the Pi's onboard sound card. To get around this, I disabled the onboard sound and installed a [Plugable USB Audio Adapter](https://www.amazon.com/gp/product/B00NMXY2MO). For more details on the config changes, have a look at the `external sound card` section of [this repo's README.md](https://github.com/siggy/bbox#env--bootup).
 
 ### Keyboard hacking
 
-For user input, I wanted to use 64 large buttons to toggle beats. The Pi does not have enough pins to handle that many without other chips or boards. I had read about hacking apart a computer keyboard and wiring 64 buttons into it, via [Instructables](https://www.instructables.com/) in two articles: [Hacking a USB Keyboard](https://www.instructables.com/id/Hacking-a-USB-Keyboard/) and [Create External Buttons For Your Keyboard](https://www.instructables.com/id/Create-External-Buttons-For-Your-Keyboard/). This was a compelling option, as the software was already built to accept keyboard inputs, no additional coding or GPIO programming required. It's a fun hack, though wiring 64 buttons into a tiny keyboard PCB yields this tangle of epicness:
+For user input, I wanted to use 64 large buttons to toggle beats. The Pi does not have enough pins to handle this many without other chips or boards. I had read about hacking apart a computer keyboard and wiring buttons into it, via [Instructables](https://www.instructables.com/) in two articles: [Hacking a USB Keyboard](https://www.instructables.com/id/Hacking-a-USB-Keyboard/) and [Create External Buttons For Your Keyboard](https://www.instructables.com/id/Create-External-Buttons-For-Your-Keyboard/). This was a compelling option, as the software was already built to accept keyboard inputs, no additional coding or GPIO programming required. It's a fun hack, though wiring 64 buttons into a tiny keyboard PCB yields this tangle of epicness:
 
 <a href="assets/images/wires1.jpg" data-lightbox="wires" data-title="Wires"><img src="assets/images/wires1.jpg" alt="Wires" class="thumbnail"></a><a href="assets/images/wires2.jpg" data-lightbox="wires" data-title="Wires"><img src="assets/images/wires2.jpg" alt="Wires" class="thumbnail"></a><a href="assets/images/wires3.jpg" data-lightbox="wires" data-title="Wires"><img src="assets/images/wires3.jpg" alt="Wires" class="thumbnail"></a>
 
@@ -85,9 +85,9 @@ For the full SketchUp files, (click here).
 
 ### Plastics
 
-In deciding on the material for the exterior of the pyramid, my friends [@yet](https://twitter.com/yet) and Brian suggested plywood, but a desire for transparent material, to allow LEDs to shine through from the inside, led me to plastic. In the end we built the base and a halo out of plywood, as an homage to this initial design, and our shared fondness of [Tom Sachs' Love Letter to Plywood](https://vimeo.com/44947985).
+In deciding on the material for the exterior of the pyramid, my friends [@yet](https://twitter.com/yet) and Brian suggested plywood, but a desire for transparent material, to allow LEDs to shine through from the inside, led me to plastic. In the end we built the base and a halo out of plywood, as an homage to this initial design, and our shared fondness for [Tom Sachs' Love Letter to Plywood](https://vimeo.com/44947985).
 
-I had no experience working with or manufacturing plastic. Fortunately, the good folks at [TAP Plastics SF](https://www.tapplastics.com/about/locations/detail/san_francisco_ca), and specifically my new friend at TAP, Jacobo, were extremely helpful in guiding me. I submitted the overall triangle dimensions for C&C manufacturing. The trickier part was producing those precise bevel angles so the triangles would fit together perfectly, and align with the ground. Jacobo took it upon himself to cut the bevels by hand. I had ordered up five triangles instead of four in case anything broke. I ended up with five perfectly shaped triangles. When put together, the four tops of the triangles fit with absolute precision, I cannot thank Jacobo and TAP enough for their work on this:
+I had no experience working with or manufacturing plastic. Fortunately, the good folks at [TAP Plastics SF](https://www.tapplastics.com/about/locations/detail/san_francisco_ca), and specifically my new friend at TAP, Jacobo, were extremely helpful in guiding me. I submitted the overall triangle dimensions for C&C manufacturing. The trickier part was producing those precise bevel angles so the triangles would fit together perfectly, and align with the ground. Jacobo took it upon himself to cut the bevels by hand. I had ordered up five triangles instead of four in case anything broke. I ended up with five perfectly shaped triangles. When put together, the four tops of the triangles fit with absolute precision, I cannot thank Jacobo and TAP enough for their work on this.
 
 <a href="assets/images/jacobo.jpg" data-lightbox="jacobo" data-title="Jacobo from TAP Plastics"><img src="assets/images/jacobo.jpg" alt="Jacobo from TAP Plastics" class="thumbnail"></a>
 
@@ -113,7 +113,7 @@ Upon arrival setup went surprisingly smooth. The awesome folks at [The Artery](h
 
 ## Lessons learned
 
-I originally set out to build Beatboxer on my own, partly to see if I could, but primarily because I did not want to burden friends who already had amazing projects on their plates. Though I quickly found that I was in way over my head, I fortunately also found my friends were extremely willing to get involved. Without everyone jumping in, there is no way this project would have happened. I cannot thank everyone enough.
+I originally set out to build Beatboxer on my own, partly to see if I could, but also because I did not want to burden friends who already had amazing projects on their plates. Though I quickly found that I was in way over my head, I fortunately also found my friends were extremely willing to get involved. Without everyone jumping in, there is no way this project would have happened. I cannot thank everyone enough.
 
 (building beatboxer vid)
 
