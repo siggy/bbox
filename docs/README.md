@@ -66,7 +66,7 @@ For user input, I wanted to use 64 large buttons to toggle beats. The Pi does no
 
 <a href="assets/images/wires1.jpg" data-lightbox="wires" data-title="Wires"><img src="assets/images/wires1.jpg" alt="Wires" class="thumbnail"></a><a href="assets/images/wires2.jpg" data-lightbox="wires" data-title="Wires"><img src="assets/images/wires2.jpg" alt="Wires" class="thumbnail"></a><a href="assets/images/wires3.jpg" data-lightbox="wires" data-title="Wires"><img src="assets/images/wires3.jpg" alt="Wires" class="thumbnail"></a>
 
-Determined to hack this keyboard, I against enlisted much soldering help from [@yet](https://twitter.com/yet) to wire 30 pins from the keyboard pcb to an [Adafruit perma-proto board](https://www.adafruit.com/product/1606). From there we wired up 64 combinations of the 30 pins. For those interested in the pinouts of an [AmazonBasics Keyboard](https://www.amazon.com/gp/product/B005EOWBHC/ref=oh_aui_search_detailpage?ie=UTF8&psc=1), have a look at this [code](https://github.com/siggy/bbox/blob/master/bbox/keys.go).
+Determined to hack this keyboard, I again enlisted much soldering help from [@yet](https://twitter.com/yet) to wire 30 pins from the keyboard pcb to an [Adafruit perma-proto board](https://www.adafruit.com/product/1606). From there we wired up 64 combinations of the 30 pins. For those interested in the pinouts of an [AmazonBasics Keyboard](https://www.amazon.com/gp/product/B005EOWBHC/ref=oh_aui_search_detailpage?ie=UTF8&psc=1), have a look at this [code](https://github.com/siggy/bbox/blob/master/bbox/keys.go).
 
 ### A change in shape
 
