@@ -77,7 +77,7 @@ To build a pyramid, I naively thought I could simply design four triangles, do s
 <a href="assets/images/sketch1.jpg" data-lightbox="sketch" data-title="SketchUp"><img src="assets/images/sketch1.jpg" alt="SketchUp" class="thumbnail narrow"></a><a href="assets/images/sketch2.jpg" data-lightbox="sketch" data-title="SketchUp"><img src="assets/images/sketch2.jpg" alt="SketchUp" class="thumbnail narrow"></a><a href="assets/images/sketch3.jpg" data-lightbox="sketch" data-title="SketchUp"><img src="assets/images/sketch3.jpg" alt="SketchUp" class="thumbnail narrow"></a>
 
 
-For the full SketchUp files, (click here).
+For the full <a href="https://www.sketchup.com/">SketchUp</a> file, <a href="assets/images/bbox_sketchup.skp">click here</a>.
 
 ### Plastics
 
@@ -131,27 +131,31 @@ Another requirement for these projects was faster boot time. With vanilla Raspia
 
 With power and boot time sorted, we were ready to apply these LEDs to three more projects.
 
-<a href="assets/images/fish_beatboxer.jpg" data-lightbox="epilogue" data-title="Fish and Beatboxer"><img src="assets/images/fish_beatboxer.jpg" alt="Fish and Beatboxer" class="thumbnail mid"></a><a href="assets/images/crane.jpg" data-lightbox="epilogue" data-title="Crane Of Remembrance"><img src="assets/images/crane.jpg" alt="Crane Of Remembrance" class="thumbnail mid"></a><a href="assets/images/fish_krawler.jpg" data-lightbox="epilogue" data-title="Fish & Krawler"><img src="assets/images/fish_krawler.jpg" alt="Fish & Krawler" class="thumbnail mid"></a>
+<a href="assets/images/fish_beatboxer.jpg" data-lightbox="epilogue" data-title="Fish and Beatboxer"><img src="assets/images/fish_beatboxer.jpg" alt="Fish and Beatboxer" class="thumbnail"></a>
 
 ### The Krawler
 
 [The Krawler](https://www.facebook.com/thekrawler/) is Rob and [@cecbayan](https://www.instagram.com/cecbayan/)'s riding-lawnmower-turned-tank. It also shoots fire from eight poofers mounted on top. Here we added 480 LEDs along the bottom frame in a streak-like pattern, to highlight some of the amazing manufacturing and engineering that went into this vehicle.
 
-TODO: (krawler pic/vid)
+<a href="assets/images/fish_krawler.jpg" data-lightbox="epilogue" data-title="Fish & Krawler"><img src="assets/images/fish_krawler.jpg" alt="Fish & Krawler" class="thumbnail"></a>
 
 ### Crane of Remembrance
 
 The Crane of Remembrance is a 15-foot tall replica of a Port of Oakland crane, and a tribute to the victims of the [Ghost Ship Fire](https://en.wikipedia.org/wiki/2016_Oakland_warehouse_fire). Our friend Rob is an Oakland firefighter, and was onsite during the incident. He inspired our group to build the Crane. The lighting included 540 LEDs, 240 in a beating heart, and 300 in two strands extending across the top. The heart beats at 36 BPM, and the strands display 36 lights at a time, one for each person lost in the fire.
 
-TODO: (crane pic/vid)
+<a href="assets/images/crane.jpg" data-lightbox="epilogue" data-title="Crane Of Remembrance"><img src="assets/images/crane.jpg" alt="Crane Of Remembrance" class="thumbnail"></a>
 
 ### The Fish
 
 The Fish is Brian's mutant vehicle, built on top of an airport luggage carrier. This year was the Fish's tenth year at Burning Man. This turned out to be the most ambitious lighting project, involving 2040 LEDs, all mounted in its four fins. Each side fin alone has 720 LEDs, and the top and back fins have a combined 600. Painting with LEDs on a canvas like this turned out to be quite a thrill:
 
-TODO: (fish pic/vid)
+<iframe width="560" height="315" src="https://www.youtube.com/embed/AYFAND0Bk_w" frameborder="0" allowfullscreen></iframe>
 
-2017.10.01
+## Contact
+
+Thanks for reading. If you have any questions or comments, you can <a href="https://github.com/siggy/bbox/issues">file an issue against this repo in Github</a>, or just hit me up on Twitter at <a href="https://twitter.com/siggy">@siggy</a>.
+
+Written by <a href="https://twitter.com/siggy">@siggy</a>, published on 2017.10.02.
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="assets/js/lightbox.min.js"></script>
