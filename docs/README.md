@@ -120,7 +120,7 @@ As I learned to work with LEDs, I found opportunities to work with other artists
 <a href="assets/images/fish_fritzing.png" data-lightbox="fish_fritzing" data-title="The Fish Fritzing"><img src="assets/images/fish_fritzing.png" alt="The Fish Fritzing" class="thumbnail mid"></a>
 
 
-To download the source Fritzing shareable sketch file, <a href="assets/images/fish_fritzing.fzz">click here</a> (requires the <a href="https://github.com/adafruit/Fritzing-Library">Adafruit Fritzing Library</a>. To view this project directly on the Fritzing site, head over to the
+To download the source Fritzing shareable sketch file, <a href="assets/images/fish_fritzing.fzz">click here</a> (requires the <a href="https://github.com/adafruit/Fritzing-Library">Adafruit Fritzing Library</a>). To view this project directly on the Fritzing site, head over to the
 <a href="http://fritzing.org/projects/neopixels-on-mutant-vehicles">NeoPixels on Mutant Vehicles project</a> at <a href="http://fritzing.org">fritzing.org</a>.
 
 With additional components and design complexity, my friend [@oceanphoto](https://twitter.com/oceanphoto) jumped back in and 3D printed some awesome enclosures to keep everything safe from the elements, and even included ethernet ports to be able to update the Pi without opening the enclosures:
