@@ -10,9 +10,7 @@ permalink: /
 
 This is the story of building Beatboxer:
 
-(better beatboxer vid)
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/Pbo0mBi7B7w" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/2gNIAz0s2dg" frameborder="0" allowfullscreen></iframe>
 
 ## Prior Art
 
@@ -56,9 +54,7 @@ Fortunately the amazing folks at [Adafruit](https://www.adafruit.com/) had a tut
 
 I cannot emphasize enough how helpful [Adafruit](https://www.adafruit.com/) is for projects such as these. Their tutorials and documentation are awesome, and they provide all the materials needed to follow along.
 
-Controlling [NeoPixels](https://www.adafruit.com/category/168) from a Pi requires building a circuit board, something I had zero experience with. I again enlisted [@yet](https://twitter.com/yet)'s help to learn how to solder wires, chips, and resistors. In short order we had a Pi controlling [NeoPixels](https://www.adafruit.com/category/168):
-
-(led vid)
+Controlling [NeoPixels](https://www.adafruit.com/category/168) from a Pi requires building a circuit board, something I had zero experience with. I again enlisted [@yet](https://twitter.com/yet)'s help to learn how to solder wires, chips, and resistors. In short order we had a Pi controlling [NeoPixels](https://www.adafruit.com/category/168).
 
 ### Pulse width modulation and onboard audio
 
@@ -115,13 +111,17 @@ Upon arrival setup went surprisingly smooth. The awesome folks at [The Artery](h
 
 I originally set out to build Beatboxer on my own, partly to see if I could, but also because I did not want to burden friends who already had amazing projects on their plates. Though I quickly found that I was in way over my head, I fortunately also found my friends were extremely willing to get involved. Without everyone jumping in, there is no way this project would have happened. I cannot thank everyone enough.
 
-(building beatboxer vid)
+<iframe width="560" height="315" src="https://www.youtube.com/embed/a7bc4D5Lgos" frameborder="0" allowfullscreen></iframe>
 
 ## Epilogue
 
 As I learned to work with LEDs, I found opportunities to work with other artists to help light their own projects. While Beatboxer used about 300 LEDs, these projects demanded a bit more. Applying the same powering methods to these larger projects resulted in some melted electronics, necessitating a power redesign. Fortunately my friend [Tom](http://www.tinsel.org/) quickly provided a wiring diagram to overcome these power issues:
 
-(tom's wiring diagram)
+<a href="assets/images/fish_fritzing.png" data-lightbox="fish_fritzing" data-title="The Fish Fritzing"><img src="assets/images/fish_fritzing.png" alt="The Fish Fritzing" class="thumbnail mid"></a>
+
+
+To download the source Fritzing shareable sketch file, <a href="assets/images/fish_fritzing.fzz">click here</a> (requires the <a href="https://github.com/adafruit/Fritzing-Library">Adafruit Fritzing Library</a>. To view this project directly on the Fritzing site, head over to the
+<a href="http://fritzing.org/projects/neopixels-on-mutant-vehicles">NeoPixels on Mutant Vehicles project</a> at <a href="http://fritzing.org">fritzing.org</a>.
 
 With additional components and design complexity, my friend [@oceanphoto](https://twitter.com/oceanphoto) jumped back in and 3D printed some awesome enclosures to keep everything safe from the elements, and even included ethernet ports to be able to update the Pi without opening the enclosures:
 
@@ -131,27 +131,25 @@ Another requirement for these projects was faster boot time. With vanilla Raspia
 
 With power and boot time sorted, we were ready to apply these LEDs to three more projects.
 
-
-
 <a href="assets/images/fish_beatboxer.jpg" data-lightbox="epilogue" data-title="Fish and Beatboxer"><img src="assets/images/fish_beatboxer.jpg" alt="Fish and Beatboxer" class="thumbnail mid"></a><a href="assets/images/crane.jpg" data-lightbox="epilogue" data-title="Crane Of Remembrance"><img src="assets/images/crane.jpg" alt="Crane Of Remembrance" class="thumbnail mid"></a><a href="assets/images/fish_krawler.jpg" data-lightbox="epilogue" data-title="Fish & Krawler"><img src="assets/images/fish_krawler.jpg" alt="Fish & Krawler" class="thumbnail mid"></a>
 
 ### The Krawler
 
 [The Krawler](https://www.facebook.com/thekrawler/) is Rob and [@cecbayan](https://www.instagram.com/cecbayan/)'s riding-lawnmower-turned-tank. It also shoots fire from eight poofers mounted on top. Here we added 480 LEDs along the bottom frame in a streak-like pattern, to highlight some of the amazing manufacturing and engineering that went into this vehicle.
 
-(krawler pic/vid)
+TODO: (krawler pic/vid)
 
 ### Crane of Remembrance
 
 The Crane of Remembrance is a 15-foot tall replica of a Port of Oakland crane, and a tribute to the victims of the [Ghost Ship Fire](https://en.wikipedia.org/wiki/2016_Oakland_warehouse_fire). Our friend Rob is an Oakland firefighter, and was onsite during the incident. He inspired our group to build the Crane. The lighting included 540 LEDs, 240 in a beating heart, and 300 in two strands extending across the top. The heart beats at 36 BPM, and the strands display 36 lights at a time, one for each person lost in the fire.
 
-(crane pic/vid)
+TODO: (crane pic/vid)
 
 ### The Fish
 
 The Fish is Brian's mutant vehicle, built on top of an airport luggage carrier. This year was the Fish's tenth year at Burning Man. This turned out to be the most ambitious lighting project, involving 2040 LEDs, all mounted in its four fins. Each side fin alone has 720 LEDs, and the top and back fins have a combined 600. Painting with LEDs on a canvas like this turned out to be quite a thrill:
 
-(fish pic/vid)
+TODO: (fish pic/vid)
 
 2017.10.01
 
