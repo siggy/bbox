@@ -20,11 +20,15 @@ Around 2008 I saw Nine Inch Nails perform Echoplex using a drum machine that occ
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/6O_92BTrUcA" frameborder="0" allowfullscreen></iframe>
 
-I loved it, and I wanted to build it.
+I loved it, I wanted to build something like it.
+
+### Raspberry Pi
+
+Eight years later in 2016 I had a converstion with my friend [Nick](https://github.com/hebnern) about his Arduino integration into [The Krawler](https://www.facebook.com/thekrawler/)'s fire poofers, he mentioned the lack of library and developer support being a pain point. He said he'd use a Raspberry Pi the next time, since it's pretty much just a Linux computer. This caught my attention. _It's a UNIX system, I know this._ That was the catalyst to look for an excuse to play with a Pi.
 
 ### Beatboxer in JavaScript
 
-In 2016 I attempted to replicate Nine Inch Nails' drum machine on a web page, using as little code as possible. The result was a few hundred lines of JavaScript, HTML, and CSS, I called it [Beatboxer](https://sig.gy/beatboxer/):
+<a href="https://github.com/siggy/beatboxer/commit/17850ff889e607aba5941c5de58ecba9b342d5c0">Less than a week</a> after chatting with Nick, I attempted to replicate Nine Inch Nails' drum machine on a web page, using as little code as possible. The result was a few hundred lines of JavaScript, HTML, and CSS, I called it [Beatboxer](https://sig.gy/beatboxer/):
 
 <iframe width="900" height="315" src="https://sig.gy/beatboxer/" frameborder="0" allowfullscreen></iframe>
 
@@ -38,17 +42,17 @@ Beatboxer transmits input from a keyboard to LEDs, a console renderer, and a dru
 
 Reading and playing back audio files in Go turned out to be more work than in JavaScript. I eventually found a pair of excellent Go libraries, [youpy's go-wav](https://github.com/youpy/go-wav) for reading wavs, and [gordonklaus' Go bindings](https://github.com/gordonklaus/portaudio) for [PortAudio](http://portaudio.com/) for outputting sound.
 
-I found an awesome collection of high quality drum samples at [99sounds.org](http://99sounds.org/drum-samples/). It's free for download, but throw them a donation if you appreciate their work. I found their 808 beats to be just want I needed. I reached out to confirm they were OK with me using their samples in a public art project, [Tomislav](https://twitter.com/bpblog) replied a few hours later with full support.
+I found an awesome collection of high quality drum samples at [99sounds.org](http://99sounds.org/drum-samples/). It's free for download. Throw them a donation if you appreciate their work. I found their 808 beats to be just want I needed. I reached out to confirm they were OK with me using their samples in a public art project, [Tomislav](https://twitter.com/bpblog) replied a few hours later with full support.
 
 ## Back to the project
 
-With a working prototype in Go, I returned to thinking about building a physical drum machine. [Burning Man](https://burningman.org/) seemed like a reasonable destination for a project like this, and provided a concrete deadline for added motivation.
+With a working prototype in Go, I returned to thinking about building a physical drum machine. [Burning Man 2017](https://burningman.org/) provided a concrete deadline for added motivation.
 
 I began brainstorming a structure with my good friend [@yet](https://twitter.com/yet), who pointed out that a long, flat structure like the one used by Nine Inch Nails would not fare well in the gale-force winds of the Black Rock Desert. He suggested wrapping the drum machine into the shape of a phone booth, as a more compact structure would be much easier to build, transport, and support.
 
 ### Addressable LEDs
 
-As the physical form continued to coalesce, I knew I'd need buttons to enable beats, and LEDs to provide feedback. I began researching addressable LEDs. Like Go, this was another domain where I was looking for a personal project to enable learning more about. Arduino seemed to be the platform of choice for working with LEDs. I was not very familiar with Arduino or Raspberry Pi. I recalled a conversation I had with my friend [Nick](https://github.com/hebnern), who had integrated an Arduino into [The Krawler](https://www.facebook.com/thekrawler/)'s fire poofers. He mentioned the lack of library support being a pain point that would not exist on a Pi, since it's basically just a Linux computer. I opted to build the project around a Pi for this very reason, though aware that I was going a bit against the grain for an addressable LED project.
+As the physical form continued to coalesce, I knew I'd need buttons to enable beats, and LEDs to provide feedback. I began researching addressable LEDs. Like Go, this was another domain where I was looking for a personal project to enable learning more about. Arduino seemed to be the platform of choice for working with LEDs. I opted to build the project around a Pi, aware that I was going a bit against the grain for an addressable LED project.
 
 Fortunately the amazing folks at [Adafruit](https://www.adafruit.com/) had a tutorial on [controlling NeoPixel LEDs with a Raspberry Pi](https://learn.adafruit.com/neopixels-on-raspberry-pi). Even more fortuitious, the library used in the tutorial, [jgarff's rpi_ws281x](https://github.com/jgarff/rpi_ws281x), came with a Go wrapper!
 
@@ -70,7 +74,7 @@ Determined to hack this keyboard, I again enlisted much soldering help from [@ye
 
 ### A change in shape
 
-While all this was going on, I described to my good friend [Jhon](https://www.instagram.com/yesjhon/) what I was working on. Jhon's background in electronics and industrial design exceeds just about anyone I know, and he immediately suggested I consider a pyramid shape rather than a phone booth. I loved the idea. At the time I did not realize the added complexity a shape like this would require, but in the end it was definitely worth it.
+While all this was going on, I described to my good friend [Jhon](https://www.instagram.com/yesjhon/) what I was working on. Jhon's background in electronics and industrial design exceeds just about anyone I know, and he immediately suggested I reshape the phone booth as a pyramid. I loved the idea. At the time I did not realize the added complexity a shape like this would require, but in the end it was worth it.
 
 To build a pyramid, I naively thought I could simply design four triangles, do some linear calculations for the angles, and all would fit together. Fortunately my good friend and owner of Three Bears Furniture, [@jneaderhouser](https://twitter.com/jneaderhouser), pointed me to this excellent [compound miter calculator](http://www.pdxtex.com/canoe/compound.htm). This helped me determine that, based on triangles 6 feet tall by 2.5 feet wide, I needed 46.244° side bevels and 77.975° base bevels. I was able to confirm this all worked by building Beatboxer in SketchUp:
 
@@ -89,7 +93,7 @@ I had no experience working with or manufacturing plastic. Fortunately, the good
 
 ### Construction
 
-With software, electronics, and materials proven out, last was actual assembly. As with all the collaboration on this project, I simultaneously realized I needed help and found a friend extremely willing to collaborate. My friend Brian, who could build a house if needed, and had experience constructing things to withstand the elements at Burning Man, understood well before I did what was required to assemble Beatboxer. I showed up at his house expecting to ask some questions, and he had a complete internal skeleton designed, with materials sourced and ready to assemble. In one evening he built a complete internal structure out of PVC pipes, very strong and lightweight:
+With software, electronics, and materials proven out, last was actual assembly. As with all the collaboration on this project, I simultaneously realized I needed help and found a friend extremely willing to jump in. My friend Brian, who could build a house if he had to, and had experience constructing things to withstand the elements at Burning Man, understood well before I did what was required to assemble Beatboxer. I showed up at his house expecting to ask some questions, and he had a complete internal skeleton designed, with materials sourced and ready to assemble. In one evening he built a complete internal structure out of PVC pipes, very strong and lightweight:
 
 <a href="assets/images/structure1.jpg" data-lightbox="structure" data-title="PVC Structure"><img src="assets/images/structure1.jpg" alt="PVC Structure" class="thumbnail"></a><a href="assets/images/structure2.jpg" data-lightbox="structure" data-title="PVC Structure"><img src="assets/images/structure2.jpg" alt="PVC Structure" class="thumbnail"></a>
 
@@ -97,7 +101,7 @@ Without Brian's help I would have assembled this thing with glue and tape and it
 
 ### Last minute freakout
 
-While helping me with bevel angles, my woodworker friend [@jneaderhouser](https://twitter.com/jneaderhouser) also advised me to build a prototype. I forewent this step in favor of SketchUp, concerned I did not have time for additional construction. One week before the event this came back to bite me in a big way. I had purchased 64 [red arcade buttons](https://www.amazon.com/gp/product/B00V0OM7WO/ref=oh_aui_search_detailpage?ie=UTF8&psc=1) to be mounted in the pyramid sides, which would control the beats. As I assembled Beatboxer for the first time, I quickly realized that the buttons were so deep that they collided on the corners of the pyramid. I needed shallower buttons, but the holes in the pyramid had been cut specifically for the diameter of these larger buttons. Again a friend, [@oceanphoto](https://twitter.com/oceanphoto), swooped in to save the day. He quickly 3D printed mountings to allow smaller buttons to fit tightly in the pyramid holes:
+While helping me with bevel angles, my woodworker friend [@jneaderhouser](https://twitter.com/jneaderhouser) also advised me to build a prototype. I forewent this step in favor of SketchUp, concerned I did not have time for additional construction. One week before the event that decision came back to bite me. I had purchased 64 [red arcade buttons](https://www.amazon.com/gp/product/B00V0OM7WO/ref=oh_aui_search_detailpage?ie=UTF8&psc=1) to be mounted in the pyramid sides, which would toggle the beats. As I assembled Beatboxer for the first time, I quickly realized that the buttons were so deep that they collided on the corners of the pyramid. I needed shallower buttons, but the holes in the pyramid had been cut specifically for the diameter of these larger buttons. Again a friend, [@oceanphoto](https://twitter.com/oceanphoto), swooped in to save the day. He quickly 3D printed mountings to allow smaller buttons to fit tightly in the pyramid holes:
 
 <a href="assets/images/3d_button1.jpg" data-lightbox="3d_button" data-title="3D-printed button housing"><img src="assets/images/3d_button1.jpg" alt="3D-printed button housing" class="thumbnail"></a><a href="assets/images/3d_button2.jpg" data-lightbox="3d_button" data-title="3D-printed button housing"><img src="assets/images/3d_button2.jpg" alt="3D-printed button housing" class="thumbnail"></a>
 
@@ -109,7 +113,7 @@ Upon arrival setup went surprisingly smooth. The awesome folks at [The Artery](h
 
 ## Lessons learned
 
-I originally set out to build Beatboxer on my own, partly to see if I could, but also because I did not want to burden friends who already had amazing projects on their plates. Though I quickly found that I was in way over my head, I fortunately also found my friends were extremely willing to get involved. Without everyone jumping in, there is no way this project would have happened. I cannot thank everyone enough.
+I originally set out to build Beatboxer on my own, to see if I could, and also because I did not want to burden friends who already had amazing projects on their plates. Though I quickly found that I was in way over my head, I fortunately also found friends who were extremely willing to get involved. Without everyone jumping in, there is no way this project would have happened. I cannot thank everyone enough.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/a7bc4D5Lgos" frameborder="0" allowfullscreen></iframe>
 
