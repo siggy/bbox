@@ -32,9 +32,9 @@ This was a fun little project, I learned a bit about [AudioContext](https://deve
 
 ## A rewrite in Go
 
-[Go](https://golang.org/) has recently become my favorite programming language. Rewriting Beatboxer in Go was a great excuse to play with the language a bit more.
+[Go](https://golang.org/) has recently become a favorite programming language of mine. Rewriting Beatboxer in Go was a great excuse to play with the language a bit more.
 
-Beatboxer transmits input from a keyboard to LEDs, a console renderer, and a drum loop. The Go language really shines here in allowing explicit definition of these concurrent threads, with communication via Go Channels. This whole architecture is summarized nicely in [BeatBoxer's main](https://github.com/siggy/bbox/blob/master/cmd/bbox.go).
+Beatboxer transmits input from a keyboard to LEDs, a console renderer, and a drum loop. The Go language really shines here in allowing explicit definition of these concurrent threads, with communication via Go Channels. This whole architecture is summarized nicely in [Beatboxer's main](https://github.com/siggy/bbox/blob/master/cmd/bbox.go).
 
 Reading and playing back audio files in Go turned out to be more work than in JavaScript. I eventually found a pair of excellent Go libraries, [youpy's go-wav](https://github.com/youpy/go-wav) for reading wavs, and [gordonklaus' Go bindings](https://github.com/gordonklaus/portaudio) for [PortAudio](http://portaudio.com/) for outputting sound.
 
@@ -70,7 +70,7 @@ Determined to hack this keyboard, I again enlisted much soldering help from [@ye
 
 ### A change in shape
 
-While all this was going on, I described to my good friend [Jhon](https://www.instagram.com/yesjhon/) what I was working on. Jhon's background in electronics and industrial design exceeds anyone I know, and he immediately suggested I consider a pyramid shape rather than a phone booth. I loved the idea. At the time I did not realize the added complexity a shape like this would require, but in the end it was definitely worth it.
+While all this was going on, I described to my good friend [Jhon](https://www.instagram.com/yesjhon/) what I was working on. Jhon's background in electronics and industrial design exceeds just about anyone I know, and he immediately suggested I consider a pyramid shape rather than a phone booth. I loved the idea. At the time I did not realize the added complexity a shape like this would require, but in the end it was definitely worth it.
 
 To build a pyramid, I naively thought I could simply design four triangles, do some linear calculations for the angles, and all would fit together. Fortunately my good friend and owner of Three Bears Furniture, [@jneaderhouser](https://twitter.com/jneaderhouser), pointed me to this excellent [compound miter calculator](http://www.pdxtex.com/canoe/compound.htm). This helped me determine that, based on triangles 6 feet tall by 2.5 feet wide, I needed 46.244° side bevels and 77.975° base bevels. I was able to confirm this all worked by building Beatboxer in SketchUp:
 
@@ -155,7 +155,7 @@ The Fish is Brian's mutant vehicle, built on top of an airport luggage carrier. 
 
 Thanks for reading. If you have any questions or comments, you can <a href="https://github.com/siggy/bbox/issues">file an issue against this repo in Github</a>, or just hit me up on Twitter at <a href="https://twitter.com/siggy">@siggy</a>.
 
-Written by <a href="https://twitter.com/siggy">@siggy</a>, published on 2017.10.02.
+Published 2017.10.02.
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="assets/js/lightbox.min.js"></script>
