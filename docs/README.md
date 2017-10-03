@@ -121,7 +121,7 @@ Upon arrival setup went surprisingly smooth. The awesome folks at [The Artery](h
 
 ## Lessons learned
 
-I originally set out to build Beatboxer on my own, to see if I could, and also because I did not want to burden friends who already had amazing projects on their plates. Though I quickly found that I was in way over my head, I fortunately also found folks who were extremely willing to get involved. Without everyone jumping in, there is no way this project would have happened. I cannot thank everyone enough.
+I originally set out to build Beatboxer on my own, to see if I could, and also because I did not want to burden friends who already had amazing projects on their own plates. Though I quickly found that I was in way over my head, I fortunately also found folks who were extremely willing to get involved. Without everyone jumping in, there is no way this project would have happened. I cannot thank everyone enough.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/a7bc4D5Lgos" frameborder="0" allowfullscreen></iframe>
 
