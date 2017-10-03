@@ -157,5 +157,9 @@ Thanks for reading. If you have any questions or comments, you can <a href="http
 
 Published 2017.10.02.
 
+## Beatboxer in real life
+
+If you are interested in seeing Beatboxer in person, it will be on display Saturday, 2017.10.14 at <a href="https://burningman.org/events/san-francisco-decompression-2017/">SF Decompression</a>. Come say hi!
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="assets/js/lightbox.min.js"></script>
