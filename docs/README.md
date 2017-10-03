@@ -52,7 +52,7 @@ With a working prototype in Go, I returned to thinking about building a physical
 
 I began brainstorming a structure with my good friend [@yet](https://twitter.com/yet), who pointed out that a long, flat structure like the one used by Nine Inch Nails would not fare well in the gale-force winds of the Black Rock Desert. He suggested wrapping the drum machine into the shape of a phone booth, as a more compact structure would be much easier to build, transport, and support.
 
-A few days later I described the project to my good friend [Jhon](https://www.instagram.com/yesjhon/). Jhon's background in electronics and industrial design exceeds just about anyone I know, and he immediately suggested I reshape the phone booth as a pyramid. I loved the idea. At the time I did not realize the added complexity a shape like this would require, but in the end it was worth it.
+A few days later I described the project to my good friend [Jhon](http://www.jar-lab.com/). Jhon's background in electronics and industrial design exceeds just about anyone I know, and he immediately suggested I reshape the phone booth as a pyramid. I loved the idea. At the time I did not realize the added complexity a shape like this would require, but in the end it was worth it.
 
 <a href="assets/images/sketch1.jpg" data-lightbox="sketch" data-title="Sketch1"><img src="assets/images/sketch1.jpg" alt="Sketch1" class="thumbnail mid"></a><a href="assets/images/sketch2.jpg" data-lightbox="sketch" data-title="Sketch2"><img src="assets/images/sketch2.jpg" alt="Sketch2" class="thumbnail mid"></a><a href="assets/images/sketch3.jpg" data-lightbox="sketch" data-title="Sketch3"><img src="assets/images/sketch3.jpg" alt="Sketch3" class="thumbnail mid"></a>
 
