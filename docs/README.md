@@ -89,7 +89,7 @@ Determined to hack this keyboard, I again enlisted much soldering help from [@ye
 
 ### Plastics
 
-In deciding on the material for the exterior of the pyramid, my friends [@yet](https://twitter.com/yet) and Brian suggested plywood, but a desire for transparent material, to allow LEDs to shine through from the inside, led me to plastic. In the end we built the base and a halo out of plywood, as an homage to this initial design, and our shared fondness for [Tom Sachs' Love Letter to Plywood](https://vimeo.com/44947985).
+In deciding on the material for the exterior of the pyramid, my friends [@yet](https://twitter.com/yet) and Brian MF Horton suggested plywood, but a desire for transparent material, to allow LEDs to shine through from the inside, led me to plastic. In the end we built the base and a halo out of plywood, as an homage to this initial design, and our shared fondness for [Tom Sachs' Love Letter to Plywood](https://vimeo.com/44947985).
 
 I had no experience working with or manufacturing plastic. Fortunately, the good folks at [TAP Plastics SF](https://www.tapplastics.com/about/locations/detail/san_francisco_ca), and specifically my new friend at TAP, Jacobo, were extremely helpful in guiding me. I submitted the overall triangle dimensions for C&C manufacturing. The trickier part was producing those precise bevel angles so the triangles would fit together perfectly, and align with the ground. Jacobo took it upon himself to cut the bevels by hand. I had ordered up five triangles instead of four in case anything broke. I ended up with five perfectly shaped triangles. When put together, the four tops of the triangles fit with absolute precision, I cannot thank Jacobo and TAP enough for their work on this.
 
