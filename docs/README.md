@@ -30,7 +30,7 @@ Eight years later in 2016 I had a converstion with my friend [Nick](https://gith
 
 ### Beatboxer in JavaScript
 
-<a href="https://github.com/siggy/beatboxer/commit/17850ff889e607aba5941c5de58ecba9b342d5c0">Less than a week</a> after chatting with Nick, I attempted to replicate Nine Inch Nails' drum machine on a web page, using as little code as possible. The result was a few hundred lines of JavaScript, HTML, and CSS, I called it [Beatboxer](https://sig.gy/beatboxer/):
+<a href="https://github.com/siggy/beatboxer/commit/17850ff889e607aba5941c5de58ecba9b342d5c0">About a week</a> after chatting with Nick, I attempted to replicate Nine Inch Nails' drum machine on a web page, using as little code as possible. The result was a few hundred lines of JavaScript, HTML, and CSS, I called it [Beatboxer](https://sig.gy/beatboxer/):
 
 <iframe width="900" height="315" src="https://sig.gy/beatboxer/" frameborder="0" allowfullscreen></iframe>
 
