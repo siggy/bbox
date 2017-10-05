@@ -20,15 +20,17 @@ type Loop struct {
 	beats   Beats
 	closing chan struct{}
 	msgs    <-chan Beats
+	tempo   <-chan int
 	ticks   []chan<- int
 	wavs    *Wavs
 }
 
-func InitLoop(msgs <-chan Beats, ticks []chan<- int) *Loop {
+func InitLoop(msgs <-chan Beats, tempo <-chan int, ticks []chan<- int) *Loop {
 	return &Loop{
 		beats:   Beats{},
 		closing: make(chan struct{}),
 		msgs:    msgs,
+		tempo:   tempo,
 		ticks:   ticks,
 		wavs:    InitWavs(),
 	}
@@ -56,6 +58,17 @@ func (l *Loop) Run() {
 				fmt.Printf("Loop closing\n")
 				return
 			}
+
+		case tempo, more := <-l.tempo:
+			if more {
+				// incoming tempo update from keyboard
+				fmt.Printf("TEMPO: %+v", tempo)
+			} else {
+				// we should never get here
+				fmt.Printf("unexpected: tempo return no more\n")
+				return
+			}
+
 		case <-ticker.C: // for every time interval
 			// next interval
 			tick = (tick + 1) % TICKS
