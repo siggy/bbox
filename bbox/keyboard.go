@@ -8,6 +8,8 @@ import (
 )
 
 const (
+	TEMPO_TICK = 15
+
 	// test
 	// DECAY      = 2 * time.Second
 	// KEEP_ALIVE = 5 * time.Second
@@ -209,7 +211,7 @@ func (kb *Keyboard) emitter() {
 				}
 
 				// if tempo change, broadcast
-				if button.tick == 0 && last.tick == 0 {
+				if button.tick == TEMPO_TICK && last.tick == TEMPO_TICK {
 					if button.beat == 0 && last.beat == 0 {
 						kb.tempo <- 1
 					} else if button.beat == 3 && last.beat == 3 {

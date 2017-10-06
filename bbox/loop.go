@@ -6,18 +6,20 @@ import (
 )
 
 const (
-	BPM            = 120
+	DEFAULT_BPM    = 120
+	MIN_BPM        = 30
+	MAX_BPM        = 480
 	SOUNDS         = 4
 	BEATS          = 16
 	TICKS_PER_BEAT = 10
 	TICKS          = BEATS * TICKS_PER_BEAT
-	INTERVAL       = 60 * time.Second / BPM / (BEATS / 4) / TICKS_PER_BEAT // 4 beats per interval
 )
 
 type Beats [SOUNDS][BEATS]bool
 
 type Loop struct {
 	beats   Beats
+	bpm     int
 	closing chan struct{}
 	msgs    <-chan Beats
 	tempo   <-chan int
@@ -28,6 +30,7 @@ type Loop struct {
 func InitLoop(msgs <-chan Beats, tempo <-chan int, ticks []chan<- int) *Loop {
 	return &Loop{
 		beats:   Beats{},
+		bpm:     DEFAULT_BPM,
 		closing: make(chan struct{}),
 		msgs:    msgs,
 		tempo:   tempo,
@@ -37,7 +40,7 @@ func InitLoop(msgs <-chan Beats, tempo <-chan int, ticks []chan<- int) *Loop {
 }
 
 func (l *Loop) Run() {
-	ticker := time.NewTicker(INTERVAL)
+	ticker := time.NewTicker(bpmToInterval(l.bpm))
 	defer ticker.Stop()
 
 	tick := 0
@@ -62,7 +65,15 @@ func (l *Loop) Run() {
 		case tempo, more := <-l.tempo:
 			if more {
 				// incoming tempo update from keyboard
-				fmt.Printf("TEMPO: %+v", tempo)
+				if (l.bpm > MIN_BPM || tempo > 0) &&
+					(l.bpm < MAX_BPM || tempo < 0) {
+					l.bpm += tempo
+					ticker.Stop()
+					ticker = time.NewTicker(bpmToInterval(l.bpm))
+					defer ticker.Stop()
+
+					fmt.Printf("BPM: %+v", l.bpm)
+				}
 			} else {
 				// we should never get here
 				fmt.Printf("unexpected: tempo return no more\n")
@@ -94,4 +105,8 @@ func (l *Loop) Run() {
 func (l *Loop) Close() {
 	// TODO: this doesn't block?
 	close(l.closing)
+}
+
+func bpmToInterval(bpm int) time.Duration {
+	return 60 * time.Second / time.Duration(bpm) / (BEATS / 4) / TICKS_PER_BEAT // 4 beats per interval
 }
