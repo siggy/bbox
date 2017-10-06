@@ -19,6 +19,10 @@ func main() {
 		make(chan bbox.Beats),
 	}
 
+	// tempo changes
+	//	 keyboard => loop
+	tempo := make(chan int)
+
 	// ticks
 	//   loop => render
 	ticks := []chan int{
@@ -26,8 +30,8 @@ func main() {
 	}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), false)
-	loop := bbox.InitLoop(msgs[0], bbox.WriteonlyInt(ticks))
+	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, false)
+	loop := bbox.InitLoop(msgs[0], tempo, bbox.WriteonlyInt(ticks))
 	render := bbox.InitRender(msgs[1], ticks[0])
 
 	go keyboard.Run()

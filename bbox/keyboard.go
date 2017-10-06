@@ -8,6 +8,8 @@ import (
 )
 
 const (
+	TEMPO_TICK = 15
+
 	// test
 	// DECAY      = 2 * time.Second
 	// KEEP_ALIVE = 5 * time.Second
@@ -33,6 +35,7 @@ type Keyboard struct {
 	keepAlive *time.Timer    // ensure at least one beat is sent periodically to keep speaker alive
 	emit      chan Button    // single button press, keyboard->emitter
 	msgs      []chan<- Beats // all beats, emitter->msgs
+	tempo     chan<- int     // tempo changes
 	closing   chan struct{}
 	debug     bool
 }
@@ -44,7 +47,11 @@ func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 	}
 }
 
-func InitKeyboard(msgs []chan<- Beats, debug bool) *Keyboard {
+func InitKeyboard(
+	msgs []chan<- Beats,
+	tempo chan<- int,
+	debug bool,
+) *Keyboard {
 	// termbox.Close() called when Render.Run() exits
 	err := termbox.Init()
 	if err != nil {
@@ -55,6 +62,7 @@ func InitKeyboard(msgs []chan<- Beats, debug bool) *Keyboard {
 	return &Keyboard{
 		beats:   Beats{},
 		msgs:    msgs,
+		tempo:   tempo,
 		emit:    make(chan Button),
 		closing: make(chan struct{}),
 		debug:   debug,
@@ -101,8 +109,8 @@ func (kb *Keyboard) Run() {
 				data = data[:len(data)-curev.N]
 
 				// TODO: make settable
-				// key := keymaps[Key{ev.Ch, 0}]
-				key := keymaps_rpi[Key{ev.Ch, ev.Key}]
+				key := keymaps[Key{ev.Ch, 0}]
+				// key := keymaps_rpi[Key{ev.Ch, ev.Key}]
 				if key != nil {
 					kb.flip(key[0], key[1])
 				}
@@ -141,6 +149,8 @@ func (kb *Keyboard) allOff() bool {
 }
 
 func (kb *Keyboard) emitter() {
+	last := Button{}
+
 	for {
 		select {
 		case <-kb.closing:
@@ -199,6 +209,17 @@ func (kb *Keyboard) emitter() {
 				for _, msg := range kb.msgs {
 					msg <- kb.beats
 				}
+
+				// if tempo change, broadcast
+				if button.tick == TEMPO_TICK && last.tick == TEMPO_TICK {
+					if button.beat == 0 && last.beat == 0 {
+						kb.tempo <- 1
+					} else if button.beat == 3 && last.beat == 3 {
+						kb.tempo <- -1
+					}
+				}
+
+				last = button
 			} else {
 				// we should never get here
 				fmt.Printf("closed on emit, invalid state")
