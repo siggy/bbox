@@ -4,8 +4,6 @@ title: "Beatboxer: A human-sized drum machine built with a Raspberry Pi, LEDs, a
 permalink: /
 ---
 
-**DRAFT**
-
 # Beatboxer: A human-sized drum machine built with a Raspberry Pi, LEDs, and Go
 
 This is the story of building Beatboxer:
