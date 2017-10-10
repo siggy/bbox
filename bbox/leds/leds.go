@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	GPIO_PIN1A = 18  // PWM0, must be 18 or 12
-	GPIO_PIN1B = 12  // PWM0, must be 18 or 12
-	GPIO_PIN2  = 13  // PWM1, must be 13 for rPI 3
-	BRIGHTNESS = 255 // 0-255
-	PI_FACTOR  = math.Pi / 2.
+	DEFAULT_FREQ = 800000
+	GPIO_PIN1A   = 18  // PWM0, must be 18 or 12
+	GPIO_PIN1B   = 12  // PWM0, must be 18 or 12
+	GPIO_PIN2    = 13  // PWM1, must be 13 for rPI 3
+	BRIGHTNESS   = 255 // 0-255
+	PI_FACTOR    = math.Pi / 2.
 )
 
 const (
@@ -57,6 +58,7 @@ var (
 	}
 
 	redWhite = MkColor(255, 0, 0, 255)
+	black    = MkColor(0, 0, 0, 0)
 )
 
 var (
@@ -78,7 +80,19 @@ const (
 )
 
 // TODO: cache?
+type sineKey struct {
+	ledCount  int
+	floatBeat float64
+	period    int
+}
+
+var sineCache = make(map[sineKey]map[int]int)
+
 func GetSineVals(ledCount int, floatBeat float64, period int) (sineVals map[int]int) {
+	if sineCache[sineKey{ledCount, floatBeat, period}] != nil {
+		return sineCache[sineKey{ledCount, floatBeat, period}]
+	}
+
 	halfPeriod := float64(period) / 2.0
 
 	first := int(math.Ceil(floatBeat - halfPeriod)) // 12.7 - 1.5 => 11.2 => 12
@@ -103,12 +117,23 @@ func GetSineVals(ledCount int, floatBeat float64, period int) (sineVals map[int]
 		}
 	}
 
+	sineCache[sineKey{ledCount, floatBeat, period}] = sineVals
+
 	return
 }
 
 // TODO: cache?
 func SineScale(weight float64) float64 {
 	return math.Sin(PI_FACTOR * weight)
+}
+
+func contains(s []uint32, e uint32) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 // maps midpoint 128 => 32 for brightness
@@ -203,10 +228,11 @@ func AmpColor(color uint32, ampLevel uint32) uint32 {
  * Standalone functions to test all LEDs
  */
 
-func InitLeds(ledCount1 int, ledCount2 int) {
+func InitLeds(freq int, ledCount1 int, ledCount2 int) {
 	// init once for each PIN1 (PWM0)
 	fmt.Printf("ws2811.Init()\n")
 	err := ws2811.Init(
+		freq,
 		GPIO_PIN1A, ledCount1, BRIGHTNESS,
 		GPIO_PIN2, ledCount2, BRIGHTNESS,
 	)
@@ -225,6 +251,7 @@ func InitLeds(ledCount1 int, ledCount2 int) {
 	ws2811.Fini()
 
 	err = ws2811.Init(
+		DEFAULT_FREQ,
 		GPIO_PIN1B, ledCount1, BRIGHTNESS,
 		GPIO_PIN2, ledCount2, BRIGHTNESS,
 	)
@@ -335,6 +362,7 @@ func Shutdown() {
 func Clear(ledCount1 int, ledCount2 int) {
 	fmt.Printf("ws2811.Init()\n")
 	err := ws2811.Init(
+		DEFAULT_FREQ,
 		GPIO_PIN1A, ledCount1, BRIGHTNESS,
 		GPIO_PIN2, ledCount2, BRIGHTNESS,
 	)

@@ -28,7 +28,7 @@ type Crawler struct {
 }
 
 func InitCrawler(level <-chan float64, press <-chan struct{}) *Crawler {
-	InitLeds(CRAWLER_LED_COUNT1, 0)
+	InitLeds(DEFAULT_FREQ, CRAWLER_LED_COUNT1, 0)
 
 	return &Crawler{
 		closing: make(chan struct{}),

@@ -35,18 +35,7 @@ const (
 
 var (
 	RED_LIGHT_RANGE = []uint32{0, 1, 2, 3, 4}
-
-	black = MkColor(0, 0, 0, 0)
 )
-
-func contains(s []uint32, e uint32) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
 
 type Crane struct {
 	ampLevel float64
@@ -55,7 +44,7 @@ type Crane struct {
 }
 
 func InitCrane(level <-chan float64) *Crane {
-	InitLeds(CRANE_LED_COUNT1, CRANE_LED_COUNT2)
+	InitLeds(DEFAULT_FREQ, CRANE_LED_COUNT1, CRANE_LED_COUNT2)
 
 	return &Crane{
 		closing: make(chan struct{}),
@@ -150,7 +139,7 @@ func (c *Crane) Run() {
 			sineMap := GetSineVals(CRANE_LED_COUNT1, streakLoc, STREAK_LENGTH)
 			for led, value := range sineMap {
 				if !contains(append(lights, RED_LIGHT_RANGE...), uint32(led)) {
-                                        mag := float64(value) / 254.0
+					mag := float64(value) / 254.0
 					strand1[led] = MkColor(0, uint32(float64(123)*mag), uint32(float64(55)*mag), 0)
 				}
 			}

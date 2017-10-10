@@ -40,9 +40,9 @@ type Keyboard struct {
 	debug     bool
 }
 
-func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
+func tbprint(x, y int, msg string) {
 	for _, c := range msg {
-		termbox.SetCell(x, y, c, fg, bg)
+		termbox.SetCell(x, y, c, termbox.ColorDefault, termbox.ColorDefault)
 		x++
 	}
 }
@@ -109,15 +109,15 @@ func (kb *Keyboard) Run() {
 				data = data[:len(data)-curev.N]
 
 				// TODO: make settable
-				key := keymaps[Key{ev.Ch, 0}]
-				// key := keymaps_rpi[Key{ev.Ch, ev.Key}]
+				// key := keymaps[Key{ev.Ch, 0}]
+				key := keymaps_rpi[Key{ev.Ch, ev.Key}]
 				if key != nil {
 					kb.flip(key[0], key[1])
 				}
 
 				// for debugging output
 				if kb.debug {
-					tbprint(0, SOUNDS+1, termbox.ColorDefault, termbox.ColorDefault,
+					tbprint(0, SOUNDS+1,
 						fmt.Sprintf("EventKey: k: %5d, c: %c", ev.Key, ev.Ch))
 					termbox.Flush()
 				}
@@ -213,9 +213,9 @@ func (kb *Keyboard) emitter() {
 				// if tempo change, broadcast
 				if button.tick == TEMPO_TICK && last.tick == TEMPO_TICK {
 					if button.beat == 0 && last.beat == 0 {
-						kb.tempo <- 1
+						kb.tempo <- 4
 					} else if button.beat == 3 && last.beat == 3 {
-						kb.tempo <- -1
+						kb.tempo <- -4
 					}
 				}
 

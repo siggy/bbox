@@ -31,7 +31,7 @@ type Fish struct {
 }
 
 func InitFish(level <-chan float64, press <-chan struct{}) *Fish {
-	InitLeds(LED_COUNT1, LED_COUNT2)
+	InitLeds(DEFAULT_FREQ, LED_COUNT1, LED_COUNT2)
 
 	return &Fish{
 		closing: make(chan struct{}),

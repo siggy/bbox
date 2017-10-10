@@ -22,7 +22,7 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
-	leds.InitLeds(LED_COUNT1, LED_COUNT2)
+	leds.InitLeds(leds.DEFAULT_FREQ, LED_COUNT1, LED_COUNT2)
 
 	defer func() {
 		ws2811.Clear()

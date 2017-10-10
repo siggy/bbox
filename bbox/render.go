@@ -16,19 +16,28 @@ type Render struct {
 	msgs    <-chan Beats
 	tick    int
 	ticks   <-chan int
+
+	iv         Interval
+	intervalCh <-chan Interval
 }
 
-func InitRender(msgs <-chan Beats, ticks <-chan int) *Render {
+func InitRender(msgs <-chan Beats, ticks <-chan int, intervalCh <-chan Interval) *Render {
 	return &Render{
 		closing: make(chan struct{}),
 		msgs:    msgs,
 		ticks:   ticks,
+
+		iv: Interval{
+			TicksPerBeat: DEFAULT_TICKS_PER_BEAT,
+			Ticks:        DEFAULT_TICKS,
+		},
+		intervalCh: intervalCh,
 	}
 }
 
 func (r *Render) Draw() {
-	oldTick := (r.tick + TICK_DELAY - 1) % TICKS
-	newTick := (r.tick + TICK_DELAY) % TICKS
+	oldTick := (r.tick + TICK_DELAY - 1) % r.iv.Ticks
+	newTick := (r.tick + TICK_DELAY) % r.iv.Ticks
 	termbox.SetCell(oldTick, 0, ' ', termbox.ColorDefault, termbox.ColorDefault)
 	termbox.SetCell(newTick, 0, 'O', termbox.ColorBlack, termbox.ColorWhite)
 
@@ -43,7 +52,7 @@ func (r *Render) Draw() {
 				back = termbox.ColorRed
 				fore = termbox.ColorBlack
 			}
-			termbox.SetCell(j*TICKS_PER_BEAT, i+1, c, fore, back)
+			termbox.SetCell(j*r.iv.TicksPerBeat, i+1, c, fore, back)
 		}
 
 		// render all runes in old and new columns
@@ -54,9 +63,9 @@ func (r *Render) Draw() {
 		newRune := '.'
 		newBack := termbox.ColorWhite
 		newFore := termbox.ColorBlack
-		if oldTick%TICKS_PER_BEAT == 0 {
+		if oldTick%r.iv.TicksPerBeat == 0 {
 			// old tick is on a beat
-			if r.beats[i][oldTick/TICKS_PER_BEAT] {
+			if r.beats[i][oldTick/r.iv.TicksPerBeat] {
 				// not ticked, activated
 				oldRune = 'X'
 				oldBack = termbox.ColorRed
@@ -65,9 +74,9 @@ func (r *Render) Draw() {
 				// not ticked, not activated
 				oldRune = '-'
 			}
-		} else if newTick%TICKS_PER_BEAT == 0 {
+		} else if newTick%r.iv.TicksPerBeat == 0 {
 			// new tick is on a beat
-			if r.beats[i][newTick/TICKS_PER_BEAT] {
+			if r.beats[i][newTick/r.iv.TicksPerBeat] {
 				// ticked, activated
 				newRune = '8'
 				newBack = termbox.ColorMagenta
@@ -104,6 +113,15 @@ func (r *Render) Run() {
 			} else {
 				// closing
 				fmt.Printf("Render closing\n")
+				return
+			}
+		case iv, more := <-r.intervalCh:
+			if more {
+				// incoming interval update from loop
+				r.iv = iv
+			} else {
+				// we should never get here
+				fmt.Printf("unexpected: intervalCh return no more\n")
 				return
 			}
 		}
