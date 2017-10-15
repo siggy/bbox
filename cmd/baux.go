@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/bbox/leds"
 )
 
@@ -14,13 +13,10 @@ func main() {
 
 	level := make(chan float64)
 
-	amplitude := bbox.InitAmplitude(level)
 	baux := leds.InitBaux(level)
 
-	go amplitude.Run()
 	go baux.Run()
 
-	defer amplitude.Close()
 	defer baux.Close()
 
 	for {

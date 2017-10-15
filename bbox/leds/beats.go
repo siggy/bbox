@@ -12,8 +12,8 @@ import (
 const (
 	LED_FREQ     = 1200000
 	LED_COUNT    = 300
-	FREEFORM_IDX = 250
-	TICK_DELAY   = 17 // match sound to LEDs
+	FREEFORM_IDX = 188
+	TICK_DELAY   = 6 // match sound to LEDs
 	SINE_PERIOD  = 5
 )
 
@@ -75,45 +75,45 @@ var (
 	rows = [bbox.SOUNDS]Row{
 		// rows 0 and 1 are LED strip 0
 		Row{
-			start: 33,
+			start: 71,
 			end:   0,
 			buttons: [bbox.BEATS]int{
-				30, 28, 26, 24,
-				22, 20, 18, 16,
-				14, 12, 10, 8,
-				6, 4, 2, 0,
+				68, 64, 60, 56,
+				41, 37, 33, 29,
+				27, 23, 19, 15,
+				13, 9, 5, 1,
 			},
 		},
 		Row{
-			start: 35,
-			end:   69,
+			start: 72,
+			end:   151,
 			buttons: [bbox.BEATS]int{
-				33, 35, 38, 40,
-				42, 45, 47, 49,
-				52, 54, 57, 59,
-				61, 63, 65, 68,
+				75, 79, 83, 88,
+				103, 108, 112, 117,
+				119, 124, 128, 133,
+				136, 140, 145, 150,
 			},
 		},
 
 		// rows 2 and 3 are LED strip 1
 		Row{
-			start: 43,
+			start: 83,
 			end:   0,
 			buttons: [bbox.BEATS]int{
-				38, 35, 33, 31,
-				28, 25, 22, 20,
-				18, 15, 13, 10,
-				8, 5, 3, 0,
+				79, 74, 69, 64,
+				53, 47, 42, 37,
+				34, 29, 24, 18,
+				16, 10, 5, 0,
 			},
 		},
 		Row{
-			start: 45,
-			end:   87,
+			start: 84,
+			end:   176,
 			buttons: [bbox.BEATS]int{
-				42, 45, 48, 51,
-				54, 57, 60, 63,
-				65, 68, 71, 74,
-				77, 80, 83, 86,
+				88, 93, 99, 105,
+				115, 121, 127, 133,
+				136, 142, 148, 154,
+				157, 163, 169, 174,
 			},
 		},
 	}

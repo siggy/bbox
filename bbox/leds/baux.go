@@ -11,8 +11,8 @@ import (
 const (
 	// TODO: bbox testing
 	// 2x structure
-	BAUX_STRAND_COUNT1 = 5
-	BAUX_STRAND_LEN1   = 30
+	BAUX_STRAND_COUNT1 = 1
+	BAUX_STRAND_LEN1   = 85
 
 	// 1x heart
 	BAUX_STRAND_COUNT2 = 4
@@ -21,13 +21,15 @@ const (
 	BAUX_LED_COUNT1 = BAUX_STRAND_COUNT1 * BAUX_STRAND_LEN1 // 5*30 // 30/m
 	BAUX_LED_COUNT2 = BAUX_STRAND_COUNT2 * BAUX_STRAND_LEN2 // 4*60 // 60/m
 
-	BAUX_BPM      = 30
+	BAUX_BPM      = 15
 	BAUX_INTERVAL = 60 * time.Second / BAUX_BPM / 2 // (30 beats/min) / 2 color transitions/beat
 
-	BAUX_LIGHT_COUNT = 36 // 36 total deepPurple lights turned on at a time
+	BAUX_LIGHT_COUNT = 6 // 36 total deepPurple lights turned on at a time
 
-	BAUX_STREAK_LENGTH = BAUX_LED_COUNT1 / 2
+	BAUX_STREAK_LENGTH = BAUX_LED_COUNT1 * 3 / 4
 )
+
+var BAUX_LIGHT_COLOR = MkColor(0, 123, 55, 0)
 
 type Baux struct {
 	ampLevel float64
@@ -95,15 +97,15 @@ func (c *Baux) Run() {
 			_ = uint32(255.0 * c.ampLevel)
 
 			now := time.Now()
-			weight := float64(now.Sub(last).Nanoseconds()) / float64(BAUX_INTERVAL.Nanoseconds())
+			weight := 1.0 - float64(now.Sub(last).Nanoseconds())/float64(BAUX_INTERVAL.Nanoseconds())
 
-			if weight >= 1 {
-				weight = 0
+			if weight < 0 {
+				weight = 1
 				last = now
 
 				// structure iters
 				lights[lightIter] = nextLight
-				lightIter = (lightIter + 1) % len(lights)
+				lightIter = (lightIter + BAUX_LIGHT_COUNT - 1) % BAUX_LIGHT_COUNT
 
 				nextLight = uint32(rand.Int31n(BAUX_LED_COUNT1))
 				for contains(lights, nextLight) {
@@ -119,10 +121,10 @@ func (c *Baux) Run() {
 			// structure
 			for i, light := range lights {
 				if i == lightIter {
-					strand1[light] = MkColorWeight(deepPurple, black, weight)
-					strand1[nextLight] = MkColorWeight(black, deepPurple, weight)
+					strand1[light] = MkColorWeight(BAUX_LIGHT_COLOR, black, weight)
+					strand1[nextLight] = MkColorWeight(black, BAUX_LIGHT_COLOR, weight)
 				} else {
-					strand1[light] = deepPurple
+					strand1[light] = BAUX_LIGHT_COLOR
 				}
 			}
 
@@ -131,7 +133,7 @@ func (c *Baux) Run() {
 			for led, value := range sineMap {
 				if !contains(lights, uint32(led)) {
 					mag := float64(value) / 254.0
-					strand1[led] = MkColor(0, uint32(float64(123)*mag), uint32(float64(55)*mag), 0)
+					strand1[led] = MkColor(uint32(float64(200)*mag), 0, uint32(float64(100)*mag), 0)
 				}
 			}
 
