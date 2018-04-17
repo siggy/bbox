@@ -15,13 +15,17 @@ type Amplitude struct {
 
 const (
 	MIN_MAX_VOL = 0.1
-	SMOOTHING   = 0.99
+
+	SMOOTHING_FAST = 0.9
+	SMOOTHING_SLOW = 0.99
 )
 
 var (
 	vol           = float64(0)
 	volMax        = MIN_MAX_VOL
-	MAX_SMOOTHING = math.Pow(SMOOTHING, 1.0/100)
+	MAX_SMOOTHING = math.Pow(0.999, 1.0/100)
+
+	firstRun = true
 )
 
 // taken from:
@@ -35,9 +39,19 @@ func amp(slice []int32) float64 {
 		sum += math.Pow(math.Min(float64(x)/volMax, 1), 2)
 	}
 	rms := math.Sqrt(sum / bufLength)
-	vol = math.Max(rms, vol*SMOOTHING)
-	volMax = math.Max(math.Max(vol, volMax*MAX_SMOOTHING), MIN_MAX_VOL)
-	return vol / volMax
+
+	if firstRun && rms > 0 {
+		volMax = rms
+		firstRun = false
+	}
+
+	if rms > volMax {
+		volMax = (1-SMOOTHING_FAST)*rms + volMax*SMOOTHING_FAST
+	} else {
+		volMax = (1-SMOOTHING_SLOW)*rms + volMax*SMOOTHING_SLOW
+	}
+
+	return volMax
 }
 
 func InitAmplitude(level chan<- float64) *Amplitude {

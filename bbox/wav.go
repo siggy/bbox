@@ -12,7 +12,7 @@ import (
 
 const (
 	WAVS    = "./wavs"
-	BUF     = 16
+	BUF     = 128
 	MAX_BUF = 524288
 )
 
@@ -107,6 +107,8 @@ func (w *Wavs) cb(output [][]float32) {
 	for _, wv := range w.wavs {
 		for i := 0; i < BUF; i++ {
 			if wv.remaining > i {
+				// TODO: do this correctly
+				// add dynamic range compressor
 				out[i] += wv.buf[wv.length-wv.remaining+i]
 			}
 		}
