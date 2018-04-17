@@ -19,7 +19,7 @@ func main() {
 	tempo := make(chan int)
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, true)
+	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, true)
 
 	go keyboard.Run()
 	defer keyboard.Close()

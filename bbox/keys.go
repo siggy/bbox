@@ -11,7 +11,7 @@ type Key struct {
 	Key termbox.Key // one of Key* constants, invalid if 'Ch' is not 0
 }
 
-var keymaps = map[Key]*Coord{
+var KeyMapsPC = map[Key]*Coord{
 	{'1', 0}: &Coord{0, 0},
 	{'2', 0}: &Coord{0, 1},
 	{'3', 0}: &Coord{0, 2},
@@ -82,7 +82,7 @@ var keymaps = map[Key]*Coord{
 }
 
 // mapping from keyboard box
-var keymaps_rpi = map[Key]*Coord{
+var KeyMapsRPI = map[Key]*Coord{
 	// 2 x 21 = [volume down]
 	// 2 x 24 = [mute]
 	// 3 x 19 = ` (quit)

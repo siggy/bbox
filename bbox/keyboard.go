@@ -30,6 +30,7 @@ type Button struct {
 // shtudown operation:
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
+	keyMap    map[Key]*Coord
 	beats     Beats
 	timers    [SOUNDS][BEATS]*time.Timer
 	keepAlive *time.Timer    // ensure at least one beat is sent periodically to keep speaker alive
@@ -50,6 +51,7 @@ func tbprint(x, y int, msg string) {
 func InitKeyboard(
 	msgs []chan<- Beats,
 	tempo chan<- int,
+	keyMap map[Key]*Coord,
 	debug bool,
 ) *Keyboard {
 	// termbox.Close() called when Render.Run() exits
@@ -60,6 +62,7 @@ func InitKeyboard(
 	termbox.SetInputMode(termbox.InputAlt)
 
 	return &Keyboard{
+		keyMap:  keyMap,
 		beats:   Beats{},
 		msgs:    msgs,
 		tempo:   tempo,
@@ -108,9 +111,7 @@ func (kb *Keyboard) Run() {
 				copy(data, data[curev.N:])
 				data = data[:len(data)-curev.N]
 
-				// TODO: make settable
-				// key := keymaps[Key{ev.Ch, 0}]
-				key := keymaps_rpi[Key{ev.Ch, ev.Key}]
+				key := kb.keyMap[Key{ev.Ch, ev.Key}]
 				if key != nil {
 					kb.flip(key[0], key[1])
 				}
