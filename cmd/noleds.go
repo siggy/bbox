@@ -5,6 +5,8 @@ import (
 	"os/signal"
 
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/bbox/pattern"
+	"github.com/siggy/bbox/bbox/renderer"
 )
 
 func main() {
@@ -13,7 +15,7 @@ func main() {
 
 	// beat changes
 	//   keyboard => loop
-	//   keyboard => render
+	//   keyboard => leds
 	msgs := []chan bbox.Beats{
 		make(chan bbox.Beats),
 		make(chan bbox.Beats),
@@ -24,29 +26,30 @@ func main() {
 	tempo := make(chan int)
 
 	// ticks
-	//   loop => render
+	//   loop => leds
 	ticks := []chan int{
 		make(chan int),
 	}
 
 	// interval changes
-	//   loop => render
+	//   loop => leds
 	intervals := []chan bbox.Interval{
 		make(chan bbox.Interval),
 	}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
+	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, bbox.KeyMapsRPI, false)
 	loop := bbox.InitLoop(msgs[0], tempo, bbox.WriteonlyInt(ticks), bbox.WriteonlyInterval(intervals))
-	render := bbox.InitRender(msgs[1], ticks[0], intervals[0])
+	leds := pattern.InitLedBeats(msgs[1], ticks[0], intervals[0], renderer.Screen{})
 
 	go keyboard.Run()
 	go loop.Run()
-	go render.Run()
+	go leds.Run()
 
+	// defer termbox.Close()
 	defer keyboard.Close()
 	defer loop.Close()
-	defer render.Close()
+	defer leds.Close()
 
 	for {
 		select {
@@ -54,4 +57,6 @@ func main() {
 			return
 		}
 	}
+
+	// termbox.Init() called in InitKeyboard()
 }

@@ -157,10 +157,10 @@ func (l *Loop) Run() {
 			}
 
 			t := time.Now()
-			tbprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
-			tbprint(0, 6, fmt.Sprintf("______int:__%+v______", l.bpmToInterval(l.bpm)))
-			tbprint(0, 7, fmt.Sprintf("______time:_%+v______", t.Sub(tickTime)))
-			tbprint(0, 8, fmt.Sprintf("______tick:_%+v______", tick))
+			Tbprint(0, 5, "______BPM:__%+v______", l.bpm)
+			Tbprint(0, 6, "______int:__%+v______", l.bpmToInterval(l.bpm))
+			Tbprint(0, 7, "______time:_%+v______", t.Sub(tickTime))
+			Tbprint(0, 8, "______tick:_%+v______", tick)
 			tickTime = t
 		}
 	}

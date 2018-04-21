@@ -41,8 +41,8 @@ type Keyboard struct {
 	debug     bool
 }
 
-func tbprint(x, y int, msg string) {
-	for _, c := range msg {
+func Tbprint(x, y int, format string, a ...interface{}) {
+	for _, c := range fmt.Sprintf(format, a...) {
 		termbox.SetCell(x, y, c, termbox.ColorDefault, termbox.ColorDefault)
 		x++
 	}
@@ -54,7 +54,7 @@ func InitKeyboard(
 	keyMap map[Key]*Coord,
 	debug bool,
 ) *Keyboard {
-	// termbox.Close() called when Render.Run() exits
+	// termbox.Close() called when LedBeats.Run() exits
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -118,8 +118,7 @@ func (kb *Keyboard) Run() {
 
 				// for debugging output
 				if kb.debug {
-					tbprint(0, SOUNDS+1,
-						fmt.Sprintf("EventKey: k: %5d, c: %c", ev.Key, ev.Ch))
+					Tbprint(0, SOUNDS+1, "EventKey: k: %5d, c: %c", ev.Key, ev.Ch)
 					termbox.Flush()
 				}
 			}
