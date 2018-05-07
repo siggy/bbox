@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// keyboard broadcasts quit with close(msgs)
-	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, bbox.KeyMapsRPI, false)
+	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
 	loop := bbox.InitLoop(msgs[0], tempo, bbox.WriteonlyInt(ticks), bbox.WriteonlyInterval(intervals))
 	leds := pattern.InitLedBeats(msgs[1], ticks[0], intervals[0], renderer.Screen{})
 

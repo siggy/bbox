@@ -146,6 +146,7 @@ func scale(x uint32) uint32 {
 	return uint32(1000 * (0.005333*math.Pow(4002473., float64(x)/1000.) - 0.005333))
 }
 
+// TODO: move to color.go
 // expects 0 <= [r,g,b,w] <= 255
 func MkColor(r uint32, g uint32, b uint32, w uint32) uint32 {
 	return uint32(b + g<<8 + r<<16 + w<<24)
@@ -160,14 +161,6 @@ type ColorWeight struct {
 var (
 	colorWeightCache = make(map[ColorWeight]uint32)
 )
-
-func PrintColor(color uint32) {
-	b := color & 0x000000ff
-	g := (color & 0x0000ff00) >> 8
-	r := (color & 0x00ff0000) >> 16
-	w := (color & 0xff000000) >> 24
-	fmt.Printf("(%+v, %+v, %+v, %+v)\n", r, g, b, w)
-}
 
 func MultiplyColor(color uint32, multiplier float64) uint32 {
 	b := color & 0x000000ff

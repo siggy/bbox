@@ -3,12 +3,14 @@ package renderer
 import (
 	termbox "github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/bbox/color"
 )
 
 // WS2811 satisfies the Render interface, backed by the ws2811 LED library
 type Screen struct{}
 
 const INFO_ROW = 30
+const CHANNEL_MULTIPLIER = 15
 
 var (
 	runes = []rune{' ', '░', '▒', '▓', '█'}
@@ -58,8 +60,13 @@ func (s Screen) Wait() error {
 }
 
 func (s Screen) SetLed(channel int, index int, value uint32) {
-	bbox.Tbprint(0, INFO_ROW-1, "SetLed(%2d, %3d, %10d)", channel, index, value)
-	termbox.SetCell(index, channel, '░', termbox.Attribute(value), termbox.ColorBlack)
+	w, _ := termbox.Size()
+	y := index / w
+	x := index - y*w
+
+	bbox.Tbprint(0, INFO_ROW-1, "SetLed(%2d, (%3d, %3d), %20s)", channel, x, y, color.ColorStr(value))
+	fg, bg := ledColorToTermColor(value)
+	termbox.SetCell(x, y+channel*CHANNEL_MULTIPLIER, '░', fg, bg)
 	termbox.Flush()
 }
 
@@ -67,10 +74,10 @@ func (s Screen) Clear() {
 	bbox.Tbprint(0, INFO_ROW, "Clear")
 	for y := 0; y < 2; y++ {
 		for x := 0; x < gLedCount1; x++ {
-			termbox.SetCell(x, y, ' ', termbox.ColorBlack, termbox.ColorBlack)
+			// termbox.SetCell(x, y, ' ', termbox.ColorBlack, termbox.ColorBlack)
 		}
 	}
-	termbox.Flush()
+	termbox.Clear(termbox.ColorBlack, termbox.ColorBlack)
 }
 
 func (s Screen) SetBitmap(channel int, a []uint32) {

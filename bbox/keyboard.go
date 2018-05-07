@@ -60,6 +60,7 @@ func InitKeyboard(
 		panic(err)
 	}
 	termbox.SetInputMode(termbox.InputAlt)
+	termbox.SetOutputMode(termbox.Output256)
 
 	return &Keyboard{
 		keyMap:  keyMap,
