@@ -67,20 +67,16 @@ func (s Screen) SetLed(channel int, index int, value uint32) {
 	bbox.Tbprint(0, INFO_ROW-1, "SetLed(%2d, (%3d, %3d), %20s)", channel, x, y, color.ColorStr(value))
 	fg, bg := ledColorToTermColor(value)
 	termbox.SetCell(x, y+channel*CHANNEL_MULTIPLIER, '░', fg, bg)
-	termbox.Flush()
 }
 
 func (s Screen) Clear() {
 	bbox.Tbprint(0, INFO_ROW, "Clear")
-	for y := 0; y < 2; y++ {
-		for x := 0; x < gLedCount1; x++ {
-			// termbox.SetCell(x, y, ' ', termbox.ColorBlack, termbox.ColorBlack)
-		}
-	}
 	termbox.Clear(termbox.ColorBlack, termbox.ColorBlack)
 }
 
 func (s Screen) SetBitmap(channel int, a []uint32) {
-	bbox.Tbprint(INFO_ROW, 0, "SetBitmap(%d, %+v)", channel, a)
-	termbox.Flush()
+	bbox.Tbprint(0, INFO_ROW, "SetBitmap(%d, %+v)", channel, a)
+	for i, value := range a {
+		s.SetLed(channel, i, value)
+	}
 }
