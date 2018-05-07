@@ -6,7 +6,7 @@ import (
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/bbox/pattern"
-	"github.com/siggy/bbox/bbox/renderer"
+	"github.com/siggy/bbox/bbox/renderer/web"
 )
 
 func main() {
@@ -40,7 +40,8 @@ func main() {
 	// keyboard broadcasts quit with close(msgs)
 	keyboard := bbox.InitKeyboard(bbox.WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
 	loop := bbox.InitLoop(msgs[0], tempo, bbox.WriteonlyInt(ticks), bbox.WriteonlyInterval(intervals))
-	leds := pattern.InitLedBeats(msgs[1], ticks[0], intervals[0], renderer.Screen{})
+	// leds := pattern.InitLedBeats(msgs[1], ticks[0], intervals[0], renderer.Screen{})
+	leds := pattern.InitLedBeats(msgs[1], ticks[0], intervals[0], web.InitWeb())
 
 	go keyboard.Run()
 	go loop.Run()
