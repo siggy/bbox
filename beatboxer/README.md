@@ -16,6 +16,7 @@ The Beatboxer's 16x4 grid of buttons is emulated via your keyboard. The first
 - `q` .. `i`
 - `a` .. `k`
 - `z` .. `,`
+
 The shift key modifies the above to act on the second set of 8x4 keys.
 
 Note all indexes in code are 0-based. Button 0x0 is `1`, 15x3 is `shift` + `,`.
