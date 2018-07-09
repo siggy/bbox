@@ -13,11 +13,11 @@ import (
 const (
 	WAVS    = "./wavs"
 	BUF     = 128
-	MAX_BUF = 524288
+	MAX_BUF = 524288 // TODO: make dynamic based on file size
 )
 
 type Wavs struct {
-	wavs   [SOUNDS]*wavFile
+	wavs   [SOUNDS]*wavFile // TODO: make it a string map rather than array
 	stream *portaudio.Stream
 }
 
