@@ -7,6 +7,7 @@ import (
 
 	"github.com/siggy/bbox/beatboxer"
 	"github.com/siggy/bbox/beatboxer/programs/ceottk"
+	"github.com/siggy/bbox/beatboxer/programs/drums"
 )
 
 func main() {
@@ -14,7 +15,8 @@ func main() {
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	harness := beatboxer.InitHarness()
-	// harness.Register(&drums.DrumMachine{})
+
+	harness.Register(&drums.DrumMachine{})
 	harness.Register(&ceottk.Ceottk{})
 
 	go harness.Run()

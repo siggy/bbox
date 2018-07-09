@@ -2,17 +2,17 @@ package drums
 
 import (
 	"github.com/siggy/bbox/bbox"
-	"github.com/siggy/bbox/beatboxer/render"
-	"github.com/siggy/bbox/beatboxer/wavs"
+	"github.com/siggy/bbox/beatboxer"
 )
 
 type DrumMachine struct {
-	kb   *Keyboard
-	loop *Loop
-	r    *Render
+	kb     *Keyboard
+	loop   *Loop
+	r      *Render
+	output beatboxer.Output
 }
 
-func (dm *DrumMachine) Init(player wavs.Player, renderCB func(render.RenderState)) {
+func (dm *DrumMachine) Init(output beatboxer.Output) {
 	// beat changes
 	//   keyboard => loop
 	//   keyboard => render
@@ -38,8 +38,8 @@ func (dm *DrumMachine) Init(player wavs.Player, renderCB func(render.RenderState
 	}
 	// keyboard broadcasts quit with close(msgs)
 	dm.kb = InitKeyboard(WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
-	dm.loop = InitLoop(player, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
-	dm.r = InitRender(msgs[1], ticks[0], intervals[0], renderCB)
+	dm.loop = InitLoop(output.Play, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
+	dm.r = InitRender(msgs[1], ticks[0], intervals[0], output.Render)
 
 	go dm.loop.Run()
 	go dm.r.Run()

@@ -3,6 +3,7 @@ package drums
 import (
 	"fmt"
 
+	"github.com/siggy/bbox/beatboxer/color"
 	"github.com/siggy/bbox/beatboxer/render"
 )
 
@@ -23,7 +24,12 @@ type Render struct {
 	render func(render.RenderState)
 }
 
-func InitRender(msgs <-chan Beats, ticks <-chan int, intervalCh <-chan Interval, renderCB func(render.RenderState)) *Render {
+func InitRender(
+	msgs <-chan Beats,
+	ticks <-chan int,
+	intervalCh <-chan Interval,
+	renderCB func(render.RenderState),
+) *Render {
 	return &Render{
 		closing: make(chan struct{}),
 		msgs:    msgs,
@@ -38,10 +44,6 @@ func InitRender(msgs <-chan Beats, ticks <-chan int, intervalCh <-chan Interval,
 	}
 }
 
-func mkColor(r uint32, g uint32, b uint32, w uint32) uint32 {
-	return uint32(b + g<<8 + r<<16 + w<<24)
-}
-
 func (r *Render) Draw() {
 	renderState := render.RenderState{}
 
@@ -49,7 +51,7 @@ func (r *Render) Draw() {
 	newLed := newTick / r.iv.TicksPerBeat
 
 	transition := render.Transition{
-		Color:    mkColor(0, 0, 0, 127),
+		Color:    color.Make(0, 0, 0, 127),
 		Location: float64(newTick-(newLed*r.iv.TicksPerBeat)) / float64(r.iv.TicksPerBeat),
 		Length:   0.5,
 	}
@@ -64,9 +66,9 @@ func (r *Render) Draw() {
 		for j := 0; j < BEATS; j++ {
 			if r.beats[i][j] {
 				if j == newLed {
-					renderState.LEDs[i][j] = mkColor(127, 127, 0, 127)
+					renderState.LEDs[i][j] = color.Make(127, 127, 0, 127)
 				} else {
-					renderState.LEDs[i][j] = mkColor(127, 0, 0, 0)
+					renderState.LEDs[i][j] = color.Make(127, 0, 0, 0)
 				}
 			}
 		}

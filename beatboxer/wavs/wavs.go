@@ -16,10 +16,6 @@ const (
 	BUF  = 128
 )
 
-type Player interface {
-	Play(name string)
-}
-
 type Wavs struct {
 	wavs   map[string]*wavFile
 	stream *portaudio.Stream

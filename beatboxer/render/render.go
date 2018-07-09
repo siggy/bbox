@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nsf/termbox-go"
+	"github.com/siggy/bbox/beatboxer/color"
 )
 
 const (
@@ -21,10 +22,6 @@ type Transition struct {
 type RenderState struct {
 	LEDs        [ROWS][COLUMNS]uint32
 	Transitions [ROWS][COLUMNS]Transition
-}
-
-func mkColor(r uint32, g uint32, b uint32, w uint32) uint32 {
-	return uint32(b + g<<8 + r<<16 + w<<24)
 }
 
 // TODO: dry up
@@ -46,25 +43,25 @@ func Render(renderState RenderState) {
 				termbox.SetCell(col*COLS_PER_BEAT+i, row, ' ', termbox.ColorBlack, termbox.ColorBlack)
 			}
 
-			color := termbox.ColorBlack
+			fgColor := termbox.ColorBlack
 			rune := ' '
-			if renderState.LEDs[row][col] == mkColor(0, 0, 0, 127) {
-				color = termbox.ColorWhite
+			if renderState.LEDs[row][col] == color.Make(0, 0, 0, 127) {
+				fgColor = termbox.ColorWhite
 				rune = 'X'
-			} else if renderState.LEDs[row][col] == mkColor(127, 0, 0, 0) {
-				color = termbox.ColorRed
+			} else if renderState.LEDs[row][col] == color.Make(127, 0, 0, 0) {
+				fgColor = termbox.ColorRed
 				rune = 'O'
-			} else if renderState.LEDs[row][col] == mkColor(127, 127, 0, 127) {
-				color = termbox.ColorYellow
+			} else if renderState.LEDs[row][col] == color.Make(127, 127, 0, 127) {
+				fgColor = termbox.ColorYellow
 				rune = 'X'
 			}
 
-			if renderState.Transitions[row][col].Color == mkColor(0, 0, 0, 127) {
+			if renderState.Transitions[row][col].Color == color.Make(0, 0, 0, 127) {
 				location := int(COLS_PER_BEAT * renderState.Transitions[row][col].Location)
 				termbox.SetCell(col*COLS_PER_BEAT+location, row, 'X', termbox.ColorBlack, termbox.ColorWhite)
 			}
 
-			termbox.SetCell(col*COLS_PER_BEAT, row, rune, termbox.ColorBlack, color)
+			termbox.SetCell(col*COLS_PER_BEAT, row, rune, termbox.ColorBlack, fgColor)
 		}
 	}
 

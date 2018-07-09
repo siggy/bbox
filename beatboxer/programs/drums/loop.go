@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/siggy/bbox/beatboxer/render"
-	"github.com/siggy/bbox/beatboxer/wavs"
 )
 
 const (
@@ -47,15 +46,15 @@ type Loop struct {
 	tempo      <-chan int
 	tempoDecay *time.Timer
 
-	ticks  []chan<- int
-	player wavs.Player
+	ticks []chan<- int
+	play  func(string)
 
 	iv         Interval
 	intervalCh []chan<- Interval
 }
 
 func InitLoop(
-	player wavs.Player,
+	play func(string),
 	msgs <-chan Beats,
 	tempo <-chan int,
 	ticks []chan<- int,
@@ -71,7 +70,7 @@ func InitLoop(
 		msgs:    msgs,
 		tempo:   tempo,
 		ticks:   ticks,
-		player:  player,
+		play:    play,
 
 		intervalCh: intervalCh,
 		iv: Interval{
@@ -163,7 +162,7 @@ func (l *Loop) Run() {
 				for i, beat := range l.beats {
 					if beat[tick/l.iv.TicksPerBeat] {
 						// initiate playback
-						l.player.Play(WAVS[i])
+						l.play(WAVS[i])
 					}
 				}
 			}

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/siggy/bbox/beatboxer"
+	"github.com/siggy/bbox/beatboxer/color"
 	"github.com/siggy/bbox/beatboxer/render"
-	"github.com/siggy/bbox/beatboxer/wavs"
 )
 
 const (
@@ -59,13 +60,21 @@ var (
 	}
 )
 
-type Ceottk struct {
-	location int
-	player   wavs.Player
+func locationToLed(location int) (int, int) {
+	loc := location % (render.ROWS * render.COLUMNS)
+	row := loc / render.COLUMNS
+	col := loc - row*render.COLUMNS
+
+	return row, col
 }
 
-func (c *Ceottk) Init(player wavs.Player, render func(render.RenderState)) {
-	c.player = player
+type Ceottk struct {
+	location int
+	output   beatboxer.Output
+}
+
+func (c *Ceottk) Init(output beatboxer.Output) {
+	c.output = output
 
 	// player.Play("ceottk001_human.wav")
 	// time.Sleep(500 * time.Millisecond)
@@ -365,12 +374,22 @@ func (c *Ceottk) Pressed(row int, column int) {
 	}
 
 	human := fmt.Sprintf("ceottk%03d_human.wav", loc)
-	c.player.Play(human)
+	c.output.Play(human)
+
+	rs := render.RenderState{}
+	row, col := locationToLed(c.location)
+	rs.LEDs[row][col] = color.Make(127, 0, 0, 0)
+	c.output.Render(rs)
 
 	if _, ok := aliens[c.location+1]; ok {
 		time.Sleep(500 * time.Millisecond)
 		c.location++
 		alien := fmt.Sprintf("ceottk%03d_alien.wav", c.location)
-		c.player.Play(alien)
+		c.output.Play(alien)
+
+		rs := render.RenderState{}
+		row, col := locationToLed(c.location)
+		rs.LEDs[row][col] = color.Make(127, 127, 0, 127)
+		c.output.Render(rs)
 	}
 }
