@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/beatboxer/render"
+	"github.com/siggy/bbox/beatboxer/wavs"
 )
 
 const (
@@ -17,6 +18,15 @@ const (
 	DEFAULT_TICKS          = BEATS * DEFAULT_TICKS_PER_BEAT
 
 	TEMPO_DECAY = 3 * time.Minute
+)
+
+var (
+	WAVS = [SOUNDS]string{
+		"hihat-808.wav",
+		"kick-classic.wav",
+		"perc-808.wav",
+		"tom-808.wav",
+	}
 )
 
 type Interval struct {
@@ -37,14 +47,15 @@ type Loop struct {
 	tempo      <-chan int
 	tempoDecay *time.Timer
 
-	ticks []chan<- int
-	wavs  *bbox.Wavs
+	ticks  []chan<- int
+	player wavs.Player
 
 	iv         Interval
 	intervalCh []chan<- Interval
 }
 
 func InitLoop(
+	player wavs.Player,
 	msgs <-chan Beats,
 	tempo <-chan int,
 	ticks []chan<- int,
@@ -60,7 +71,7 @@ func InitLoop(
 		msgs:    msgs,
 		tempo:   tempo,
 		ticks:   ticks,
-		wavs:    bbox.InitWavs(),
+		player:  player,
 
 		intervalCh: intervalCh,
 		iv: Interval{
@@ -89,7 +100,6 @@ func (l *Loop) Run() {
 				l.beats = beats
 			} else {
 				// closing
-				l.wavs.Close()
 				fmt.Printf("Loop closing\n")
 				return
 			}
@@ -153,16 +163,16 @@ func (l *Loop) Run() {
 				for i, beat := range l.beats {
 					if beat[tick/l.iv.TicksPerBeat] {
 						// initiate playback
-						l.wavs.Play(i)
+						l.player.Play(WAVS[i])
 					}
 				}
 			}
 
 			t := time.Now()
-			tbprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
-			tbprint(0, 6, fmt.Sprintf("______int:__%+v______", l.bpmToInterval(l.bpm)))
-			tbprint(0, 7, fmt.Sprintf("______time:_%+v______", t.Sub(tickTime)))
-			tbprint(0, 8, fmt.Sprintf("______tick:_%+v______", tick))
+			render.TBprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
+			render.TBprint(0, 6, fmt.Sprintf("______int:__%+v______", l.bpmToInterval(l.bpm)))
+			render.TBprint(0, 7, fmt.Sprintf("______time:_%+v______", t.Sub(tickTime)))
+			render.TBprint(0, 8, fmt.Sprintf("______tick:_%+v______", tick))
 			tickTime = t
 		}
 	}

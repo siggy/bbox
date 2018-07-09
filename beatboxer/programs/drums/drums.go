@@ -3,6 +3,7 @@ package drums
 import (
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer/render"
+	"github.com/siggy/bbox/beatboxer/wavs"
 )
 
 type DrumMachine struct {
@@ -11,7 +12,7 @@ type DrumMachine struct {
 	r    *Render
 }
 
-func (dm *DrumMachine) Init(renderCB func(render.RenderState)) {
+func (dm *DrumMachine) Init(player wavs.Player, renderCB func(render.RenderState)) {
 	// beat changes
 	//   keyboard => loop
 	//   keyboard => render
@@ -37,7 +38,7 @@ func (dm *DrumMachine) Init(renderCB func(render.RenderState)) {
 	}
 	// keyboard broadcasts quit with close(msgs)
 	dm.kb = InitKeyboard(WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
-	dm.loop = InitLoop(msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
+	dm.loop = InitLoop(player, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
 	dm.r = InitRender(msgs[1], ticks[0], intervals[0], renderCB)
 
 	go dm.loop.Run()
@@ -48,8 +49,8 @@ func (dm *DrumMachine) Pressed(row int, column int) {
 	dm.kb.Flip(row, column)
 }
 
-func (dm *DrumMachine) Close() {
-	dm.kb.Close()
-	dm.loop.Close()
-	dm.r.Close()
-}
+// func (dm *DrumMachine) Close() {
+// 	dm.kb.Close()
+// 	dm.loop.Close()
+// 	dm.r.Close()
+// }

@@ -4,12 +4,14 @@ import (
 	termbox "github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer/render"
+	"github.com/siggy/bbox/beatboxer/wavs"
 )
 
 type Harness struct {
 	pressed  chan bbox.Coord
 	kb       *Keyboard
-	programs []Program
+	programs []Program // TODO: designate one as active
+	wavs     *wavs.Wavs
 }
 
 func InitHarness() *Harness {
@@ -19,21 +21,23 @@ func InitHarness() *Harness {
 		panic(err)
 	}
 
-	h := Harness{}
+	pressed := make(chan bbox.Coord)
 
-	h.pressed = make(chan bbox.Coord)
-	h.kb = InitKeyboard(h.pressed, bbox.KeyMapsPC)
-
-	return &h
+	return &Harness{
+		pressed: pressed,
+		wavs:    wavs.InitWavs(),
+		kb:      InitKeyboard(pressed, bbox.KeyMapsPC), // TODO: parameterize for KeyMapsPI
+	}
 }
 
 func (h *Harness) Register(program Program) {
-	program.Init(render.Render)
+	program.Init(h.wavs, render.Render)
 	h.programs = append(h.programs, program)
 }
 
 func (h *Harness) Run() {
 	defer termbox.Close()
+	defer h.wavs.Close()
 
 	go h.kb.Run()
 

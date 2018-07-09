@@ -28,7 +28,7 @@ func mkColor(r uint32, g uint32, b uint32, w uint32) uint32 {
 }
 
 // TODO: dry up
-func tbprint(x, y int, msg string) {
+func TBprint(x, y int, msg string) {
 	for _, c := range msg {
 		termbox.SetCell(x, y, c, termbox.ColorDefault, termbox.ColorDefault)
 		x++
@@ -37,7 +37,7 @@ func tbprint(x, y int, msg string) {
 
 func Render(renderState RenderState) {
 
-	tbprint(0, 10, fmt.Sprintf("______RenderState:_%+v______", renderState))
+	TBprint(0, 10, fmt.Sprintf("______RenderState:_%+v______", renderState))
 
 	for row := 0; row < ROWS; row++ {
 		for col := 0; col < COLUMNS; col++ {

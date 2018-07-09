@@ -1,8 +1,11 @@
 package beatboxer
 
-import "github.com/siggy/bbox/beatboxer/render"
+import (
+	"github.com/siggy/bbox/beatboxer/render"
+	"github.com/siggy/bbox/beatboxer/wavs"
+)
 
 type Program interface {
-	Init(render func(render.RenderState))
+	Init(player wavs.Player, render func(render.RenderState))
 	Pressed(row int, column int)
 }

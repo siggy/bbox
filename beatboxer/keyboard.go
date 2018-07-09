@@ -14,13 +14,6 @@ type Keyboard struct {
 	pressed chan<- bbox.Coord // single button press
 }
 
-func tbprint(x, y int, msg string) {
-	for _, c := range msg {
-		termbox.SetCell(x, y, c, termbox.ColorDefault, termbox.ColorDefault)
-		x++
-	}
-}
-
 func InitKeyboard(
 	pressed chan<- bbox.Coord,
 	keyMap map[bbox.Key]*bbox.Coord,

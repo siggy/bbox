@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	termbox "github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
 )
 
@@ -42,13 +41,6 @@ type Keyboard struct {
 	debug     bool
 }
 
-func tbprint(x, y int, msg string) {
-	for _, c := range msg {
-		termbox.SetCell(x, y, c, termbox.ColorDefault, termbox.ColorDefault)
-		x++
-	}
-}
-
 func InitKeyboard(
 	msgs []chan<- Beats,
 	tempo chan<- int,
@@ -70,7 +62,6 @@ func InitKeyboard(
 
 	go func() {
 		kb.emitter()
-
 		// starter beat
 		fmt.Printf("InitKeyboard0\n")
 		kb.Flip(1, 0)
