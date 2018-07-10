@@ -10,6 +10,7 @@ import (
 type Output interface {
 	Play(name string) time.Duration
 	Render(rs render.RenderState)
+	Yield()
 }
 
 // Program defines the interface all Beatboxer programs must satisfy

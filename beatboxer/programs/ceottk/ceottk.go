@@ -112,7 +112,12 @@ func (c *Ceottk) Pressed(row int, column int) {
 			rs.LEDs[row][col] = color.Make(127, 127, 0, 127)
 			c.output.Render(rs)
 
-			time.AfterFunc(time.Duration(float64(dur)*EARLY_PLAY), func() {
+			time.AfterFunc(dur, func() {
+				// this works because we know the last sound played is alien
+				if c.location == SEQEUNCE_LENGTH {
+					c.location = 0 // TODO: reset or have harness recreate program
+					c.output.Yield()
+				}
 				c.playing = false
 			})
 		} else {

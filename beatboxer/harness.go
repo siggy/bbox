@@ -30,6 +30,9 @@ func (r *registered) Play(name string) time.Duration {
 func (r *registered) Render(rs render.RenderState) {
 	r.harness.render(r.id, rs)
 }
+func (r *registered) Yield() {
+	r.harness.yield(r.id)
+}
 
 type Harness struct {
 	pressed chan bbox.Coord
@@ -107,5 +110,11 @@ func (h *Harness) play(id int, name string) time.Duration {
 func (h *Harness) render(id int, rs render.RenderState) {
 	if id == h.active {
 		render.Render(rs)
+	}
+}
+
+func (h *Harness) yield(id int) {
+	if id == h.active {
+		h.active = (h.active + 1) % len(h.programs)
 	}
 }
