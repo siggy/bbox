@@ -1,12 +1,14 @@
 package beatboxer
 
 import (
+	"time"
+
 	"github.com/siggy/bbox/beatboxer/render"
 )
 
 // Output defines the interface Beatboxer programs may use to send output
 type Output interface {
-	Play(name string)
+	Play(name string) time.Duration
 	Render(rs render.RenderState)
 }
 

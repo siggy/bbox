@@ -47,14 +47,14 @@ type Loop struct {
 	tempoDecay *time.Timer
 
 	ticks []chan<- int
-	play  func(string)
+	play  func(string) time.Duration
 
 	iv         Interval
 	intervalCh []chan<- Interval
 }
 
 func InitLoop(
-	play func(string),
+	play func(string) time.Duration,
 	msgs <-chan Beats,
 	tempo <-chan int,
 	ticks []chan<- int,

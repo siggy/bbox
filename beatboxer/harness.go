@@ -1,6 +1,8 @@
 package beatboxer
 
 import (
+	"time"
+
 	termbox "github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer/render"
@@ -22,8 +24,8 @@ type registered struct {
 }
 
 // satisfy Output interface
-func (r *registered) Play(name string) {
-	r.harness.play(r.id, name)
+func (r *registered) Play(name string) time.Duration {
+	return r.harness.play(r.id, name)
 }
 func (r *registered) Render(rs render.RenderState) {
 	r.harness.render(r.id, rs)
@@ -94,10 +96,12 @@ func (h *Harness) Run() {
 	}
 }
 
-func (h *Harness) play(id int, name string) {
+func (h *Harness) play(id int, name string) time.Duration {
 	if id == h.active {
-		h.wavs.Play(name)
+		return h.wavs.Play(name)
 	}
+
+	return time.Duration(0)
 }
 
 func (h *Harness) render(id int, rs render.RenderState) {

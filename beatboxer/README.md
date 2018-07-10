@@ -41,3 +41,7 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 - better development renderer (perhaps web-based?)
 - fix concurrency (`go run -race cmd/beatboxer_noleds.go` is not pretty)
 - update LED rendering code for harness environment
+- ceottk
+  - don't crash at end, yield back
+drums
+  - set initial beats

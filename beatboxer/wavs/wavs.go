@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gordonklaus/portaudio"
 	"github.com/youpy/go-wav"
@@ -90,6 +91,8 @@ func initWav(f os.FileInfo) *wavFile {
 	}
 	copy(w.buf, buf[:])
 
+	fmt.Printf("Loaded wav file %s: %d samples\n", w.name, w.length)
+
 	return &w
 }
 
@@ -116,8 +119,16 @@ func (w *Wavs) cb(output [][]float32) {
 	copy(output[0], out)
 }
 
-func (wavs *Wavs) Play(name string) {
-	wavs.wavs[name].active <- struct{}{}
+func (wavs *Wavs) Play(name string) time.Duration {
+	wav, ok := wavs.wavs[name]
+	if !ok {
+		fmt.Printf("Unknown wav file: %s\n", name)
+		return time.Duration(0)
+	}
+
+	wav.active <- struct{}{}
+
+	return time.Duration(wav.length*1000/44100) * time.Millisecond
 }
 
 func (w *Wavs) Close() {
