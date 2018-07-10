@@ -28,18 +28,19 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 1. Add a new file under [`programs`](programs/)
 1. Implement the `Program` interface, as defined in [`program.go`](program.go).
     This interface supports the following:
-    - `Init`: initialize state and kick off any long-running processes
+    - `New`: initialize state, kicks off long-running processes, returns new handle
     - `Pressed`: receive button presses
     - `Render`: render LEDs
     - `Play`: play audio files
+    - `Yield`: yield back to the harness
+    - `Close`: stops all processes, frees resources
 1. Add your new module to [`../cmd/beatboxer_noleds.go`](../cmd/beatboxer_noleds.go).
 
 ## TODO
 
-- start/stop programs when not in use
-- allow programs to yield to the next program
+- provide audio amplitude data to programs
 - better development renderer (perhaps web-based?)
 - fix concurrency (`go run -race cmd/beatboxer_noleds.go` is not pretty)
 - update LED rendering code for harness environment
-drums
-  - set initial beats
+- ceottk
+  - better render patterns

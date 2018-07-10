@@ -1,6 +1,7 @@
 package beatboxer
 
 import (
+	"fmt"
 	"time"
 
 	termbox "github.com/nsf/termbox-go"
@@ -19,7 +20,6 @@ var (
 
 type registered struct {
 	harness *Harness
-	program Program
 	id      int
 }
 
@@ -39,11 +39,11 @@ type Harness struct {
 	kb      *Keyboard
 	wavs    *wavs.Wavs
 
-	programs []registered
+	programs []Program
 	active   int
 }
 
-func InitHarness() *Harness {
+func InitHarness(keyMap map[bbox.Key]*bbox.Coord) *Harness {
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -54,21 +54,26 @@ func InitHarness() *Harness {
 	return &Harness{
 		pressed: pressed,
 		wavs:    wavs.InitWavs(),
-		kb:      InitKeyboard(pressed, bbox.KeyMapsPC), // TODO: parameterize for KeyMapsPI
+		kb:      InitKeyboard(pressed, keyMap),
 	}
 }
 
 func (h *Harness) Register(program Program) {
-	id := len(h.programs)
+	h.programs = append(h.programs, program)
+}
 
-	r := registered{
+func (h *Harness) NextProgram() {
+	prev := h.programs[h.active]
+	h.active = (h.active + 1) % len(h.programs)
+	prev.Close()
+
+	render.Render(render.RenderState{})
+
+	reg := registered{
 		harness: h,
-		program: program,
-		id:      id,
+		id:      h.active,
 	}
-	h.programs = append(h.programs, r)
-
-	program.Init(&r)
+	h.programs[h.active] = h.programs[h.active].New(&reg)
 }
 
 func (h *Harness) Run() {
@@ -76,6 +81,13 @@ func (h *Harness) Run() {
 	defer h.wavs.Close()
 
 	go h.kb.Run()
+
+	// make the first program active
+	reg := registered{
+		harness: h,
+		id:      0,
+	}
+	h.programs[0] = h.programs[0].New(&reg)
 
 	switcherCount := 0
 	for {
@@ -86,35 +98,44 @@ func (h *Harness) Run() {
 			}
 			if coord == switcher {
 				switcherCount++
+
 				if switcherCount >= SWITCH_COUNT {
-					h.active = (h.active + 1) % len(h.programs)
+					h.NextProgram()
 					switcherCount = 0
+					continue
 				}
 			} else {
 				switcherCount = 0
 			}
 
-			h.programs[h.active].program.Pressed(coord[0], coord[1])
+			h.programs[h.active].Pressed(coord[0], coord[1])
 		}
 	}
 }
 
 func (h *Harness) play(id int, name string) time.Duration {
-	if id == h.active {
-		return h.wavs.Play(name)
+	if id != h.active {
+		fmt.Printf("play called by invalid program %d: %s", id, name)
+		return time.Duration(0)
 	}
 
-	return time.Duration(0)
+	return h.wavs.Play(name)
 }
 
 func (h *Harness) render(id int, rs render.RenderState) {
-	if id == h.active {
-		render.Render(rs)
+	if id != h.active {
+		fmt.Printf("render called by invalid program %d: %+v", id, rs)
+		return
 	}
+
+	render.Render(rs)
 }
 
 func (h *Harness) yield(id int) {
-	if id == h.active {
-		h.active = (h.active + 1) % len(h.programs)
+	if id != h.active {
+		fmt.Printf("yield called by invalid program %d", id)
+		return
 	}
+
+	h.NextProgram()
 }

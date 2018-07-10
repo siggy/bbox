@@ -17,6 +17,9 @@ const (
 	// prod
 	DECAY      = 3 * time.Minute
 	KEEP_ALIVE = 14 * time.Minute
+
+	// if 75% of beats are active, yield to the next program
+	YIELD_LIMIT = (SOUNDS - 1) * BEATS
 )
 
 type Button struct {
@@ -30,6 +33,7 @@ type Button struct {
 // shtudown operation:
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
+	yield     func()
 	keyMap    map[bbox.Key]*bbox.Coord
 	beats     Beats
 	timers    [SOUNDS][BEATS]*time.Timer
@@ -42,15 +46,15 @@ type Keyboard struct {
 }
 
 func InitKeyboard(
+	yield func(),
 	msgs []chan<- Beats,
 	tempo chan<- int,
 	keyMap map[bbox.Key]*bbox.Coord,
 	debug bool,
 ) *Keyboard {
 
-	fmt.Printf("InitKeyboard00\n")
-
 	kb := Keyboard{
+		yield:   yield,
 		keyMap:  keyMap,
 		beats:   Beats{},
 		msgs:    msgs,
@@ -60,14 +64,11 @@ func InitKeyboard(
 		debug:   debug,
 	}
 
+	go kb.emitter()
 	go func() {
-		kb.emitter()
 		// starter beat
-		fmt.Printf("InitKeyboard0\n")
 		kb.Flip(1, 0)
-		fmt.Printf("InitKeyboard1\n")
 		kb.Flip(1, 8)
-		fmt.Printf("InitKeyboard2\n")
 	}()
 
 	return &kb
@@ -81,16 +82,22 @@ func (kb *Keyboard) button(beat int, tick int, decay bool) {
 	kb.emit <- Button{beat: beat, tick: tick, decay: decay}
 }
 
-func (kb *Keyboard) allOff() bool {
+func (kb *Keyboard) activeButtons() int {
+	active := 0
+
 	for _, row := range kb.beats {
 		for _, beat := range row {
 			if beat {
-				return false
+				active++
 			}
 		}
 	}
 
-	return true
+	return active
+}
+
+func (kb *Keyboard) allOff() bool {
+	return kb.activeButtons() == 0
 }
 
 func (kb *Keyboard) emitter() {
@@ -138,6 +145,10 @@ func (kb *Keyboard) emitter() {
 				} else {
 					// turning on
 					kb.beats[button.beat][button.tick] = true
+
+					if kb.activeButtons() == YIELD_LIMIT {
+						kb.yield()
+					}
 
 					// set a decay timer
 					kb.timers[button.beat][button.tick] = time.AfterFunc(DECAY, func() {

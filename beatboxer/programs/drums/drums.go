@@ -12,7 +12,7 @@ type DrumMachine struct {
 	output beatboxer.Output
 }
 
-func (dm *DrumMachine) Init(output beatboxer.Output) {
+func (dm *DrumMachine) New(output beatboxer.Output) beatboxer.Program {
 	// beat changes
 	//   keyboard => loop
 	//   keyboard => render
@@ -37,20 +37,26 @@ func (dm *DrumMachine) Init(output beatboxer.Output) {
 		make(chan Interval),
 	}
 	// keyboard broadcasts quit with close(msgs)
-	dm.kb = InitKeyboard(WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
-	dm.loop = InitLoop(output.Play, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
-	dm.r = InitRender(msgs[1], ticks[0], intervals[0], output.Render)
+	kb := InitKeyboard(output.Yield, WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
+	loop := InitLoop(output.Play, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
+	r := InitRender(msgs[1], ticks[0], intervals[0], output.Render)
 
-	go dm.loop.Run()
-	go dm.r.Run()
+	go loop.Run()
+	go r.Run()
+
+	return &DrumMachine{
+		kb:   kb,
+		loop: loop,
+		r:    r,
+	}
 }
 
 func (dm *DrumMachine) Pressed(row int, column int) {
 	dm.kb.Flip(row, column)
 }
 
-// func (dm *DrumMachine) Close() {
-// 	dm.kb.Close()
-// 	dm.loop.Close()
-// 	dm.r.Close()
-// }
+func (dm *DrumMachine) Close() {
+	dm.kb.Close()
+	dm.loop.Close()
+	dm.r.Close()
+}

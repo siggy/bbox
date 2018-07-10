@@ -91,8 +91,6 @@ func initWav(f os.FileInfo) *wavFile {
 	}
 	copy(w.buf, buf[:])
 
-	fmt.Printf("Loaded wav file %s: %d samples\n", w.name, w.length)
-
 	return &w
 }
 

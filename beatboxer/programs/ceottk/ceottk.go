@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	SEQEUNCE_LENGTH = 123
-	EARLY_PLAY      = 0.5
+	SEQUENCE_LENGTH      = 123
+	EARLY_PLAY           = 0.5
+	IMPATIENCE_THRESHOLD = 100
 )
 
 var (
@@ -70,20 +71,26 @@ func locationToLed(location int) (int, int) {
 }
 
 type Ceottk struct {
-	location int
-	output   beatboxer.Output
-	playing  bool
+	location   int
+	output     beatboxer.Output
+	playing    bool
+	impatience int
 }
 
-func (c *Ceottk) Init(output beatboxer.Output) {
-	c.output = output
+func (c *Ceottk) New(output beatboxer.Output) beatboxer.Program {
+	return &Ceottk{output: output}
 }
 
 func (c *Ceottk) Pressed(row int, column int) {
 	if c.playing {
+		c.impatience++
+		if c.impatience > IMPATIENCE_THRESHOLD {
+			c.output.Yield()
+		}
 		return
 	}
 	c.playing = true
+	c.impatience = 0
 
 	c.location++
 
@@ -114,8 +121,7 @@ func (c *Ceottk) Pressed(row int, column int) {
 
 			time.AfterFunc(dur, func() {
 				// this works because we know the last sound played is alien
-				if c.location == SEQEUNCE_LENGTH {
-					c.location = 0 // TODO: reset or have harness recreate program
+				if c.location == SEQUENCE_LENGTH {
 					c.output.Yield()
 				}
 				c.playing = false
@@ -124,4 +130,7 @@ func (c *Ceottk) Pressed(row int, column int) {
 			c.playing = false
 		}
 	})
+}
+
+func (c *Ceottk) Close() {
 }
