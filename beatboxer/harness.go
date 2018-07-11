@@ -35,12 +35,13 @@ func (r *registered) Yield() {
 }
 
 type Harness struct {
-	pressed chan bbox.Coord
-	kb      *Keyboard
-	wavs    *wavs.Wavs
-
-	programs []Program
-	active   int
+	pressed   chan bbox.Coord
+	kb        *Keyboard
+	wavs      *wavs.Wavs
+	amplitude *Amplitude
+	programs  []Program
+	active    int
+	level     chan float64
 }
 
 func InitHarness(keyMap map[bbox.Key]*bbox.Coord) *Harness {
@@ -49,12 +50,16 @@ func InitHarness(keyMap map[bbox.Key]*bbox.Coord) *Harness {
 		panic(err)
 	}
 
+	level := make(chan float64)
+	amplitude := InitAmplitude(level)
 	pressed := make(chan bbox.Coord)
 
 	return &Harness{
-		pressed: pressed,
-		wavs:    wavs.InitWavs(),
-		kb:      InitKeyboard(pressed, keyMap),
+		pressed:   pressed,
+		wavs:      wavs.InitWavs(),
+		kb:        InitKeyboard(pressed, keyMap),
+		amplitude: amplitude,
+		level:     level,
 	}
 }
 
@@ -79,7 +84,9 @@ func (h *Harness) NextProgram() {
 func (h *Harness) Run() {
 	defer termbox.Close()
 	defer h.wavs.Close()
+	defer h.amplitude.Close()
 
+	go h.amplitude.Run()
 	go h.kb.Run()
 
 	// make the first program active
@@ -92,6 +99,12 @@ func (h *Harness) Run() {
 	switcherCount := 0
 	for {
 		select {
+		case level, more := <-h.level:
+			if !more {
+				fmt.Printf("amplitude.level closed\n")
+				return
+			}
+			h.programs[h.active].Amp(level)
 		case coord, more := <-h.pressed:
 			if !more {
 				return

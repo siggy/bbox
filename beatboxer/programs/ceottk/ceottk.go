@@ -81,6 +81,22 @@ func (c *Ceottk) New(output beatboxer.Output) beatboxer.Program {
 	return &Ceottk{output: output}
 }
 
+func (c *Ceottk) Amp(level float64) {
+	rs := render.RenderState{}
+	amp := int(level * 4)
+	for row := render.ROWS - 1; row > (render.ROWS - 1 - amp); row-- {
+		for col := 0; col < render.COLUMNS; col++ {
+			rs.LEDs[row][col] = color.Make(127, 0, 0, 0)
+			rs.Transitions[row][col] = render.Transition{
+				Color:    color.Make(160, 32, 240, 0), // purple
+				Location: level,                       // !!!!!
+				Length:   level,
+			}
+		}
+	}
+	c.output.Render(rs)
+}
+
 func (c *Ceottk) Pressed(row int, column int) {
 	if c.playing {
 		c.impatience++
