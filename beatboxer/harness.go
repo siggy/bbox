@@ -35,6 +35,7 @@ func (r *registered) Yield() {
 }
 
 type Harness struct {
+	renderer  render.Renderer
 	renderFn  func(render.RenderState)
 	pressed   chan bbox.Coord
 	kb        *Keyboard
@@ -46,6 +47,7 @@ type Harness struct {
 }
 
 func InitHarness(
+	renderer render.Renderer,
 	renderFn func(render.RenderState),
 	keyMap map[bbox.Key]*bbox.Coord,
 ) *Harness {
@@ -59,6 +61,7 @@ func InitHarness(
 	pressed := make(chan bbox.Coord)
 
 	return &Harness{
+		renderer:  renderer,
 		renderFn:  renderFn,
 		pressed:   pressed,
 		wavs:      wavs.InitWavs(),
@@ -77,6 +80,7 @@ func (h *Harness) NextProgram() {
 	h.active = (h.active + 1) % len(h.programs)
 	prev.Close()
 
+	// clear the display
 	h.renderFn(render.RenderState{})
 
 	reg := registered{
@@ -147,6 +151,21 @@ func (h *Harness) render(id int, rs render.RenderState) {
 	}
 
 	h.renderFn(rs)
+
+	// TODO: decide if a web renderer is performant enough
+	// h.toRenderer(rs)
+}
+
+// temporary until all the "68, 64, 60, 56" foo is moved over
+func (h *Harness) toRenderer(rs render.RenderState) {
+	for col := 0; col < render.COLUMNS; col++ {
+		for row := 0; row < render.ROWS-2; row++ {
+			h.renderer.SetLed(0, col, rs.LEDs[row][col])
+		}
+		for row := render.ROWS - 2; row < render.ROWS; row++ {
+			h.renderer.SetLed(1, col, rs.LEDs[row][col])
+		}
+	}
 }
 
 func (h *Harness) yield(id int) {

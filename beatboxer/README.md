@@ -44,3 +44,4 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 - fix concurrency (`go run -race cmd/beatboxer_noleds.go` is not pretty)
 - better development renderer
   - https://github.com/siggy/bbox/tree/siggy/led-dep-injection/bbox/renderer/web
+  - requires making the "68, 64, 60, 56" foo injectable
