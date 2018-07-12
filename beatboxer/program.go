@@ -16,6 +16,7 @@ type Output interface {
 // Program defines the interface all Beatboxer programs must satisfy
 type Program interface {
 	New(output Output) Program
-	Pressed(row int, column int)
+	Amp(level float64)
+	Pressed(row int, col int)
 	Close()
 }

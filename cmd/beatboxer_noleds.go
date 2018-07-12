@@ -9,13 +9,17 @@ import (
 	"github.com/siggy/bbox/beatboxer"
 	"github.com/siggy/bbox/beatboxer/programs/ceottk"
 	"github.com/siggy/bbox/beatboxer/programs/drums"
+	"github.com/siggy/bbox/beatboxer/render"
 )
 
 func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
-	harness := beatboxer.InitHarness(bbox.KeyMapsPC)
+	harness := beatboxer.InitHarness(
+		render.Render,
+		bbox.KeyMapsPC,
+	)
 
 	harness.Register(&drums.DrumMachine{})
 	harness.Register(&ceottk.Ceottk{})

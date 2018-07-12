@@ -26,7 +26,7 @@ func main() {
 			if more {
 				// fmt.Printf("\r%s", strings.Repeat(" ", 100))
 				// fmt.Printf("\r%s", strings.Repeat("#", int(100*i)))
-				fmt.Printf("%s\n", strings.Repeat("#", int(100*i)))
+				fmt.Printf("%3d: %s\n", int(100*i), strings.Repeat("#", int(100*i)))
 			} else {
 				return
 			}

@@ -29,6 +29,7 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 1. Implement the `Program` interface, as defined in [`program.go`](program.go).
     This interface supports the following:
     - `New`: initialize state, kicks off long-running processes, returns new handle
+    - `Amp`: receive amplitude, [0..1]
     - `Pressed`: receive button presses
     - `Render`: render LEDs
     - `Play`: play audio files
@@ -38,9 +39,8 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 
 ## TODO
 
-- provide audio amplitude data to programs
-- better development renderer (perhaps web-based?)
-- fix concurrency (`go run -race cmd/beatboxer_noleds.go` is not pretty)
 - update LED rendering code for harness environment
-- ceottk
-  - better render patterns
+- harness should make calls on buffered channels, and drop when channel fills up
+- fix concurrency (`go run -race cmd/beatboxer_noleds.go` is not pretty)
+- better development renderer
+  - https://github.com/siggy/bbox/tree/siggy/led-dep-injection/bbox/renderer/web

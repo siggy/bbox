@@ -7,6 +7,7 @@ import (
 	"github.com/siggy/bbox/beatboxer/color"
 )
 
+// TODO: these need to be in an output-agnostic module
 const (
 	ROWS          = 4
 	COLUMNS       = 16
@@ -51,7 +52,8 @@ func Render(renderState RenderState) {
 			} else if renderState.LEDs[row][col] == color.Make(127, 0, 0, 0) {
 				fgColor = termbox.ColorRed
 				rune = 'O'
-			} else if renderState.LEDs[row][col] == color.Make(127, 127, 0, 127) {
+			} else if renderState.LEDs[row][col] == color.Make(250, 143, 94, 0) {
+				// ceottk
 				fgColor = termbox.ColorYellow
 				rune = 'X'
 			}
