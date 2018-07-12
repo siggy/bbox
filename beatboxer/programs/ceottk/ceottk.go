@@ -2,6 +2,7 @@ package ceottk
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/siggy/bbox/beatboxer"
@@ -62,42 +63,53 @@ var (
 	}
 )
 
-func locationToLed(location int) (int, int) {
-	loc := location % (render.ROWS * render.COLUMNS)
-	row := loc / render.COLUMNS
-	col := loc - row*render.COLUMNS
-
-	return row, col
-}
-
 type Ceottk struct {
 	location   int
 	output     beatboxer.Output
 	playing    bool
 	impatience int
+
+	closing     chan struct{}
+	leds        chan [render.ROWS][render.COLUMNS]uint32
+	transitions chan [render.ROWS][render.COLUMNS]render.Transition
 }
 
 func (c *Ceottk) New(output beatboxer.Output) beatboxer.Program {
-	return &Ceottk{output: output}
+	ceottk := &Ceottk{
+		output:      output,
+		closing:     make(chan struct{}),
+		leds:        make(chan [render.ROWS][render.COLUMNS]uint32),
+		transitions: make(chan [render.ROWS][render.COLUMNS]render.Transition),
+	}
+
+	go ceottk.run()
+
+	return ceottk
 }
 
 func (c *Ceottk) Amp(level float64) {
 	rs := render.RenderState{}
-	amp := int(level * 4)
+	amp := int(math.Min(level*4+1, 4))
 	for row := render.ROWS - 1; row > (render.ROWS - 1 - amp); row-- {
 		for col := 0; col < render.COLUMNS; col++ {
-			rs.LEDs[row][col] = color.Make(127, 0, 0, 0)
 			rs.Transitions[row][col] = render.Transition{
-				Color:    color.Make(160, 32, 240, 0), // purple
-				Location: level,                       // !!!!!
+				// blue -> purple -> red
+				// 40, 32, 240 -> 160, 32, 34
+				Color: color.Make(
+					uint32(40*(4-row)),
+					32,
+					uint32(-12.875*float64(col)+240),
+					0,
+				),
+				Location: level, // !!!!!
 				Length:   level,
 			}
 		}
 	}
-	c.output.Render(rs)
+	c.transitions <- rs.Transitions
 }
 
-func (c *Ceottk) Pressed(row int, column int) {
+func (c *Ceottk) Pressed(row int, col int) {
 	if c.playing {
 		c.impatience++
 		if c.impatience > IMPATIENCE_THRESHOLD {
@@ -120,9 +132,8 @@ func (c *Ceottk) Pressed(row int, column int) {
 	dur := c.output.Play(human)
 
 	rs := render.RenderState{}
-	row, col := locationToLed(c.location)
 	rs.LEDs[row][col] = color.Make(127, 0, 0, 0)
-	c.output.Render(rs)
+	c.leds <- rs.LEDs
 
 	time.AfterFunc(time.Duration(float64(dur)*EARLY_PLAY), func() {
 		if _, ok := aliens[c.location+1]; ok {
@@ -130,10 +141,15 @@ func (c *Ceottk) Pressed(row int, column int) {
 			alien := fmt.Sprintf("ceottk%03d_alien.wav", c.location)
 			dur := c.output.Play(alien)
 
-			rs := render.RenderState{}
-			row, col := locationToLed(c.location)
-			rs.LEDs[row][col] = color.Make(127, 127, 0, 127)
-			c.output.Render(rs)
+			for aRow := int(math.Max(0, float64(row)-1)); aRow <= int(math.Min(render.ROWS-1, float64(row)+1)); aRow++ {
+				for aCol := int(math.Max(0, float64(col)-1)); aCol <= int(math.Min(render.COLUMNS-1, float64(col)+1)); aCol++ {
+					if aRow != row || aCol != col {
+						rs.LEDs[aRow][aCol] = color.Make(250, 143, 94, 0)
+					}
+				}
+			}
+
+			c.leds <- rs.LEDs
 
 			time.AfterFunc(dur, func() {
 				// this works because we know the last sound played is alien
@@ -149,4 +165,23 @@ func (c *Ceottk) Pressed(row int, column int) {
 }
 
 func (c *Ceottk) Close() {
+	close(c.closing)
+}
+
+func (c *Ceottk) run() {
+	rs := render.RenderState{}
+	for {
+		select {
+		case leds := <-c.leds:
+			rs.LEDs = leds
+		case transitions := <-c.transitions:
+			rs.Transitions = transitions
+		case _, more := <-c.closing:
+			if !more {
+				return
+			}
+		}
+
+		c.output.Render(rs)
+	}
 }

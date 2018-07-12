@@ -53,8 +53,8 @@ func (dm *DrumMachine) New(output beatboxer.Output) beatboxer.Program {
 
 func (dm *DrumMachine) Amp(level float64) {}
 
-func (dm *DrumMachine) Pressed(row int, column int) {
-	dm.kb.Flip(row, column)
+func (dm *DrumMachine) Pressed(row int, col int) {
+	dm.kb.Flip(row, col)
 }
 
 func (dm *DrumMachine) Close() {

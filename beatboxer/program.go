@@ -17,6 +17,6 @@ type Output interface {
 type Program interface {
 	New(output Output) Program
 	Amp(level float64)
-	Pressed(row int, column int)
+	Pressed(row int, col int)
 	Close()
 }

@@ -35,6 +35,7 @@ func (r *registered) Yield() {
 }
 
 type Harness struct {
+	renderFn  func(render.RenderState)
 	pressed   chan bbox.Coord
 	kb        *Keyboard
 	wavs      *wavs.Wavs
@@ -44,7 +45,10 @@ type Harness struct {
 	level     chan float64
 }
 
-func InitHarness(keyMap map[bbox.Key]*bbox.Coord) *Harness {
+func InitHarness(
+	renderFn func(render.RenderState),
+	keyMap map[bbox.Key]*bbox.Coord,
+) *Harness {
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -55,6 +59,7 @@ func InitHarness(keyMap map[bbox.Key]*bbox.Coord) *Harness {
 	pressed := make(chan bbox.Coord)
 
 	return &Harness{
+		renderFn:  renderFn,
 		pressed:   pressed,
 		wavs:      wavs.InitWavs(),
 		kb:        InitKeyboard(pressed, keyMap),
@@ -72,7 +77,7 @@ func (h *Harness) NextProgram() {
 	h.active = (h.active + 1) % len(h.programs)
 	prev.Close()
 
-	render.Render(render.RenderState{})
+	h.renderFn(render.RenderState{})
 
 	reg := registered{
 		harness: h,
@@ -141,7 +146,7 @@ func (h *Harness) render(id int, rs render.RenderState) {
 		return
 	}
 
-	render.Render(rs)
+	h.renderFn(rs)
 }
 
 func (h *Harness) yield(id int) {
