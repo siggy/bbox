@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	termbox "github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/beatboxer/keyboard"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/wavs"
 )
@@ -35,11 +35,14 @@ func (r *registered) Yield() {
 }
 
 type Harness struct {
-	renderer  render.Renderer
-	renderFn  func(render.RenderState)
-	pressed   chan bbox.Coord
-	kb        *Keyboard
+	renderer   render.Renderer
+	terminal   *render.Terminal
+	termRender chan render.RenderState
+	// pressed   chan bbox.Coord
+	kb *keyboard.Keyboard
+	// flush     chan struct{}
 	wavs      *wavs.Wavs
+	keyMap    map[bbox.Key]*bbox.Coord
 	amplitude *Amplitude
 	programs  []Program
 	active    int
@@ -48,26 +51,25 @@ type Harness struct {
 
 func InitHarness(
 	renderer render.Renderer,
-	renderFn func(render.RenderState),
 	keyMap map[bbox.Key]*bbox.Coord,
 ) *Harness {
-	err := termbox.Init()
-	if err != nil {
-		panic(err)
-	}
+	// err := termbox.Init()
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	level := make(chan float64)
 	amplitude := InitAmplitude(level)
-	pressed := make(chan bbox.Coord)
 
 	return &Harness{
-		renderer:  renderer,
-		renderFn:  renderFn,
-		pressed:   pressed,
-		wavs:      wavs.InitWavs(),
-		kb:        InitKeyboard(pressed, keyMap),
-		amplitude: amplitude,
-		level:     level,
+		renderer: renderer,
+		// pressed:   make(chan bbox.Coord),
+		termRender: make(chan render.RenderState),
+		wavs:       wavs.InitWavs(),
+		keyMap:     keyMap,
+		amplitude:  amplitude,
+		level:      level,
+		// flush:     make(chan struct{}),
 	}
 }
 
@@ -81,7 +83,8 @@ func (h *Harness) NextProgram() {
 	prev.Close()
 
 	// clear the display
-	h.renderFn(render.RenderState{})
+	// h.renderFn(render.RenderState{})
+	h.terminal.Render(render.RenderState{})
 
 	reg := registered{
 		harness: h,
@@ -91,9 +94,24 @@ func (h *Harness) NextProgram() {
 }
 
 func (h *Harness) Run() {
-	defer termbox.Close()
+	// err := termbox.Init()
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	defer func() {
+		// termbox.Interrupt()
+		// termbox.Close()
+		prev := h.programs[h.active]
+		// don't actually start the next program
+		h.active = (h.active + 1) % len(h.programs)
+		prev.Close()
+	}()
 	defer h.wavs.Close()
 	defer h.amplitude.Close()
+
+	h.kb = keyboard.Init(h.keyMap)
+	h.terminal = render.InitTerminal(h.kb)
 
 	go h.amplitude.Run()
 	go h.kb.Run()
@@ -108,14 +126,21 @@ func (h *Harness) Run() {
 	switcherCount := 0
 	for {
 		select {
+		// case _, more := <-h.flush:
+		// 	if !more {
+		// 		fmt.Printf("flush channel closed\n")
+		// 		return
+		// 	}
+		// 	termbox.Flush()
 		case level, more := <-h.level:
 			if !more {
-				fmt.Printf("amplitude.level closed\n")
+				fmt.Printf("amplitude.level channel closed\n")
 				return
 			}
 			h.programs[h.active].Amp(level)
-		case coord, more := <-h.pressed:
+		case coord, more := <-h.kb.Pressed():
 			if !more {
+				fmt.Printf("pressed channel closed\n")
 				return
 			}
 			if coord == switcher {
@@ -131,6 +156,12 @@ func (h *Harness) Run() {
 			}
 
 			h.programs[h.active].Pressed(coord[0], coord[1])
+		case rs, more := <-h.termRender:
+			if !more {
+				fmt.Printf("termRender channel closed\n")
+				return
+			}
+			h.terminal.Render(rs)
 		}
 	}
 }
@@ -150,7 +181,15 @@ func (h *Harness) render(id int, rs render.RenderState) {
 		return
 	}
 
-	h.renderFn(rs)
+	// TODO: led renderer, which eventually call renderer.SetLed
+	// h.led.Render(rs)
+
+	h.termRender <- rs
+	// h.renderFn(rs)
+
+	// TODO: should renderFn() do this?
+	// also TODO: should this be synch?
+	// h.kb.Flush()
 
 	// TODO: decide if a web renderer is performant enough
 	// h.toRenderer(rs)

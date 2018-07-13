@@ -82,6 +82,7 @@ func (r *Render) Run() {
 		select {
 		case _, more := <-r.closing:
 			if !more {
+				fmt.Printf("Render.closing closed\n")
 				return
 			}
 		case tick := <-r.ticks:
@@ -94,7 +95,7 @@ func (r *Render) Run() {
 				r.Draw()
 			} else {
 				// closing
-				fmt.Printf("Render closing\n")
+				fmt.Printf("Render.msgs closed\n")
 				return
 			}
 		case iv, more := <-r.intervalCh:

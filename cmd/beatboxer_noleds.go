@@ -9,7 +9,6 @@ import (
 	"github.com/siggy/bbox/beatboxer"
 	"github.com/siggy/bbox/beatboxer/programs/ceottk"
 	"github.com/siggy/bbox/beatboxer/programs/drums"
-	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/render/web"
 )
 
@@ -19,7 +18,6 @@ func main() {
 
 	harness := beatboxer.InitHarness(
 		web.InitWeb(),
-		render.Render,
 		bbox.KeyMapsPC,
 	)
 

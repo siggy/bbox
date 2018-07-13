@@ -3,8 +3,6 @@ package drums
 import (
 	"fmt"
 	"time"
-
-	"github.com/siggy/bbox/beatboxer/render"
 )
 
 const (
@@ -85,7 +83,7 @@ func (l *Loop) Run() {
 	defer ticker.Stop()
 
 	tick := 0
-	tickTime := time.Now()
+	// tickTime := time.Now()
 	for {
 		select {
 		case _, more := <-l.closing:
@@ -167,12 +165,12 @@ func (l *Loop) Run() {
 				}
 			}
 
-			t := time.Now()
-			render.TBprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
-			render.TBprint(0, 6, fmt.Sprintf("______int:__%+v______", l.bpmToInterval(l.bpm)))
-			render.TBprint(0, 7, fmt.Sprintf("______time:_%+v______", t.Sub(tickTime)))
-			render.TBprint(0, 8, fmt.Sprintf("______tick:_%+v______", tick))
-			tickTime = t
+			// t := time.Now()
+			// render.TBprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
+			// render.TBprint(0, 6, fmt.Sprintf("______int:__%+v______", l.bpmToInterval(l.bpm)))
+			// render.TBprint(0, 7, fmt.Sprintf("______time:_%+v______", t.Sub(tickTime)))
+			// render.TBprint(0, 8, fmt.Sprintf("______tick:_%+v______", tick))
+			// tickTime = t
 		}
 	}
 }
