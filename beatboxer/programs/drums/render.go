@@ -1,10 +1,9 @@
 package drums
 
 import (
-	"fmt"
-
 	"github.com/siggy/bbox/beatboxer/color"
 	"github.com/siggy/bbox/beatboxer/render"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -82,7 +81,7 @@ func (r *Render) Run() {
 		select {
 		case _, more := <-r.closing:
 			if !more {
-				fmt.Printf("Render.closing closed\n")
+				log.Debugf("Render.closing closed")
 				return
 			}
 		case tick := <-r.ticks:
@@ -95,7 +94,7 @@ func (r *Render) Run() {
 				r.Draw()
 			} else {
 				// closing
-				fmt.Printf("Render.msgs closed\n")
+				log.Debugf("Render.msgs closed")
 				return
 			}
 		case iv, more := <-r.intervalCh:
@@ -104,7 +103,7 @@ func (r *Render) Run() {
 				r.iv = iv
 			} else {
 				// we should never get here
-				fmt.Printf("unexpected: intervalCh return no more\n")
+				log.Debugf("unexpected: intervalCh return no more")
 				return
 			}
 		}

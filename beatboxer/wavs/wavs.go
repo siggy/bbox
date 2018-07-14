@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gordonklaus/portaudio"
+	log "github.com/sirupsen/logrus"
 	"github.com/youpy/go-wav"
 )
 
@@ -120,7 +121,7 @@ func (w *Wavs) cb(output [][]float32) {
 func (wavs *Wavs) Play(name string) time.Duration {
 	wav, ok := wavs.wavs[name]
 	if !ok {
-		fmt.Printf("Unknown wav file: %s\n", name)
+		log.Debugf("Unknown wav file: %s", name)
 		return time.Duration(0)
 	}
 
@@ -134,5 +135,5 @@ func (w *Wavs) Close() {
 	w.stream.Close()
 	portaudio.Terminate()
 
-	fmt.Printf("Wavs closing\n")
+	log.Debugf("Wavs Closed")
 }

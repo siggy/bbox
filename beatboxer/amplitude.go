@@ -1,11 +1,11 @@
 package beatboxer
 
 import (
-	"fmt"
 	"math"
 	"time"
 
 	"github.com/gordonklaus/portaudio"
+	log "github.com/sirupsen/logrus"
 )
 
 type Amplitude struct {
@@ -55,6 +55,12 @@ func amp(slice []int32) float64 {
 }
 
 func InitAmplitude(level chan<- float64) *Amplitude {
+	err := portaudio.Initialize()
+	if err != nil {
+		log.Debugf("portaudio.Initialize failed: %+v\n", err)
+		panic(err)
+	}
+
 	return &Amplitude{
 		closing: make(chan struct{}),
 		level:   level,
@@ -62,24 +68,19 @@ func InitAmplitude(level chan<- float64) *Amplitude {
 }
 
 func (a *Amplitude) Run() {
-	err := portaudio.Initialize()
-	if err != nil {
-		fmt.Printf("portaudio.Initialize failed: %+v\n", err)
-		panic(err)
-	}
-	defer portaudio.Terminate()
+	// defer portaudio.Terminate()
 
 	in := make([]int32, 64)
 	stream, err := portaudio.OpenDefaultStream(1, 0, 44100, len(in), in)
 	if err != nil {
-		fmt.Printf("OpenDefaultStream failed: %+v\n", err)
+		log.Debugf("OpenDefaultStream failed: %+v\n", err)
 		panic(err)
 	}
 	defer stream.Close()
 
 	err = stream.Start()
 	if err != nil {
-		fmt.Printf("stream.Start failed: %+v\n", err)
+		log.Debugf("stream.Start failed: %+v\n", err)
 		panic(err)
 	}
 	defer stream.Stop()
@@ -100,4 +101,7 @@ func (a *Amplitude) Run() {
 
 func (a *Amplitude) Close() {
 	close(a.closing)
+	portaudio.Terminate()
+
+	log.Debugf("Amplitude Closed")
 }

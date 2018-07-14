@@ -3,6 +3,7 @@ package drums
 import (
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer"
+	log "github.com/sirupsen/logrus"
 )
 
 type DrumMachine struct {
@@ -54,7 +55,9 @@ func (dm *DrumMachine) New(output beatboxer.Output) beatboxer.Program {
 func (dm *DrumMachine) Amp(level float64) {}
 
 func (dm *DrumMachine) Pressed(row int, col int) {
+	log.Debugf("dm.Pressed start: %02d, %02d", row, col)
 	dm.kb.Flip(row, col)
+	log.Debugf("dm.Pressed end: %02d, %02d", row, col)
 }
 
 func (dm *DrumMachine) Close() {

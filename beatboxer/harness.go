@@ -1,13 +1,13 @@
 package beatboxer
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer/keyboard"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/wavs"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -99,22 +99,35 @@ func (h *Harness) Run() {
 	// 	panic(err)
 	// }
 
+	h.kb = keyboard.Init(h.keyMap)
+
+	go h.amplitude.Run()
+	go h.kb.Run()
+
+	h.terminal = render.InitTerminal(h.kb)
+
 	defer func() {
+		log.Debugf("h.Run() defer func() 0")
+
 		// termbox.Interrupt()
 		// termbox.Close()
 		prev := h.programs[h.active]
 		// don't actually start the next program
 		h.active = (h.active + 1) % len(h.programs)
 		prev.Close()
+
+		log.Debugf("h.Run() defer func() 1")
+
+		// ensure nested shutdown for portaudio even though it shouldn't be necessary?
+		go func() {
+			h.amplitude.Close()
+			h.wavs.Close()
+		}()
+
+		go h.kb.Close()
+
+		log.Debugf("h.Run() defer func() 2")
 	}()
-	defer h.wavs.Close()
-	defer h.amplitude.Close()
-
-	h.kb = keyboard.Init(h.keyMap)
-	h.terminal = render.InitTerminal(h.kb)
-
-	go h.amplitude.Run()
-	go h.kb.Run()
 
 	// make the first program active
 	reg := registered{
@@ -128,19 +141,26 @@ func (h *Harness) Run() {
 		select {
 		// case _, more := <-h.flush:
 		// 	if !more {
-		// 		fmt.Printf("flush channel closed\n")
+		// 		log.Debugf("flush channel closed")
 		// 		return
 		// 	}
 		// 	termbox.Flush()
 		case level, more := <-h.level:
+			log.Debugf("h.level")
 			if !more {
-				fmt.Printf("amplitude.level channel closed\n")
+				log.Debugf("harness: amplitude.level channel closed")
 				return
 			}
+
+			// log.Debugf("h.programs[h.active].Amp(level) start")
+
 			h.programs[h.active].Amp(level)
+
+			// log.Debugf("h.programs[h.active].Amp(level) end")
 		case coord, more := <-h.kb.Pressed():
+			log.Debugf("h.kb.Pressed()")
 			if !more {
-				fmt.Printf("pressed channel closed\n")
+				log.Debugf("harness: pressed channel closed")
 				return
 			}
 			if coord == switcher {
@@ -156,19 +176,28 @@ func (h *Harness) Run() {
 			}
 
 			h.programs[h.active].Pressed(coord[0], coord[1])
-		case rs, more := <-h.termRender:
+		case _, more := <-h.kb.Closing():
+			log.Debugf("<-h.kb.Closing()")
 			if !more {
-				fmt.Printf("termRender channel closed\n")
+				log.Debugf("harness: keyboard closing")
 				return
 			}
+		case rs, more := <-h.termRender:
+			log.Debugf("<-h.termRender")
+			if !more {
+				log.Debugf("harness: termRender channel closed")
+				return
+			}
+			log.Debugf("h.terminal.Render(rs) start")
 			h.terminal.Render(rs)
+			log.Debugf("h.terminal.Render(rs) end")
 		}
 	}
 }
 
 func (h *Harness) play(id int, name string) time.Duration {
 	if id != h.active {
-		fmt.Printf("play called by invalid program %d: %s", id, name)
+		log.Debugf("play called by invalid program %d: %s", id, name)
 		return time.Duration(0)
 	}
 
@@ -177,7 +206,7 @@ func (h *Harness) play(id int, name string) time.Duration {
 
 func (h *Harness) render(id int, rs render.RenderState) {
 	if id != h.active {
-		fmt.Printf("render called by invalid program %d: %+v", id, rs)
+		log.Debugf("render called by invalid program %d: %+v", id, rs)
 		return
 	}
 
@@ -209,7 +238,7 @@ func (h *Harness) toRenderer(rs render.RenderState) {
 
 func (h *Harness) yield(id int) {
 	if id != h.active {
-		fmt.Printf("yield called by invalid program %d", id)
+		log.Debugf("yield called by invalid program %d", id)
 		return
 	}
 

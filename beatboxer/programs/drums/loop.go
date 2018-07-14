@@ -1,8 +1,9 @@
 package drums
 
 import (
-	"fmt"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -88,7 +89,7 @@ func (l *Loop) Run() {
 		select {
 		case _, more := <-l.closing:
 			if !more {
-				fmt.Printf("Loop trying to close\n")
+				log.Debugf("Loop trying to close")
 				// return
 			}
 		case beats, more := <-l.msgs:
@@ -97,7 +98,7 @@ func (l *Loop) Run() {
 				l.beats = beats
 			} else {
 				// closing
-				fmt.Printf("Loop closing\n")
+				log.Debugf("Loop closing")
 				return
 			}
 
@@ -120,7 +121,7 @@ func (l *Loop) Run() {
 				defer ticker.Stop()
 			} else {
 				// we should never get here
-				fmt.Printf("closed on bpm, invalid state")
+				log.Debugf("closed on bpm, invalid state")
 				panic(1)
 			}
 
@@ -142,7 +143,7 @@ func (l *Loop) Run() {
 				}
 			} else {
 				// we should never get here
-				fmt.Printf("unexpected: tempo return no more\n")
+				log.Debugf("unexpected: tempo return no more")
 				return
 			}
 
