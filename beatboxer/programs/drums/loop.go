@@ -93,12 +93,15 @@ func (l *Loop) Run() {
 				// return
 			}
 		case beats, more := <-l.msgs:
+			log.Debugf("Loop.Run <-l.msgs")
 			if more {
+				log.Debugf("Loop.Run <-l.msgs start: %+v", beats)
 				// incoming beat update from keyboard
 				l.beats = beats
+				log.Debugf("Loop.Run <-l.msgs end: %+v", beats)
 			} else {
 				// closing
-				log.Debugf("Loop closing")
+				log.Debugf("Loop.Run closing")
 				return
 			}
 
