@@ -109,7 +109,11 @@ func (kb *Keyboard) emitter() {
 
 	for {
 		select {
-		case <-kb.closing:
+		case _, more := <-kb.closing:
+			if more {
+				log.Debugf("send on kb.closing, invalid state")
+				panic(1)
+			}
 			// ensure all timers are stopped before closing kb.emit
 			if kb.keepAlive != nil {
 				kb.keepAlive.Stop()

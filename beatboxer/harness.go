@@ -28,7 +28,9 @@ func (r *registered) Play(name string) time.Duration {
 	return r.harness.play(r.id, name)
 }
 func (r *registered) Render(rs render.RenderState) {
+	log.Debugf("(r *registered) Render start: %+d", r.id)
 	r.harness.render(r.id, rs)
+	log.Debugf("(r *registered) Render start: %+d", r.id)
 }
 func (r *registered) Yield() {
 	r.harness.yield(r.id)
@@ -158,7 +160,7 @@ func (h *Harness) Run() {
 
 			// log.Debugf("h.programs[h.active].Amp(level) end")
 		case coord, more := <-h.kb.Pressed():
-			log.Debugf("h.kb.Pressed()")
+			log.Debugf("h.kb.Pressed(): %+v", coord)
 			if !more {
 				log.Debugf("harness: pressed channel closed")
 				return
@@ -213,7 +215,9 @@ func (h *Harness) render(id int, rs render.RenderState) {
 	// TODO: led renderer, which eventually call renderer.SetLed
 	// h.led.Render(rs)
 
+	log.Debugf("(h *Harness) render start: %+d", id)
 	h.termRender <- rs
+	log.Debugf("(h *Harness) render end: %+d", id)
 	// h.renderFn(rs)
 
 	// TODO: should renderFn() do this?

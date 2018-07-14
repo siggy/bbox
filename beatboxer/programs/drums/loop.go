@@ -151,12 +151,15 @@ func (l *Loop) Run() {
 			}
 
 		case <-ticker.C: // for every time interval
+			log.Debugf("loop: ticker.C tick start: %+v", tick)
 			// next interval
 			tick = (tick + 1) % l.iv.Ticks
 			tmp := tick
 
 			for _, ch := range l.ticks {
-				ch <- tmp
+				log.Debugf("loop: ticker.C l.ticks start: %+v, %+v", tick, ch)
+				ch <- tmp // <-------- this is blocking, or play below
+				log.Debugf("loop: ticker.C l.ticks end: %+v, %+v", tick, ch)
 			}
 
 			// for each beat type
@@ -168,6 +171,8 @@ func (l *Loop) Run() {
 					}
 				}
 			}
+
+			log.Debugf("loop: ticker.C tick end: %+v", tick)
 
 			// t := time.Now()
 			// render.TBprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))

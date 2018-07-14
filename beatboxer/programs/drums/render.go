@@ -73,7 +73,9 @@ func (r *Render) Draw() {
 		}
 	}
 
+	log.Debugf("Render.Draw(): calling r.render() start")
 	r.render(renderState)
+	log.Debugf("Render.Draw(): calling r.render() end")
 }
 
 func (r *Render) Run() {
@@ -81,13 +83,16 @@ func (r *Render) Run() {
 		select {
 		case _, more := <-r.closing:
 			if !more {
-				log.Debugf("Render.closing closed")
+				log.Debugf("Render.Run(): <-r.closing")
 				return
 			}
 		case tick := <-r.ticks:
 			r.tick = tick
+			log.Debugf("Render.Run(): <-r.ticks start")
 			r.Draw()
+			log.Debugf("Render.Run(): <-r.ticks end")
 		case beats, more := <-r.msgs:
+			log.Debugf("Render.Run(): <-r.msgs")
 			if more {
 				// incoming beat update from keyboard
 				r.beats = beats
