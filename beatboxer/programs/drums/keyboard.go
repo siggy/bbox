@@ -1,7 +1,6 @@
 package drums
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/siggy/bbox/bbox"
@@ -33,7 +32,8 @@ type Button struct {
 // shtudown operation:
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
-	yield     func()
+	presses   <-chan bbox.Coord
+	yield     chan<- struct{}
 	keyMap    map[bbox.Key]*bbox.Coord
 	beats     Beats
 	timers    [SOUNDS][BEATS]*time.Timer
@@ -46,7 +46,8 @@ type Keyboard struct {
 }
 
 func InitKeyboard(
-	yield func(),
+	presses <-chan bbox.Coord,
+	yield chan<- struct{},
 	msgs []chan<- Beats,
 	tempo chan<- int,
 	keyMap map[bbox.Key]*bbox.Coord,
@@ -54,6 +55,7 @@ func InitKeyboard(
 ) *Keyboard {
 
 	kb := Keyboard{
+		presses: presses,
 		yield:   yield,
 		keyMap:  keyMap,
 		beats:   Beats{},
@@ -105,6 +107,10 @@ func (kb *Keyboard) emitter() {
 
 	for {
 		select {
+		case coord, _ := <-kb.presses:
+			go func() {
+				kb.Flip(coord[0], coord[1])
+			}()
 		case <-kb.closing:
 			// ensure all timers are stopped before closing kb.emit
 			if kb.keepAlive != nil {
@@ -122,65 +128,64 @@ func (kb *Keyboard) emitter() {
 				close(msg) // signals to other processes to quit
 			}
 			close(kb.emit)
-			fmt.Printf("Keyboard emitter closing\n")
 			return
 		case button, more := <-kb.emit:
-			if more {
-				// TODO: consider re-using timers
-				if kb.timers[button.beat][button.tick] != nil {
-					kb.timers[button.beat][button.tick].Stop()
-				}
-
-				if button.decay || kb.beats[button.beat][button.tick] {
-					// turning off
-					kb.beats[button.beat][button.tick] = false
-
-					// check for all beats off, if so, set a keepalive timer
-					if kb.allOff() {
-						kb.keepAlive = time.AfterFunc(KEEP_ALIVE, func() {
-							// enable a beat to keep the speaker alive
-							kb.Flip(1, 0)
-						})
-					}
-				} else {
-					// turning on
-					kb.beats[button.beat][button.tick] = true
-
-					if kb.activeButtons() == YIELD_LIMIT {
-						kb.yield()
-					}
-
-					// set a decay timer
-					kb.timers[button.beat][button.tick] = time.AfterFunc(DECAY, func() {
-						kb.button(button.beat, button.tick, true)
-					})
-
-					// we've enabled a beat, kill keepAlive
-					if kb.keepAlive != nil {
-						kb.keepAlive.Stop()
-					}
-				}
-
-				// broadcast changes
-				for _, msg := range kb.msgs {
-					msg <- kb.beats
-				}
-
-				// if tempo change, broadcast
-				if button.tick == TEMPO_TICK && last.tick == TEMPO_TICK {
-					if button.beat == 0 && last.beat == 0 {
-						kb.tempo <- 4
-					} else if button.beat == 3 && last.beat == 3 {
-						kb.tempo <- -4
-					}
-				}
-
-				last = button
-			} else {
+			if !more {
 				// we should never get here
-				fmt.Printf("closed on emit, invalid state")
 				panic(1)
 			}
+
+			// TODO: consider re-using timers
+			if kb.timers[button.beat][button.tick] != nil {
+				kb.timers[button.beat][button.tick].Stop()
+			}
+
+			if button.decay || kb.beats[button.beat][button.tick] {
+				// turning off
+				kb.beats[button.beat][button.tick] = false
+
+				// check for all beats off, if so, set a keepalive timer
+				if kb.allOff() {
+					kb.keepAlive = time.AfterFunc(KEEP_ALIVE, func() {
+						// enable a beat to keep the speaker alive
+						kb.Flip(1, 0)
+					})
+				}
+			} else {
+				// turning on
+				kb.beats[button.beat][button.tick] = true
+
+				if kb.activeButtons() == YIELD_LIMIT {
+					kb.yield <- struct{}{}
+				}
+
+				// set a decay timer
+				kb.timers[button.beat][button.tick] = time.AfterFunc(DECAY, func() {
+					kb.button(button.beat, button.tick, true)
+				})
+
+				// we've enabled a beat, kill keepAlive
+				if kb.keepAlive != nil {
+					kb.keepAlive.Stop()
+				}
+			}
+
+			// broadcast changes
+			for _, msg := range kb.msgs {
+				msg <- kb.beats
+			}
+
+			// if tempo change, broadcast
+			if button.tick == TEMPO_TICK && last.tick == TEMPO_TICK {
+				if button.beat == 0 && last.beat == 0 {
+					kb.tempo <- 4
+				} else if button.beat == 3 && last.beat == 3 {
+					kb.tempo <- -4
+				}
+			}
+
+			last = button
+
 		}
 	}
 }

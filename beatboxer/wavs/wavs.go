@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gordonklaus/portaudio"
+	log "github.com/sirupsen/logrus"
 	"github.com/youpy/go-wav"
 )
 
@@ -18,8 +19,9 @@ const (
 )
 
 type Wavs struct {
-	wavs   map[string]*wavFile
-	stream *portaudio.Stream
+	wavs    map[string]*wavFile
+	stream  *portaudio.Stream
+	stopAll chan struct{}
 }
 
 type wavFile struct {
@@ -39,7 +41,8 @@ func InitWavs() *Wavs {
 	files, _ := ioutil.ReadDir(WAVS)
 
 	wavs := &Wavs{
-		wavs: map[string]*wavFile{},
+		wavs:    map[string]*wavFile{},
+		stopAll: make(chan struct{}),
 	}
 
 	for _, f := range files {
@@ -103,6 +106,14 @@ func (w *Wavs) cb(output [][]float32) {
 		}
 	}
 
+	select {
+	case <-w.stopAll:
+		for _, wv := range w.wavs {
+			wv.remaining = 0
+		}
+	default:
+	}
+
 	out := make([]float32, BUF)
 	for _, wv := range w.wavs {
 		for i := 0; i < BUF; i++ {
@@ -117,16 +128,28 @@ func (w *Wavs) cb(output [][]float32) {
 	copy(output[0], out)
 }
 
-func (wavs *Wavs) Play(name string) time.Duration {
-	wav, ok := wavs.wavs[name]
+func (w *Wavs) Play(name string) {
+	wav, ok := w.wavs[name]
 	if !ok {
-		fmt.Printf("Unknown wav file: %s\n", name)
-		return time.Duration(0)
+		log.Debugf("Unknown wav file: %s", name)
+		return
 	}
 
 	wav.active <- struct{}{}
+}
 
-	return time.Duration(wav.length*1000/44100) * time.Millisecond
+func (w *Wavs) StopAll() {
+	w.stopAll <- struct{}{}
+}
+
+func (w *Wavs) Durations() map[string]time.Duration {
+	durations := map[string]time.Duration{}
+
+	for name, wav := range w.wavs {
+		durations[name] = time.Duration(wav.length*1000/44100) * time.Millisecond
+	}
+
+	return durations
 }
 
 func (w *Wavs) Close() {
@@ -134,5 +157,5 @@ func (w *Wavs) Close() {
 	w.stream.Close()
 	portaudio.Terminate()
 
-	fmt.Printf("Wavs closing\n")
+	log.Debugf("Wavs Closed")
 }

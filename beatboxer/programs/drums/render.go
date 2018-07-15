@@ -1,10 +1,9 @@
 package drums
 
 import (
-	"fmt"
-
 	"github.com/siggy/bbox/beatboxer/color"
 	"github.com/siggy/bbox/beatboxer/render"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,14 +20,14 @@ type Render struct {
 	iv         Interval
 	intervalCh <-chan Interval
 
-	render func(render.RenderState)
+	render chan<- render.RenderState
 }
 
 func InitRender(
 	msgs <-chan Beats,
 	ticks <-chan int,
 	intervalCh <-chan Interval,
-	renderCB func(render.RenderState),
+	render chan<- render.RenderState,
 ) *Render {
 	return &Render{
 		closing: make(chan struct{}),
@@ -40,7 +39,7 @@ func InitRender(
 			Ticks:        DEFAULT_TICKS,
 		},
 		intervalCh: intervalCh,
-		render:     renderCB,
+		render:     render,
 	}
 }
 
@@ -74,7 +73,7 @@ func (r *Render) Draw() {
 		}
 	}
 
-	r.render(renderState)
+	r.render <- renderState
 }
 
 func (r *Render) Run() {
@@ -94,7 +93,7 @@ func (r *Render) Run() {
 				r.Draw()
 			} else {
 				// closing
-				fmt.Printf("Render closing\n")
+				log.Debugf("Render.msgs closed")
 				return
 			}
 		case iv, more := <-r.intervalCh:
@@ -103,7 +102,7 @@ func (r *Render) Run() {
 				r.iv = iv
 			} else {
 				// we should never get here
-				fmt.Printf("unexpected: intervalCh return no more\n")
+				log.Debugf("unexpected: intervalCh return no more")
 				return
 			}
 		}

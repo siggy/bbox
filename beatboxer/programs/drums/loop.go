@@ -1,10 +1,9 @@
 package drums
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/siggy/bbox/beatboxer/render"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -47,14 +46,14 @@ type Loop struct {
 	tempoDecay *time.Timer
 
 	ticks []chan<- int
-	play  func(string) time.Duration
+	play  chan<- string
 
 	iv         Interval
 	intervalCh []chan<- Interval
 }
 
 func InitLoop(
-	play func(string) time.Duration,
+	play chan<- string,
 	msgs <-chan Beats,
 	tempo <-chan int,
 	ticks []chan<- int,
@@ -85,12 +84,11 @@ func (l *Loop) Run() {
 	defer ticker.Stop()
 
 	tick := 0
-	tickTime := time.Now()
+	// tickTime := time.Now()
 	for {
 		select {
 		case _, more := <-l.closing:
 			if !more {
-				fmt.Printf("Loop trying to close\n")
 				// return
 			}
 		case beats, more := <-l.msgs:
@@ -99,7 +97,6 @@ func (l *Loop) Run() {
 				l.beats = beats
 			} else {
 				// closing
-				fmt.Printf("Loop closing\n")
 				return
 			}
 
@@ -122,7 +119,7 @@ func (l *Loop) Run() {
 				defer ticker.Stop()
 			} else {
 				// we should never get here
-				fmt.Printf("closed on bpm, invalid state")
+				log.Debugf("closed on bpm, invalid state")
 				panic(1)
 			}
 
@@ -144,7 +141,7 @@ func (l *Loop) Run() {
 				}
 			} else {
 				// we should never get here
-				fmt.Printf("unexpected: tempo return no more\n")
+				log.Debugf("unexpected: tempo return no more")
 				return
 			}
 
@@ -154,7 +151,7 @@ func (l *Loop) Run() {
 			tmp := tick
 
 			for _, ch := range l.ticks {
-				ch <- tmp
+				ch <- tmp // <-------- this is blocking, or play below
 			}
 
 			// for each beat type
@@ -162,17 +159,17 @@ func (l *Loop) Run() {
 				for i, beat := range l.beats {
 					if beat[tick/l.iv.TicksPerBeat] {
 						// initiate playback
-						l.play(WAVS[i])
+						l.play <- WAVS[i]
 					}
 				}
 			}
 
-			t := time.Now()
-			render.TBprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
-			render.TBprint(0, 6, fmt.Sprintf("______int:__%+v______", l.bpmToInterval(l.bpm)))
-			render.TBprint(0, 7, fmt.Sprintf("______time:_%+v______", t.Sub(tickTime)))
-			render.TBprint(0, 8, fmt.Sprintf("______tick:_%+v______", tick))
-			tickTime = t
+			// t := time.Now()
+			// render.TBprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
+			// render.TBprint(0, 6, fmt.Sprintf("______int:__%+v______", l.bpmToInterval(l.bpm)))
+			// render.TBprint(0, 7, fmt.Sprintf("______time:_%+v______", t.Sub(tickTime)))
+			// render.TBprint(0, 8, fmt.Sprintf("______tick:_%+v______", tick))
+			// tickTime = t
 		}
 	}
 }

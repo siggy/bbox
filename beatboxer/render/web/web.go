@@ -2,8 +2,8 @@ package web
 
 import (
 	"fmt"
-	"log"
-	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Web struct {
@@ -11,25 +11,25 @@ type Web struct {
 }
 
 func InitWeb() *Web {
-	fmt.Printf("InitWeb\n")
+	log.Debugf("InitWeb")
 
-	hub := newHub()
-	go hub.run()
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "beatboxer/render/web/index.html")
-	})
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
-	})
-	go func() {
-		err := http.ListenAndServe(":8080", nil)
-		if err != nil {
-			log.Fatal("ListenAndServe: ", err)
-		}
-	}()
+	// hub := newHub()
+	// go hub.run()
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	http.ServeFile(w, r, "beatboxer/render/web/index.html")
+	// })
+	// http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+	// 	serveWs(hub, w, r)
+	// })
+	// go func() {
+	// 	err := http.ListenAndServe(":8080", nil)
+	// 	if err != nil {
+	// 		log.Fatal("ListenAndServe: ", err)
+	// 	}
+	// }()
 
 	return &Web{
-		hub: hub,
+	// hub: hub,
 	}
 }
 

@@ -1,16 +1,16 @@
 package beatboxer
 
 import (
-	"fmt"
 	"math"
 	"time"
 
 	"github.com/gordonklaus/portaudio"
+	log "github.com/sirupsen/logrus"
 )
 
 type Amplitude struct {
 	closing chan struct{}
-	level   chan<- float64
+	level   chan float64
 }
 
 const (
@@ -54,32 +54,33 @@ func amp(slice []int32) float64 {
 	return volMax
 }
 
-func InitAmplitude(level chan<- float64) *Amplitude {
+func InitAmplitude() *Amplitude {
+	err := portaudio.Initialize()
+	if err != nil {
+		log.Debugf("portaudio.Initialize failed: %+v\n", err)
+		panic(err)
+	}
+
 	return &Amplitude{
 		closing: make(chan struct{}),
-		level:   level,
+		level:   make(chan float64),
 	}
 }
 
 func (a *Amplitude) Run() {
-	err := portaudio.Initialize()
-	if err != nil {
-		fmt.Printf("portaudio.Initialize failed: %+v\n", err)
-		panic(err)
-	}
-	defer portaudio.Terminate()
+	// defer portaudio.Terminate()
 
 	in := make([]int32, 64)
 	stream, err := portaudio.OpenDefaultStream(1, 0, 44100, len(in), in)
 	if err != nil {
-		fmt.Printf("OpenDefaultStream failed: %+v\n", err)
+		log.Debugf("OpenDefaultStream failed: %+v\n", err)
 		panic(err)
 	}
 	defer stream.Close()
 
 	err = stream.Start()
 	if err != nil {
-		fmt.Printf("stream.Start failed: %+v\n", err)
+		log.Debugf("stream.Start failed: %+v\n", err)
 		panic(err)
 	}
 	defer stream.Stop()
@@ -88,10 +89,8 @@ func (a *Amplitude) Run() {
 		// this returns `Input overflowed` sometimes, ignore it
 		stream.Read()
 		select {
-		case _, more := <-a.closing:
-			if !more {
-				return
-			}
+		case <-a.closing:
+			return
 		case a.level <- amp(in):
 		case <-time.After(1 * time.Millisecond):
 		}
@@ -100,4 +99,11 @@ func (a *Amplitude) Run() {
 
 func (a *Amplitude) Close() {
 	close(a.closing)
+	portaudio.Terminate()
+
+	log.Debugf("Amplitude Closed")
+}
+
+func (a *Amplitude) Level() <-chan float64 {
+	return a.level
 }

@@ -1,11 +1,11 @@
 package beatboxer
 
 import (
-	"fmt"
-	"time"
+	"errors"
+	"sync"
 
-	termbox "github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/beatboxer/keyboard"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/wavs"
 )
@@ -18,142 +18,36 @@ var (
 	switcher = bbox.Coord{1, 15}
 )
 
-type registered struct {
-	harness *Harness
-	id      int
-}
-
-// satisfy Output interface
-func (r *registered) Play(name string) time.Duration {
-	return r.harness.play(r.id, name)
-}
-func (r *registered) Render(rs render.RenderState) {
-	r.harness.render(r.id, rs)
-}
-func (r *registered) Yield() {
-	r.harness.yield(r.id)
-}
-
 type Harness struct {
-	renderer  render.Renderer
-	renderFn  func(render.RenderState)
-	pressed   chan bbox.Coord
-	kb        *Keyboard
-	wavs      *wavs.Wavs
-	amplitude *Amplitude
-	programs  []Program
-	active    int
-	level     chan float64
+	renderer   render.Renderer
+	terminal   *render.Terminal
+	termRender chan render.RenderState
+	kb         *keyboard.Keyboard
+	wavs       *wavs.Wavs
+	keyMap     map[bbox.Key]*bbox.Coord
+	amplitude  *Amplitude
+	programs   []Program
 }
 
 func InitHarness(
 	renderer render.Renderer,
-	renderFn func(render.RenderState),
 	keyMap map[bbox.Key]*bbox.Coord,
 ) *Harness {
-	err := termbox.Init()
-	if err != nil {
-		panic(err)
-	}
-
-	level := make(chan float64)
-	amplitude := InitAmplitude(level)
-	pressed := make(chan bbox.Coord)
+	kb := keyboard.Init(keyMap)
 
 	return &Harness{
-		renderer:  renderer,
-		renderFn:  renderFn,
-		pressed:   pressed,
-		wavs:      wavs.InitWavs(),
-		kb:        InitKeyboard(pressed, keyMap),
-		amplitude: amplitude,
-		level:     level,
+		renderer:   renderer,
+		termRender: make(chan render.RenderState),
+		wavs:       wavs.InitWavs(),
+		keyMap:     keyMap,
+		amplitude:  InitAmplitude(),
+		kb:         kb,
+		terminal:   render.InitTerminal(kb),
 	}
 }
 
 func (h *Harness) Register(program Program) {
 	h.programs = append(h.programs, program)
-}
-
-func (h *Harness) NextProgram() {
-	prev := h.programs[h.active]
-	h.active = (h.active + 1) % len(h.programs)
-	prev.Close()
-
-	// clear the display
-	h.renderFn(render.RenderState{})
-
-	reg := registered{
-		harness: h,
-		id:      h.active,
-	}
-	h.programs[h.active] = h.programs[h.active].New(&reg)
-}
-
-func (h *Harness) Run() {
-	defer termbox.Close()
-	defer h.wavs.Close()
-	defer h.amplitude.Close()
-
-	go h.amplitude.Run()
-	go h.kb.Run()
-
-	// make the first program active
-	reg := registered{
-		harness: h,
-		id:      0,
-	}
-	h.programs[0] = h.programs[0].New(&reg)
-
-	switcherCount := 0
-	for {
-		select {
-		case level, more := <-h.level:
-			if !more {
-				fmt.Printf("amplitude.level closed\n")
-				return
-			}
-			h.programs[h.active].Amp(level)
-		case coord, more := <-h.pressed:
-			if !more {
-				return
-			}
-			if coord == switcher {
-				switcherCount++
-
-				if switcherCount >= SWITCH_COUNT {
-					h.NextProgram()
-					switcherCount = 0
-					continue
-				}
-			} else {
-				switcherCount = 0
-			}
-
-			h.programs[h.active].Pressed(coord[0], coord[1])
-		}
-	}
-}
-
-func (h *Harness) play(id int, name string) time.Duration {
-	if id != h.active {
-		fmt.Printf("play called by invalid program %d: %s", id, name)
-		return time.Duration(0)
-	}
-
-	return h.wavs.Play(name)
-}
-
-func (h *Harness) render(id int, rs render.RenderState) {
-	if id != h.active {
-		fmt.Printf("render called by invalid program %d: %+v", id, rs)
-		return
-	}
-
-	h.renderFn(rs)
-
-	// TODO: decide if a web renderer is performant enough
-	// h.toRenderer(rs)
 }
 
 // temporary until all the "68, 64, 60, 56" foo is moved over
@@ -168,11 +62,133 @@ func (h *Harness) toRenderer(rs render.RenderState) {
 	}
 }
 
-func (h *Harness) yield(id int) {
-	if id != h.active {
-		fmt.Printf("yield called by invalid program %d", id)
-		return
-	}
+func (h *Harness) Run() {
+	go h.amplitude.Run()
+	go h.kb.Run()
 
-	h.NextProgram()
+	defer func() {
+		h.amplitude.Close()
+		h.wavs.Close()
+	}()
+	defer h.kb.Close()
+
+	active := 0
+	cur := h.programs[active].New(h.wavs.Durations())
+
+	for {
+		err := h.runProgram(cur)
+		go func(cur Program) {
+			cur.Close() <- struct{}{}
+		}(cur)
+		if err != nil {
+			break
+		}
+
+		h.wavs.StopAll()
+		h.terminal.Render(render.RenderState{})
+
+		active = (active + 1) % len(h.programs)
+		cur = h.programs[active].New(h.wavs.Durations())
+	}
+}
+
+func (h *Harness) runProgram(p Program) error {
+	closing := make(chan struct{})
+	wg := sync.WaitGroup{}
+	wg.Add(5)
+
+	go h.runAmp(p, &wg, closing)
+	go h.runRender(p, &wg, closing)
+	go h.runPlay(p, &wg, closing)
+	go h.runYield(p, &wg, closing)
+	err := h.runKB(p, &wg, closing)
+
+	wg.Wait()
+
+	return err
+}
+
+// input: amplitude
+func (h *Harness) runAmp(p Program, wg *sync.WaitGroup, closing chan struct{}) {
+	defer wg.Done()
+
+	for {
+		select {
+		case p.Amplitude() <- <-h.amplitude.Level():
+		case <-closing:
+			return
+		}
+	}
+}
+
+// input: keyboard
+func (h *Harness) runKB(p Program, wg *sync.WaitGroup, closing chan struct{}) error {
+	defer wg.Done()
+
+	switcherCount := 0
+
+	for {
+		select {
+		case coord, _ := <-h.kb.Pressed():
+			if coord == switcher {
+				switcherCount++
+				if switcherCount >= SWITCH_COUNT {
+					close(closing)
+					return nil
+				}
+			} else {
+				switcherCount = 0
+			}
+
+			p.Keyboard() <- coord
+		case <-h.kb.Closing():
+			close(closing)
+			return errors.New("Exiting")
+		case <-closing:
+			return nil
+		}
+	}
+}
+
+// output: render
+func (h *Harness) runRender(p Program, wg *sync.WaitGroup, closing chan struct{}) {
+	defer wg.Done()
+
+	for {
+		select {
+		case rs, _ := <-p.Render():
+			h.terminal.Render(rs)
+		case <-closing:
+			return
+		}
+	}
+}
+
+// output: play
+func (h *Harness) runPlay(p Program, wg *sync.WaitGroup, closing chan struct{}) {
+	defer wg.Done()
+
+	for {
+		select {
+		case name, _ := <-p.Play():
+			h.wavs.Play(name)
+		case <-closing:
+			return
+		}
+	}
+}
+
+// output: yield
+func (h *Harness) runYield(p Program, wg *sync.WaitGroup, closing chan struct{}) {
+	defer wg.Done()
+
+	for {
+		select {
+		case <-p.Yield():
+			close(closing)
+			return
+		case <-closing:
+			return
+		}
+	}
 }
