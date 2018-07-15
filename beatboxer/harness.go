@@ -265,7 +265,7 @@ func (h *harness) Run() {
 	for {
 		err := h.RunProgram(cur)
 		go func(cur Program) {
-			cur.Close()
+			cur.Close() <- struct{}{}
 		}(cur)
 		if err != nil {
 			break

@@ -23,6 +23,7 @@ type DrumMachine struct {
 
 func (dm *DrumMachine) New() beatboxer.Program {
 	// input
+	close := make(chan struct{})
 	keyboard := make(chan bbox.Coord)
 
 	// output
@@ -61,6 +62,15 @@ func (dm *DrumMachine) New() beatboxer.Program {
 	go loop.Run()
 	go r.Run()
 
+	// DrumMachine shutdown
+	go func() {
+		<-close
+
+		kb.Close()
+		loop.Close()
+		r.Close()
+	}()
+
 	return &DrumMachine{
 		kb:   kb,
 		loop: loop,
@@ -69,7 +79,7 @@ func (dm *DrumMachine) New() beatboxer.Program {
 		// input
 		amp:      make(chan float64),
 		keyboard: keyboard,
-		close:    make(chan struct{}),
+		close:    close,
 
 		// output
 		play:   play,
