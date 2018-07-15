@@ -1,6 +1,8 @@
 package drums
 
 import (
+	"time"
+
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer"
 	"github.com/siggy/bbox/beatboxer/render"
@@ -21,7 +23,7 @@ type DrumMachine struct {
 	yield  chan struct{}
 }
 
-func (dm *DrumMachine) New() beatboxer.Program {
+func (dm *DrumMachine) New(wavDurs map[string]time.Duration) beatboxer.Program {
 	// input
 	close := make(chan struct{})
 	keyboard := make(chan bbox.Coord)

@@ -118,16 +118,24 @@ func (w *Wavs) cb(output [][]float32) {
 	copy(output[0], out)
 }
 
-func (wavs *Wavs) Play(name string) time.Duration {
+func (wavs *Wavs) Play(name string) {
 	wav, ok := wavs.wavs[name]
 	if !ok {
 		log.Debugf("Unknown wav file: %s", name)
-		return time.Duration(0)
+		return
 	}
 
 	wav.active <- struct{}{}
+}
 
-	return time.Duration(wav.length*1000/44100) * time.Millisecond
+func (wavs *Wavs) Durations() map[string]time.Duration {
+	durations := map[string]time.Duration{}
+
+	for name, wav := range wavs.wavs {
+		durations[name] = time.Duration(wav.length*1000/44100) * time.Millisecond
+	}
+
+	return durations
 }
 
 func (w *Wavs) Close() {

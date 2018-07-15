@@ -6,6 +6,7 @@ import (
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer"
+	"github.com/siggy/bbox/beatboxer/programs/ceottk"
 	"github.com/siggy/bbox/beatboxer/programs/drums"
 	"github.com/siggy/bbox/beatboxer/render/web"
 	log "github.com/sirupsen/logrus"
@@ -33,7 +34,7 @@ func main() {
 
 	log.Debugf("Registering apps")
 	harness.Register(&drums.DrumMachine{})
-	// harness.Register(&ceottk.Ceottk{})
+	harness.Register(&ceottk.Ceottk{})
 	log.Debugf("Registering apps complete")
 
 	log.Debugf("Running harness")

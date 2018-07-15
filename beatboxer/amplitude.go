@@ -89,10 +89,8 @@ func (a *Amplitude) Run() {
 		// this returns `Input overflowed` sometimes, ignore it
 		stream.Read()
 		select {
-		case _, more := <-a.closing:
-			if !more {
-				return
-			}
+		case <-a.closing:
+			return
 		case a.level <- amp(in):
 		case <-time.After(1 * time.Millisecond):
 		}

@@ -260,7 +260,7 @@ func (h *harness) Run() {
 	defer h.kb.Close()
 
 	active := 0
-	cur := h.programs[active].New()
+	cur := h.programs[active].New(h.wavs.Durations())
 
 	for {
 		err := h.RunProgram(cur)
@@ -274,7 +274,7 @@ func (h *harness) Run() {
 		h.terminal.Render(render.RenderState{})
 
 		active = (active + 1) % len(h.programs)
-		cur = h.programs[active].New()
+		cur = h.programs[active].New(h.wavs.Durations())
 	}
 }
 
@@ -311,11 +311,9 @@ func (h *harness) runAmp(p Program, wg *sync.WaitGroup, closing chan struct{}) {
 			// log.Debugf("h.RunProgram AMP 2")
 			// p.Amplitude() <- a
 			// log.Debugf("h.RunProgram AMP 3")
-		case _, more := <-closing:
+		case <-closing:
 			log.Debugf("h.RunProgram AMP close")
-			if !more {
-				return
-			}
+			return
 		}
 	}
 }
@@ -346,18 +344,14 @@ func (h *harness) runKB(p Program, wg *sync.WaitGroup, closing chan struct{}) er
 			log.Debugf("h.RunProgram KB 2")
 			p.Keyboard() <- coord
 			log.Debugf("h.RunProgram KB 3")
-		case _, more := <-h.kb.Closing():
+		case <-h.kb.Closing():
 			log.Debugf("h.RunProgram KB 4")
-			if !more {
-				close(closing)
-				log.Debugf("h.RunProgram KB 5")
-				return errors.New("Exiting")
-			}
-		case _, more := <-closing:
+			close(closing)
+			log.Debugf("h.RunProgram KB 5")
+			return errors.New("Exiting")
+		case <-closing:
 			log.Debugf("h.RunProgram KB close")
-			if !more {
-				return nil
-			}
+			return nil
 		}
 	}
 }
@@ -375,11 +369,9 @@ func (h *harness) runRender(p Program, wg *sync.WaitGroup, closing chan struct{}
 		case rs, _ := <-p.Render():
 			// log.Debugf("h.RunProgram RENDER 2")
 			h.terminal.Render(rs)
-		case _, more := <-closing:
+		case <-closing:
 			log.Debugf("h.RunProgram RENDER close")
-			if !more {
-				return
-			}
+			return
 		}
 	}
 }
@@ -397,11 +389,9 @@ func (h *harness) runPlay(p Program, wg *sync.WaitGroup, closing chan struct{}) 
 		case name, _ := <-p.Play():
 			log.Debugf("h.RunProgram PLAY 2")
 			h.wavs.Play(name)
-		case _, more := <-closing:
+		case <-closing:
 			log.Debugf("h.RunProgram PLAY close")
-			if !more {
-				return
-			}
+			return
 		}
 	}
 }
@@ -428,11 +418,9 @@ func (h *harness) runYield(p Program, wg *sync.WaitGroup, closing chan struct{})
 
 			// active = (active + 1) % len(h.programs)
 			// cur = h.programs[active].New()
-		case _, more := <-closing:
+		case <-closing:
 			log.Debugf("h.RunProgram YIELD close")
-			if !more {
-				return
-			}
+			return
 		}
 	}
 }

@@ -39,6 +39,7 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 
 ## TODO
 
+- terminate wav playback on program switch
 - update LED rendering code for harness environment
 - harness should make calls on buffered channels, and drop when channel fills up
 - fix concurrency (`go run -race cmd/beatboxer_noleds.go` is not pretty)
