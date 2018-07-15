@@ -19,14 +19,13 @@ var (
 )
 
 type Harness struct {
-	renderer   render.Renderer
-	terminal   *render.Terminal
-	termRender chan render.RenderState
-	kb         *keyboard.Keyboard
-	wavs       *wavs.Wavs
-	keyMap     map[bbox.Key]*bbox.Coord
-	amplitude  *Amplitude
-	programs   []Program
+	renderer  render.Renderer
+	terminal  *render.Terminal
+	kb        *keyboard.Keyboard
+	wavs      *wavs.Wavs
+	keyMap    map[bbox.Key]*bbox.Coord
+	amplitude *Amplitude
+	programs  []Program
 }
 
 func InitHarness(
@@ -36,13 +35,12 @@ func InitHarness(
 	kb := keyboard.Init(keyMap)
 
 	return &Harness{
-		renderer:   renderer,
-		termRender: make(chan render.RenderState),
-		wavs:       wavs.InitWavs(),
-		keyMap:     keyMap,
-		amplitude:  InitAmplitude(),
-		kb:         kb,
-		terminal:   render.InitTerminal(kb),
+		renderer:  renderer,
+		wavs:      wavs.InitWavs(),
+		keyMap:    keyMap,
+		amplitude: InitAmplitude(),
+		kb:        kb,
+		terminal:  render.InitTerminal(kb),
 	}
 }
 
@@ -157,6 +155,7 @@ func (h *Harness) runRender(p Program, wg *sync.WaitGroup, closing chan struct{}
 	for {
 		select {
 		case rs, _ := <-p.Render():
+			// TODO: output to all renderers here
 			h.terminal.Render(rs)
 		case <-closing:
 			return

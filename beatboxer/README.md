@@ -28,13 +28,15 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 1. Add a new file under [`programs`](programs/)
 1. Implement the `Program` interface, as defined in [`program.go`](program.go).
     This interface supports the following:
-    - `New`: initialize state, kicks off long-running processes, returns new handle
-    - `Amplitude`: receive amplitude, [0..1]
-    - `Keyboard`: receive button presses
-    - `Render`: render LEDs
-    - `Play`: play audio files
-    - `Yield`: yield back to the harness
-    - `Close`: stops all processes, frees resources
+    - Input
+        - `New`: initialize state, kicks off long-running processes, returns new handle
+        - `Amplitude`: receive amplitude, [0..1]
+        - `Keyboard`: receive button presses
+        - `Close`: stops all processes, frees resources
+    - Output
+        - `Play`: play audio files
+        - `Render`: render LEDs
+        - `Yield`: yield back to the harness
 
 1. Add your new module to [`../cmd/beatboxer_noleds.go`](../cmd/beatboxer_noleds.go).
 
