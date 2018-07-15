@@ -13,6 +13,7 @@ type DrumMachine struct {
 	loop *Loop
 	r    *Render
 
+	// input
 	amp      chan float64
 	keyboard chan bbox.Coord
 	close    chan struct{}
@@ -111,17 +112,3 @@ func (dm *DrumMachine) Render() <-chan render.RenderState {
 func (dm *DrumMachine) Yield() <-chan struct{} {
 	return dm.yield
 }
-
-// func (dm *DrumMachine) Amp(level float64) {}
-
-// func (dm *DrumMachine) Pressed(row int, col int) {
-// 	log.Debugf("dm.Pressed start: %02d, %02d", row, col)
-// 	dm.kb.Flip(row, col)
-// 	log.Debugf("dm.Pressed end: %02d, %02d", row, col)
-// }
-
-// func (dm *DrumMachine) Close() {
-// 	dm.kb.Close()
-// 	dm.loop.Close()
-// 	dm.r.Close()
-// }

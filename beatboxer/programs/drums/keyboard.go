@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/siggy/bbox/bbox"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -78,15 +77,11 @@ func InitKeyboard(
 }
 
 func (kb *Keyboard) Flip(beat int, tick int) {
-	log.Debugf("  kb.Flip: start %02d, %02d", beat, tick)
 	kb.button(beat, tick, false)
-	log.Debugf("  kb.Flip: end %02d, %02d", beat, tick)
 }
 
 func (kb *Keyboard) button(beat int, tick int, decay bool) {
-	log.Debugf("    kb.button: start %02d, %02d", beat, tick)
 	kb.emit <- Button{beat: beat, tick: tick, decay: decay}
-	log.Debugf("    kb.button: end %02d, %02d", beat, tick)
 }
 
 func (kb *Keyboard) activeButtons() int {
@@ -114,15 +109,9 @@ func (kb *Keyboard) emitter() {
 		select {
 		case coord, _ := <-kb.presses:
 			go func() {
-				log.Debugf("kb.emitter <- kb.presses 1: %+v", coord)
 				kb.Flip(coord[0], coord[1])
-				log.Debugf("kb.emitter <- kb.presses 2: %+v", coord)
 			}()
-		case _, more := <-kb.closing:
-			if more {
-				log.Debugf("send on kb.closing, invalid state")
-				panic(1)
-			}
+		case <-kb.closing:
 			// ensure all timers are stopped before closing kb.emit
 			if kb.keepAlive != nil {
 				kb.keepAlive.Stop()
@@ -139,16 +128,12 @@ func (kb *Keyboard) emitter() {
 				close(msg) // signals to other processes to quit
 			}
 			close(kb.emit)
-			log.Debugf("Keyboard emitter closing")
 			return
 		case button, more := <-kb.emit:
 			if !more {
 				// we should never get here
-				log.Debugf("closed on emit, invalid state")
 				panic(1)
 			}
-
-			log.Debugf("      kb.emitter: <-kb.emit %+v", button)
 
 			// TODO: consider re-using timers
 			if kb.timers[button.beat][button.tick] != nil {
@@ -186,15 +171,9 @@ func (kb *Keyboard) emitter() {
 			}
 
 			// broadcast changes
-			log.Debugf("      kb.emitter: <-kb.emit %+v: broadcast changes start", button)
-
 			for _, msg := range kb.msgs {
-				log.Debugf("        kb.emitter: <-kb.emit %+v: broadcast changes, msgs start: %+v", msg, button)
 				msg <- kb.beats
-				log.Debugf("        kb.emitter: <-kb.emit %+v: broadcast changes, msgs end: %+v", msg, button)
 			}
-
-			log.Debugf("      kb.emitter: <-kb.emit %+v: broadcast changes end", button)
 
 			// if tempo change, broadcast
 			if button.tick == TEMPO_TICK && last.tick == TEMPO_TICK {

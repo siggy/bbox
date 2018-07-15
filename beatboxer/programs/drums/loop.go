@@ -89,19 +89,14 @@ func (l *Loop) Run() {
 		select {
 		case _, more := <-l.closing:
 			if !more {
-				log.Debugf("Loop trying to close")
 				// return
 			}
 		case beats, more := <-l.msgs:
-			log.Debugf("Loop.Run <-l.msgs")
 			if more {
-				log.Debugf("Loop.Run <-l.msgs start: %+v", beats)
 				// incoming beat update from keyboard
 				l.beats = beats
-				log.Debugf("Loop.Run <-l.msgs end: %+v", beats)
 			} else {
 				// closing
-				log.Debugf("Loop.Run closing")
 				return
 			}
 
@@ -151,15 +146,12 @@ func (l *Loop) Run() {
 			}
 
 		case <-ticker.C: // for every time interval
-			// log.Debugf("loop: ticker.C tick start: %+v", tick)
 			// next interval
 			tick = (tick + 1) % l.iv.Ticks
 			tmp := tick
 
 			for _, ch := range l.ticks {
-				// log.Debugf("loop: ticker.C l.ticks start: %+v, %+v", tick, ch)
 				ch <- tmp // <-------- this is blocking, or play below
-				// log.Debugf("loop: ticker.C l.ticks end: %+v, %+v", tick, ch)
 			}
 
 			// for each beat type
@@ -171,8 +163,6 @@ func (l *Loop) Run() {
 					}
 				}
 			}
-
-			// log.Debugf("loop: ticker.C tick end: %+v", tick)
 
 			// t := time.Now()
 			// render.TBprint(0, 5, fmt.Sprintf("______BPM:__%+v______", l.bpm))
