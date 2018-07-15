@@ -278,8 +278,7 @@ func (h *harness) Run() {
 
 func (h *harness) RunProgram(p Program) error {
 	var err error
-	yielding := make(chan struct{})
-	exiting := make(chan struct{})
+	closing := make(chan struct{})
 
 	wg := sync.WaitGroup{}
 	wg.Add(5)
@@ -297,13 +296,8 @@ func (h *harness) RunProgram(p Program) error {
 				// log.Debugf("h.RunProgram AMP 2")
 				// p.Amplitude() <- a
 				// log.Debugf("h.RunProgram AMP 3")
-			case _, more := <-yielding:
+			case _, more := <-closing:
 				if !more {
-					return
-				}
-			case _, more := <-exiting:
-				if !more {
-					log.Debugf("h.RunProgram AMP 4")
 					return
 				}
 			}
@@ -312,6 +306,8 @@ func (h *harness) RunProgram(p Program) error {
 
 	// input: keyboard
 	go func() {
+		switcherCount := 0
+
 		log.Debugf("h.RunProgram KB")
 
 		// wg.Add(1)
@@ -321,18 +317,28 @@ func (h *harness) RunProgram(p Program) error {
 			log.Debugf("h.RunProgram KB 1")
 			select {
 			case coord, _ := <-h.kb.Pressed():
+				if coord == switcher {
+					switcherCount++
+					if switcherCount >= SWITCH_COUNT {
+						close(closing)
+						return
+					}
+				} else {
+					switcherCount = 0
+				}
+
 				log.Debugf("h.RunProgram KB 2")
 				p.Keyboard() <- coord
 				log.Debugf("h.RunProgram KB 3")
 			case _, more := <-h.kb.Closing():
 				log.Debugf("h.RunProgram KB 4")
 				if !more {
-					close(exiting)
+					close(closing)
 					err = errors.New("Exiting")
 					log.Debugf("h.RunProgram KB 5")
 					return
 				}
-			case _, more := <-yielding:
+			case _, more := <-closing:
 				if !more {
 					return
 				}
@@ -353,13 +359,8 @@ func (h *harness) RunProgram(p Program) error {
 			case rs, _ := <-p.Render():
 				// log.Debugf("h.RunProgram RENDER 2")
 				h.terminal.Render(rs)
-			case _, more := <-yielding:
+			case _, more := <-closing:
 				if !more {
-					return
-				}
-			case _, more := <-exiting:
-				if !more {
-					log.Debugf("h.RunProgram RENDER 3")
 					return
 				}
 			}
@@ -379,13 +380,8 @@ func (h *harness) RunProgram(p Program) error {
 			case name, _ := <-p.Play():
 				log.Debugf("h.RunProgram PLAY 2")
 				h.wavs.Play(name)
-			case _, more := <-yielding:
+			case _, more := <-closing:
 				if !more {
-					return
-				}
-			case _, more := <-exiting:
-				if !more {
-					log.Debugf("h.RunProgram PLAY 3")
 					return
 				}
 			}
@@ -404,7 +400,7 @@ func (h *harness) RunProgram(p Program) error {
 			select {
 			case <-p.Yield():
 				log.Debugf("h.RunProgram YIELD 2")
-				close(yielding)
+				close(closing)
 				return
 				// go func() {
 				// 	p.Close() <- struct{}{}
@@ -414,9 +410,8 @@ func (h *harness) RunProgram(p Program) error {
 
 				// active = (active + 1) % len(h.programs)
 				// cur = h.programs[active].New()
-			case _, more := <-exiting:
+			case _, more := <-closing:
 				if !more {
-					log.Debugf("h.RunProgram YIELD 3")
 					return
 				}
 			}
