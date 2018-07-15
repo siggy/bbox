@@ -271,6 +271,7 @@ func (h *harness) Run() {
 			break
 		}
 
+		h.wavs.StopAll()
 		h.terminal.Render(render.RenderState{})
 
 		active = (active + 1) % len(h.programs)

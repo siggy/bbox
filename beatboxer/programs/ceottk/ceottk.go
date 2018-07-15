@@ -13,7 +13,7 @@ import (
 
 const (
 	SEQUENCE_LENGTH      = 123
-	EARLY_PLAY           = 0.5
+	EARLY_PLAY           = 0.4
 	IMPATIENCE_THRESHOLD = 100
 )
 
