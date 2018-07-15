@@ -10,7 +10,7 @@ import (
 
 type Amplitude struct {
 	closing chan struct{}
-	level   chan<- float64
+	level   chan float64
 }
 
 const (
@@ -54,7 +54,7 @@ func amp(slice []int32) float64 {
 	return volMax
 }
 
-func InitAmplitude(level chan<- float64) *Amplitude {
+func InitAmplitude() *Amplitude {
 	err := portaudio.Initialize()
 	if err != nil {
 		log.Debugf("portaudio.Initialize failed: %+v\n", err)
@@ -63,7 +63,7 @@ func InitAmplitude(level chan<- float64) *Amplitude {
 
 	return &Amplitude{
 		closing: make(chan struct{}),
-		level:   level,
+		level:   make(chan float64),
 	}
 }
 
@@ -104,4 +104,8 @@ func (a *Amplitude) Close() {
 	portaudio.Terminate()
 
 	log.Debugf("Amplitude Closed")
+}
+
+func (a *Amplitude) Level() <-chan float64 {
+	return a.level
 }

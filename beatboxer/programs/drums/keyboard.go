@@ -33,7 +33,8 @@ type Button struct {
 // shtudown operation:
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
-	yield     func()
+	presses   <-chan bbox.Coord
+	yield     chan<- struct{}
 	keyMap    map[bbox.Key]*bbox.Coord
 	beats     Beats
 	timers    [SOUNDS][BEATS]*time.Timer
@@ -46,7 +47,8 @@ type Keyboard struct {
 }
 
 func InitKeyboard(
-	yield func(),
+	presses <-chan bbox.Coord,
+	yield chan<- struct{},
 	msgs []chan<- Beats,
 	tempo chan<- int,
 	keyMap map[bbox.Key]*bbox.Coord,
@@ -54,6 +56,7 @@ func InitKeyboard(
 ) *Keyboard {
 
 	kb := Keyboard{
+		presses: presses,
 		yield:   yield,
 		keyMap:  keyMap,
 		beats:   Beats{},
@@ -75,15 +78,15 @@ func InitKeyboard(
 }
 
 func (kb *Keyboard) Flip(beat int, tick int) {
-	log.Debugf("kb.Flip: start %02d, %02d", beat, tick)
+	log.Debugf("  kb.Flip: start %02d, %02d", beat, tick)
 	kb.button(beat, tick, false)
-	log.Debugf("kb.Flip: end %02d, %02d", beat, tick)
+	log.Debugf("  kb.Flip: end %02d, %02d", beat, tick)
 }
 
 func (kb *Keyboard) button(beat int, tick int, decay bool) {
-	log.Debugf("kb.button: start %02d, %02d", beat, tick)
+	log.Debugf("    kb.button: start %02d, %02d", beat, tick)
 	kb.emit <- Button{beat: beat, tick: tick, decay: decay}
-	log.Debugf("kb.button: end %02d, %02d", beat, tick)
+	log.Debugf("    kb.button: end %02d, %02d", beat, tick)
 }
 
 func (kb *Keyboard) activeButtons() int {
@@ -109,6 +112,12 @@ func (kb *Keyboard) emitter() {
 
 	for {
 		select {
+		case coord, _ := <-kb.presses:
+			go func() {
+				log.Debugf("kb.emitter <- kb.presses 1: %+v", coord)
+				kb.Flip(coord[0], coord[1])
+				log.Debugf("kb.emitter <- kb.presses 2: %+v", coord)
+			}()
 		case _, more := <-kb.closing:
 			if more {
 				log.Debugf("send on kb.closing, invalid state")
@@ -139,7 +148,7 @@ func (kb *Keyboard) emitter() {
 				panic(1)
 			}
 
-			log.Debugf("kb.emitter: <-kb.emit %+v", button)
+			log.Debugf("      kb.emitter: <-kb.emit %+v", button)
 
 			// TODO: consider re-using timers
 			if kb.timers[button.beat][button.tick] != nil {
@@ -162,7 +171,7 @@ func (kb *Keyboard) emitter() {
 				kb.beats[button.beat][button.tick] = true
 
 				if kb.activeButtons() == YIELD_LIMIT {
-					kb.yield()
+					kb.yield <- struct{}{}
 				}
 
 				// set a decay timer
@@ -177,15 +186,15 @@ func (kb *Keyboard) emitter() {
 			}
 
 			// broadcast changes
-			log.Debugf("kb.emitter: <-kb.emit %+v: broadcast changes start", button)
+			log.Debugf("      kb.emitter: <-kb.emit %+v: broadcast changes start", button)
 
 			for _, msg := range kb.msgs {
-				log.Debugf("kb.emitter: <-kb.emit %+v: broadcast changes, msgs start: %+v", msg, button)
+				log.Debugf("        kb.emitter: <-kb.emit %+v: broadcast changes, msgs start: %+v", msg, button)
 				msg <- kb.beats
-				log.Debugf("kb.emitter: <-kb.emit %+v: broadcast changes, msgs end: %+v", msg, button)
+				log.Debugf("        kb.emitter: <-kb.emit %+v: broadcast changes, msgs end: %+v", msg, button)
 			}
 
-			log.Debugf("kb.emitter: <-kb.emit %+v: broadcast changes end", button)
+			log.Debugf("      kb.emitter: <-kb.emit %+v: broadcast changes end", button)
 
 			// if tempo change, broadcast
 			if button.tick == TEMPO_TICK && last.tick == TEMPO_TICK {

@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer"
-	"github.com/siggy/bbox/beatboxer/programs/ceottk"
 	"github.com/siggy/bbox/beatboxer/programs/drums"
 	"github.com/siggy/bbox/beatboxer/render/web"
 	log "github.com/sirupsen/logrus"
@@ -26,20 +24,25 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
+	log.Debugf("InitHarness")
 	harness := beatboxer.InitHarness(
 		web.InitWeb(),
 		bbox.KeyMapsPC,
 	)
+	log.Debugf("InitHarness complete")
 
+	log.Debugf("Registering apps")
 	harness.Register(&drums.DrumMachine{})
-	harness.Register(&ceottk.Ceottk{})
+	// harness.Register(&ceottk.Ceottk{})
+	log.Debugf("Registering apps complete")
 
+	log.Debugf("Running harness")
 	go harness.Run()
 
 	for {
 		select {
 		case <-sig:
-			fmt.Printf("Received OS signal, exiting\n")
+			log.Debugf("Received OS signal, exiting")
 			return
 		}
 	}

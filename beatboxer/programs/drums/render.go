@@ -20,14 +20,14 @@ type Render struct {
 	iv         Interval
 	intervalCh <-chan Interval
 
-	render func(render.RenderState)
+	render chan<- render.RenderState
 }
 
 func InitRender(
 	msgs <-chan Beats,
 	ticks <-chan int,
 	intervalCh <-chan Interval,
-	renderCB func(render.RenderState),
+	render chan<- render.RenderState,
 ) *Render {
 	return &Render{
 		closing: make(chan struct{}),
@@ -39,7 +39,7 @@ func InitRender(
 			Ticks:        DEFAULT_TICKS,
 		},
 		intervalCh: intervalCh,
-		render:     renderCB,
+		render:     render,
 	}
 }
 
@@ -73,9 +73,9 @@ func (r *Render) Draw() {
 		}
 	}
 
-	log.Debugf("Render.Draw(): calling r.render() start")
-	r.render(renderState)
-	log.Debugf("Render.Draw(): calling r.render() end")
+	// log.Debugf("Render.Draw(): calling r.render() start")
+	r.render <- renderState
+	// log.Debugf("Render.Draw(): calling r.render() end")
 }
 
 func (r *Render) Run() {
@@ -88,11 +88,11 @@ func (r *Render) Run() {
 			}
 		case tick := <-r.ticks:
 			r.tick = tick
-			log.Debugf("Render.Run(): <-r.ticks start")
+			// log.Debugf("Render.Run(): <-r.ticks start")
 			r.Draw()
-			log.Debugf("Render.Run(): <-r.ticks end")
+			// log.Debugf("Render.Run(): <-r.ticks end")
 		case beats, more := <-r.msgs:
-			log.Debugf("Render.Run(): <-r.msgs")
+			// log.Debugf("Render.Run(): <-r.msgs")
 			if more {
 				// incoming beat update from keyboard
 				r.beats = beats
