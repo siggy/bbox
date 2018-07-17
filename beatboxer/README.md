@@ -10,6 +10,12 @@ From the root of this repo:
 go run cmd/beatboxer_noleds.go
 ```
 
+Optional web renderer:
+
+```bash
+open http://localhost:8080
+```
+
 The Beatboxer's 16x4 grid of buttons is emulated via your keyboard. The first
 8x4 keys are bound to:
 - `1` .. `8`
@@ -43,7 +49,4 @@ Pressing button 15x1 (`shift` + `i`) 5 times will switch programs.
 ## TODO
 
 - update LED rendering code for harness environment
-- harness should make calls on buffered channels, and drop when channel fills up
-- better development renderer
-  - https://github.com/siggy/bbox/tree/siggy/led-dep-injection/bbox/renderer/web
-  - requires making the "68, 64, 60, 56" foo injectable
+- consider buffered channels, drop when channels fills

@@ -1,6 +1,8 @@
 package web
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/siggy/bbox/beatboxer/render"
@@ -35,7 +37,12 @@ func InitWeb() *Web {
 }
 
 func (w *Web) Render(state render.State) {
-
+	b, err := json.Marshal(state)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	w.hub.send(string(b))
 }
 
 // func (w *Web) Init(

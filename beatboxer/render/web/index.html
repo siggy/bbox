@@ -11,14 +11,53 @@ window.onload = function () {
     conn.onmessage = function (evt) {
       var messages = evt.data.split('\n');
       for (var i = 0; i < messages.length; i++) {
-        console.log(messages[i]);
+        draw(messages[i]);
       }
     };
   }
 };
+
+function mkColor(color) {
+  w = (color & 0xff000000) >> 24
+
+  b = color & 0x000000ff;
+  g = (color & 0x0000ff00) >> 8;
+  r = (color & 0x00ff0000) >> 16;
+
+  b = b + w - b*w/255;
+  g = g + w - g*w/255;
+  r = r + w - r*w/255;
+
+  return 'rgba('+r+','+g+','+b+','+1+')';
+}
+
+function draw(msg) {
+  var canvas = document.getElementById('canvas');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  var ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = 'rgba(0,0,0,1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  var json = JSON.parse(msg);
+  for (row = 0; row < json.LEDs.length; row++) {
+    for (col = 0; col < json.LEDs[row].length; col++) {
+      ctx.fillStyle = mkColor(json.LEDs[row][col]);
+      ctx.fillRect(col*50, row*20, 10, 10);
+
+      // transition (assume transition dimensions match LEDs)
+      transition = json.Transitions[row][col];
+      ctx.fillStyle = mkColor(transition.Color);
+      ctx.fillRect(((col+transition.Location*0.8)*50+10), row*20, 40*transition.Length, 10);
+    }
+  }
+}
 </script>
 
 </head>
 <body>
+  <canvas id="canvas"></canvas>
 </body>
 </html>

@@ -6,6 +6,7 @@ import (
 	"os/signal"
 
 	"github.com/siggy/bbox/beatboxer/render"
+	"github.com/siggy/bbox/beatboxer/render/web"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer"
@@ -27,8 +28,8 @@ func main() {
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	harness := beatboxer.InitHarness(
-		// []render.Renderer{web.InitWeb()},
-		[]render.Renderer{},
+		[]render.Renderer{web.InitWeb()},
+		// []render.Renderer{},
 		bbox.KeyMapsPC,
 	)
 
