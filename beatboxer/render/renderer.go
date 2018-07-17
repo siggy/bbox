@@ -12,12 +12,18 @@ type Transition struct {
 	Length   float64 // [0,1]
 }
 
-type RenderState struct {
+type State struct {
 	LEDs        [ROWS][COLUMNS]uint32
 	Transitions [ROWS][COLUMNS]Transition
 }
 
 type Renderer interface {
+	Render(state State)
+}
+
+// TODO: move this to somewhere more LED specific ?
+
+type LedRenderer interface {
 	Init(
 		freq int,
 		gpioPin1 int, ledCount1 int, brightness1 int,

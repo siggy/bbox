@@ -20,14 +20,14 @@ type Render struct {
 	iv         Interval
 	intervalCh <-chan Interval
 
-	render chan<- render.RenderState
+	render chan<- render.State
 }
 
 func InitRender(
 	msgs <-chan Beats,
 	ticks <-chan int,
 	intervalCh <-chan Interval,
-	render chan<- render.RenderState,
+	render chan<- render.State,
 ) *Render {
 	return &Render{
 		closing: make(chan struct{}),
@@ -44,7 +44,7 @@ func InitRender(
 }
 
 func (r *Render) Draw() {
-	renderState := render.RenderState{}
+	state := render.State{}
 
 	newTick := (r.tick + TICK_DELAY) % r.iv.Ticks
 	newLed := newTick / r.iv.TicksPerBeat
@@ -55,25 +55,25 @@ func (r *Render) Draw() {
 		Length:   0.5,
 	}
 
-	renderState.Transitions[0][newLed] = transition
-	renderState.Transitions[1][newLed] = transition
-	renderState.Transitions[2][newLed] = transition
-	renderState.Transitions[3][newLed] = transition
+	state.Transitions[0][newLed] = transition
+	state.Transitions[1][newLed] = transition
+	state.Transitions[2][newLed] = transition
+	state.Transitions[3][newLed] = transition
 
 	for i := 0; i < SOUNDS; i++ {
 		// render all beats, slightly redundant with below
 		for j := 0; j < BEATS; j++ {
 			if r.beats[i][j] {
 				if j == newLed {
-					renderState.LEDs[i][j] = color.Make(127, 127, 0, 127)
+					state.LEDs[i][j] = color.Make(127, 127, 0, 127)
 				} else {
-					renderState.LEDs[i][j] = color.Make(127, 0, 0, 0)
+					state.LEDs[i][j] = color.Make(127, 0, 0, 0)
 				}
 			}
 		}
 	}
 
-	r.render <- renderState
+	r.render <- state
 }
 
 func (r *Render) Run() {

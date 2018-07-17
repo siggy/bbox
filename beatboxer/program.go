@@ -18,6 +18,6 @@ type Program interface {
 
 	// output
 	Play() <-chan string
-	Render() <-chan render.RenderState
+	Render() <-chan render.State
 	Yield() <-chan struct{}
 }

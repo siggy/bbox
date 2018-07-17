@@ -20,7 +20,7 @@ type DrumMachine struct {
 
 	// output
 	play   chan string
-	render chan render.RenderState
+	render chan render.State
 	yield  chan struct{}
 }
 
@@ -31,7 +31,7 @@ func (dm *DrumMachine) New(wavDurs map[string]time.Duration) beatboxer.Program {
 
 	// output
 	play := make(chan string)
-	render := make(chan render.RenderState)
+	render := make(chan render.State)
 	yield := make(chan struct{})
 
 	// beat changes
@@ -106,7 +106,7 @@ func (dm *DrumMachine) Close() chan<- struct{} {
 func (dm *DrumMachine) Play() <-chan string {
 	return dm.play
 }
-func (dm *DrumMachine) Render() <-chan render.RenderState {
+func (dm *DrumMachine) Render() <-chan render.State {
 	return dm.render
 }
 func (dm *DrumMachine) Yield() <-chan struct{} {

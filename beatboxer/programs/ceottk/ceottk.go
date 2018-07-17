@@ -82,7 +82,7 @@ type Ceottk struct {
 
 	// output
 	play   chan string
-	render chan render.RenderState
+	render chan render.State
 	yield  chan struct{}
 }
 
@@ -106,7 +106,7 @@ func (c *Ceottk) New(wavDurs map[string]time.Duration) beatboxer.Program {
 
 		// output
 		play:   make(chan string),
-		render: make(chan render.RenderState),
+		render: make(chan render.State),
 		yield:  make(chan struct{}),
 	}
 
@@ -130,7 +130,7 @@ func (c *Ceottk) Close() chan<- struct{} {
 func (c *Ceottk) Play() <-chan string {
 	return c.play
 }
-func (c *Ceottk) Render() <-chan render.RenderState {
+func (c *Ceottk) Render() <-chan render.State {
 	return c.render
 }
 func (c *Ceottk) Yield() <-chan struct{} {
@@ -143,7 +143,7 @@ func (c *Ceottk) run() {
 	go c.runKB()
 	go c.runAmp()
 
-	rs := render.RenderState{}
+	rs := render.State{}
 	for {
 		select {
 		case leds := <-c.leds:
@@ -162,7 +162,7 @@ func (c *Ceottk) runAmp() {
 	for {
 		select {
 		case level, _ := <-c.amp:
-			rs := render.RenderState{}
+			rs := render.State{}
 			amp := int(math.Min(level*4+1, 4))
 			for row := render.ROWS - 1; row > (render.ROWS - 1 - amp); row-- {
 				for col := 0; col < render.COLUMNS; col++ {
@@ -257,7 +257,7 @@ func (c *Ceottk) runKB() {
 
 			c.play <- human
 
-			rs := render.RenderState{}
+			rs := render.State{}
 			rs.LEDs[row][col] = color.Make(127, 0, 0, 0)
 			c.leds <- rs.LEDs
 

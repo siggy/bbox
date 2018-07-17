@@ -24,9 +24,9 @@ func (t *Terminal) TBprint(x, y int, msg string) {
 	}
 }
 
-func (t *Terminal) Render(renderState RenderState) {
+func (t *Terminal) Render(state State) {
 
-	t.TBprint(0, 10, fmt.Sprintf("______RenderState:_%+v______", renderState))
+	t.TBprint(0, 10, fmt.Sprintf("______render.State:_%+v______", state))
 
 	for row := 0; row < ROWS; row++ {
 		for col := 0; col < COLUMNS; col++ {
@@ -37,20 +37,20 @@ func (t *Terminal) Render(renderState RenderState) {
 
 			fgColor := termbox.ColorBlack
 			rune := ' '
-			if renderState.LEDs[row][col] == color.Make(0, 0, 0, 127) {
+			if state.LEDs[row][col] == color.Make(0, 0, 0, 127) {
 				fgColor = termbox.ColorWhite
 				rune = 'X'
-			} else if renderState.LEDs[row][col] == color.Make(127, 0, 0, 0) {
+			} else if state.LEDs[row][col] == color.Make(127, 0, 0, 0) {
 				fgColor = termbox.ColorRed
 				rune = 'O'
-			} else if renderState.LEDs[row][col] == color.Make(250, 143, 94, 0) {
+			} else if state.LEDs[row][col] == color.Make(250, 143, 94, 0) {
 				// ceottk
 				fgColor = termbox.ColorYellow
 				rune = 'X'
 			}
 
-			if renderState.Transitions[row][col].Color == color.Make(0, 0, 0, 127) {
-				location := int(COLS_PER_BEAT * renderState.Transitions[row][col].Location)
+			if state.Transitions[row][col].Color == color.Make(0, 0, 0, 127) {
+				location := int(COLS_PER_BEAT * state.Transitions[row][col].Location)
 				t.kb.SetCell(col*COLS_PER_BEAT+location, row, 'X', termbox.ColorBlack, termbox.ColorWhite)
 			}
 

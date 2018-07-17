@@ -19,8 +19,7 @@ var (
 )
 
 type Harness struct {
-	renderer  render.Renderer
-	terminal  *render.Terminal
+	renderers []render.Renderer
 	kb        *keyboard.Keyboard
 	wavs      *wavs.Wavs
 	keyMap    map[bbox.Key]*bbox.Coord
@@ -29,18 +28,17 @@ type Harness struct {
 }
 
 func InitHarness(
-	renderer render.Renderer,
+	renderers []render.Renderer,
 	keyMap map[bbox.Key]*bbox.Coord,
 ) *Harness {
 	kb := keyboard.Init(keyMap)
 
 	return &Harness{
-		renderer:  renderer,
+		renderers: append(renderers, render.InitTerminal(kb)),
 		wavs:      wavs.InitWavs(),
 		keyMap:    keyMap,
 		amplitude: InitAmplitude(),
 		kb:        kb,
-		terminal:  render.InitTerminal(kb),
 	}
 }
 
@@ -49,16 +47,16 @@ func (h *Harness) Register(program Program) {
 }
 
 // temporary until all the "68, 64, 60, 56" foo is moved over
-func (h *Harness) toRenderer(rs render.RenderState) {
-	for col := 0; col < render.COLUMNS; col++ {
-		for row := 0; row < render.ROWS-2; row++ {
-			h.renderer.SetLed(0, col, rs.LEDs[row][col])
-		}
-		for row := render.ROWS - 2; row < render.ROWS; row++ {
-			h.renderer.SetLed(1, col, rs.LEDs[row][col])
-		}
-	}
-}
+// func (h *Harness) toRenderer(rs render.State) {
+// 	for col := 0; col < render.COLUMNS; col++ {
+// 		for row := 0; row < render.ROWS-2; row++ {
+// 			h.renderer.SetLed(0, col, rs.LEDs[row][col])
+// 		}
+// 		for row := render.ROWS - 2; row < render.ROWS; row++ {
+// 			h.renderer.SetLed(1, col, rs.LEDs[row][col])
+// 		}
+// 	}
+// }
 
 func (h *Harness) Run() {
 	go h.amplitude.Run()
@@ -83,7 +81,9 @@ func (h *Harness) Run() {
 		}
 
 		h.wavs.StopAll()
-		h.terminal.Render(render.RenderState{})
+		for _, renderer := range h.renderers {
+			renderer.Render(render.State{})
+		}
 
 		active = (active + 1) % len(h.programs)
 		cur = h.programs[active].New(h.wavs.Durations())
@@ -155,8 +155,9 @@ func (h *Harness) runRender(p Program, wg *sync.WaitGroup, closing chan struct{}
 	for {
 		select {
 		case rs, _ := <-p.Render():
-			// TODO: output to all renderers here
-			h.terminal.Render(rs)
+			for _, renderer := range h.renderers {
+				renderer.Render(rs)
+			}
 		case <-closing:
 			return
 		}
