@@ -13,7 +13,6 @@ import (
 
 const (
 	SEQUENCE_LENGTH      = 123
-	EARLY_PLAY           = 0.4
 	IMPATIENCE_THRESHOLD = 100
 )
 
@@ -202,7 +201,7 @@ func (c *Ceottk) runLocation() {
 
 func (c *Ceottk) incLoc() int {
 	location := <-c.getLocation
-	newLoc := location + 1
+	newLoc := (location + 1) % (SEQUENCE_LENGTH + 1) ////
 	c.setLocation <- newLoc
 
 	return newLoc
@@ -249,11 +248,12 @@ func (c *Ceottk) runKB() {
 			impatience = 0
 
 			loc := c.incLoc()
+			humanLoc := loc
 			if mod, ok := humanMods[loc]; ok {
-				loc = mod
+				humanLoc = mod
 			}
 
-			human := fmt.Sprintf("ceottk%03d_human.wav", loc)
+			human := fmt.Sprintf("ceottk%03d_human.wav", humanLoc)
 
 			c.play <- human
 
@@ -261,34 +261,37 @@ func (c *Ceottk) runKB() {
 			rs.LEDs[row][col] = color.Make(127, 0, 0, 0)
 			c.leds <- rs.LEDs
 
-			time.AfterFunc(time.Duration(float64(c.wavDurs[human])*EARLY_PLAY), func() {
-				if _, ok := aliens[loc+1]; ok {
-					location := c.incLoc()
-					alien := fmt.Sprintf("ceottk%03d_alien.wav", location)
+			go func() {
+				if _, ok := aliens[loc+1]; !ok {
+					c.setPlaying(false)
+					return
+				}
 
-					c.play <- alien
+				location := c.incLoc()
+				alien := fmt.Sprintf("ceottk%03d_alien.wav", location)
 
-					for aRow := int(math.Max(0, float64(row)-1)); aRow <= int(math.Min(render.ROWS-1, float64(row)+1)); aRow++ {
-						for aCol := int(math.Max(0, float64(col)-1)); aCol <= int(math.Min(render.COLUMNS-1, float64(col)+1)); aCol++ {
-							if aRow != row || aCol != col {
-								rs.LEDs[aRow][aCol] = color.Make(250, 143, 94, 0)
-							}
+				c.play <- alien
+
+				for aRow := int(math.Max(0, float64(row)-1)); aRow <= int(math.Min(render.ROWS-1, float64(row)+1)); aRow++ {
+					for aCol := int(math.Max(0, float64(col)-1)); aCol <= int(math.Min(render.COLUMNS-1, float64(col)+1)); aCol++ {
+						if aRow != row || aCol != col {
+							rs.LEDs[aRow][aCol] = color.Make(250, 143, 94, 0)
 						}
 					}
-
-					c.leds <- rs.LEDs
-
-					time.AfterFunc(c.wavDurs[alien], func() {
-						// this works because we know the last sound played is alien
-						if location == SEQUENCE_LENGTH {
-							c.yield <- struct{}{}
-						}
-						c.setPlaying(false)
-					})
-				} else {
-					c.setPlaying(false)
 				}
-			})
+
+				c.leds <- rs.LEDs
+
+				time.AfterFunc(c.wavDurs[alien], func() {
+					// this works because we know the last sound played is alien
+					if location == SEQUENCE_LENGTH {
+						c.incLoc()
+						c.yield <- struct{}{}
+					}
+					c.setPlaying(false)
+				})
+			}()
+
 		case <-c.close:
 			return
 		}
