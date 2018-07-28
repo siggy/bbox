@@ -171,8 +171,6 @@ func (f *Fish) Run() {
 			speed := math.Max(LED_COUNT1/36, 1)
 			speed = math.Max(float64(webMotion), speed)
 
-			speed = 0
-
 			streakLoc1 += speed
 			if streakLoc1 >= LED_COUNT1 {
 				streakLoc1 = 0
