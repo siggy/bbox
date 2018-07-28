@@ -27,18 +27,52 @@ passwd
 # set quiet boot
 sudo sed -i '${s/$/ quiet loglevel=1/}' /boot/cmdline.txt
 
+# install packages
+sudo apt-get update
+sudo apt-get install -y git tmux vim dnsmasq hostapd
+
 # set up wifi (note leading space to avoid bash history)
  echo $'\nnetwork={\n    ssid="<WIFI_SSID>"\n    psk="<WIFI_PASSWORD>"\n}' | sudo tee --append /etc/wpa_supplicant/wpa_supplicant.conf
 
 # set static IP address
-echo $'\n# set static ip\n\ninterface eth0\nstatic ip_address=192.168.1.141/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\n\ninterface wlan0\nstatic ip_address=192.168.1.142/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1' | sudo tee --append /etc/dhcpcd.conf
+echo $'\n# set static ip\n\ninterface eth0\nstatic ip_address=192.168.4.1/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\n\ninterface wlan0\nstatic ip_address=192.168.1.142/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\nnohook wpa_supplicant' | sudo tee --append /etc/dhcpcd.conf
+
+echo $'\ndenyinterfaces wlan0' | sudo tee --append /etc/dhcpcd.conf
+
+echo $'\ninterface=wlan0\ndhcp-range=192.168.4.2,192.168.4.20,255.255.255.0,24h' | sudo tee --append /etc/dnsmasq.conf
+
+sudo tee /etc/hostapd/hostapd.conf > /dev/null <<'EOF'
+interface=wlan0
+driver=nl80211
+ssid=sigpi
+hw_mode=g
+channel=7
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=showmethepi
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP
+EOF
+
+echo $'\nDAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee --append /etc/default/hostapd
+
+echo $'\nnet.ipv4.ip_forward=1' | sudo tee --append /etc/sysctl.conf
+
+sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE
+sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
+
+# add to end of /etc/rc.local:
+# iptables-restore < /etc/iptables.ipv4.nat
+
+sudo systemctl start hostapd
+sudo systemctl start dnsmasq
 
 # reboot to connect over wifi
 sudo shutdown -r now
-
-# install packages
-sudo apt-get update
-sudo apt-get install -y git tmux vim
 
 # configure git
 git config --global push.default simple
@@ -63,8 +97,10 @@ sudo raspi-config nonint do_serial 1
 ## Code
 
 ```bash
-wget https://storage.googleapis.com/golang/go1.8.3.linux-armv6l.tar.gz -O /tmp/go1.8.3.linux-armv6l.tar.gz
-sudo tar -xzf /tmp/go1.8.3.linux-armv6l.tar.gz -C /usr/local
+
+
+wget https://dl.google.com/go/go1.10.3.linux-armv6l.tar.gz -O /tmp/go1.10.3.linux-armv6l.tar.gz
+sudo tar -xzf /tmp/go1.10.3.linux-armv6l.tar.gz -C /usr/local
 
 mkdir -p ~/code/go/src/github.com/siggy
 git clone https://github.com/siggy/bbox.git ~/code/go/src/github.com/siggy/bbox
