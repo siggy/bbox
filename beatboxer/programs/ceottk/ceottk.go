@@ -272,10 +272,16 @@ func (c *Ceottk) runKB() {
 
 				c.play <- alien
 
-				for aRow := int(math.Max(0, float64(row)-1)); aRow <= int(math.Min(render.ROWS-1, float64(row)+1)); aRow++ {
-					for aCol := int(math.Max(0, float64(col)-1)); aCol <= int(math.Min(render.COLUMNS-1, float64(col)+1)); aCol++ {
-						if aRow != row || aCol != col {
-							rs.LEDs[aRow][aCol] = color.Make(250, 143, 94, 0)
+				rowStart := int(math.Max(0, float64(row)-1))
+				rowEnd := int(math.Min(render.ROWS-1, float64(row)+1))
+				colStart := col - 1
+				colEnd := col + 1
+
+				for aRow := rowStart; aRow <= rowEnd; aRow++ {
+					for aCol := colStart; aCol <= colEnd; aCol++ {
+						c := (aCol + render.COLUMNS) % render.COLUMNS
+						if aRow != row || c != col {
+							rs.LEDs[aRow][c] = color.Make(250, 143, 94, 0)
 						}
 					}
 				}
