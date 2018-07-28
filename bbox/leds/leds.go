@@ -35,6 +35,7 @@ const (
 var (
 	pink       = MkColor(159, 0, 159, 93)
 	trueBlue   = MkColor(0, 0, 255, 0)
+	TrueBlue   = trueBlue
 	red        = MkColor(210, 0, 50, 40)
 	lightGreen = MkColor(0, 181, 115, 43)
 	trueRed    = MkColor(255, 0, 0, 0)
@@ -59,6 +60,7 @@ var (
 
 	redWhite = MkColor(255, 0, 0, 255)
 	black    = MkColor(0, 0, 0, 0)
+	Black    = black
 )
 
 var (

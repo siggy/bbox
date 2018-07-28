@@ -6,6 +6,9 @@ package web
 
 import (
 	"encoding/json"
+	"math"
+	"regexp"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -54,14 +57,30 @@ type deviceOrientation struct {
 	Gamma float64 `json:"gamma"`
 }
 type phoneEvent struct {
-	RGB string `json:"rgb"`
-	r   uint64 `json:"r,omitempty"`
-	g   uint64 `json:"g,omitempty"`
-	b   uint64 `json:"b,omitempty"`
+	RGB              string `json:"rgb"`
+	R                uint32 `json:"r,omitempty"`
+	G                uint32 `json:"g,omitempty"`
+	B                uint32 `json:"b,omitempty"`
+	NormalizedMotion float64
 
 	Orientation deviceOrientation `json:"orientation,omitempty"`
 	Motion      deviceMotion      `json:"motion,omitempty"`
 }
+
+const (
+	MIN_MAX_MOTION = 0.1
+
+	SMOOTHING_FAST = 0.9
+	SMOOTHING_SLOW = 0.99
+)
+
+var (
+	motion        = float64(0)
+	motionMax     = MIN_MAX_MOTION
+	MAX_SMOOTHING = math.Pow(0.999, 1.0/100)
+
+	firstRun = true
+)
 
 func newHub() *Hub {
 	return &Hub{
@@ -75,6 +94,13 @@ func newHub() *Hub {
 }
 
 func (h *Hub) run() {
+	// rgb(1,23,121)
+	rgbRE, err := regexp.Compile(`rgb\(([0-9]+),([0-9]+),([0-9]+)\)`)
+	if err != nil {
+		log.Errorf("Regex compile failed: %s", err)
+		return
+	}
+
 	for {
 		select {
 		case client := <-h.register:
@@ -99,10 +125,67 @@ func (h *Hub) run() {
 			if err != nil {
 				log.Errorf("json.Unmarshal failed for %+v: %s", string(message), err)
 			}
-			log.Infof("PHONE EVENT MESSAGE: %+v", string(message))
-			log.Infof("PHONE EVENT:         %+v", p)
+			log.Debugf("Phone event message:      %+v", string(message))
+			log.Debugf("Phone event unmarshalled: %+v", p)
+
+			l := rgbRE.FindStringSubmatch(p.RGB)
+			if len(l) != 4 {
+				log.Errorf("Invalid rgb string: %+v", p)
+				continue
+			}
+
+			r, err := strconv.Atoi(l[1])
+			if err != nil {
+				log.Errorf("Invalid rgb int parse: %+v", p)
+				continue
+			}
+			g, err := strconv.Atoi(l[2])
+			if err != nil {
+				log.Errorf("Invalid rgb int parse: %+v", p)
+				continue
+			}
+			b, err := strconv.Atoi(l[3])
+			if err != nil {
+				log.Errorf("Invalid rgb int parse: %+v", p)
+				continue
+			}
+
+			p.R = uint32(r)
+			p.G = uint32(g)
+			p.B = uint32(b)
+
+			p.NormalizedMotion = normalizeMotion(
+				p.Motion.Acceleration.X,
+				p.Motion.Acceleration.Y,
+				p.Motion.Acceleration.Z,
+			)
 
 			h.phoneEvents <- p
 		}
 	}
+}
+
+func normalizeMotion(x, y, z float64) float64 {
+	slice := []float64{x, y, z}
+	bufLength := float64(len(slice))
+
+	sum := float64(0)
+	for _, n := range slice {
+		x := math.Abs(float64(n) / math.MaxInt32)
+		sum += math.Pow(math.Min(float64(x)/motionMax, 1), 2)
+	}
+	rms := math.Sqrt(sum / bufLength)
+
+	if firstRun && rms > 0 {
+		motionMax = rms
+		firstRun = false
+	}
+
+	if rms > motionMax {
+		motionMax = (1-SMOOTHING_FAST)*rms + motionMax*SMOOTHING_FAST
+	} else {
+		motionMax = (1-SMOOTHING_SLOW)*rms + motionMax*SMOOTHING_SLOW
+	}
+
+	return motionMax
 }

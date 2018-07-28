@@ -5,7 +5,7 @@ import (
 	"os/signal"
 
 	"github.com/siggy/bbox/bbox"
-	"github.com/siggy/bbox/bbox/leds"
+	"github.com/siggy/bbox/bbox/leds/fishweb"
 	"github.com/siggy/bbox/beatboxer/render/web"
 )
 
@@ -16,11 +16,11 @@ func main() {
 	level := make(chan float64)
 	press := make(chan struct{})
 
-	web.InitWeb()
+	w := web.InitWeb()
 
 	amplitude := bbox.InitAmplitude(level)
 	gpio := bbox.InitGpio(press)
-	fish := leds.InitFish(level, press)
+	fish := fishweb.InitFish(level, press, w)
 
 	go amplitude.Run()
 	go gpio.Run()

@@ -25,6 +25,9 @@ func InitWeb() *Web {
 	http.HandleFunc("/beatboxer", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "beatboxer/render/web/beatboxer.html")
 	})
+	http.HandleFunc("/jquery-1.11.1.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "beatboxer/render/web/jquery-1.11.1.js")
+	})
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})

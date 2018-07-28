@@ -5,11 +5,11 @@
 package web
 
 import (
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -64,11 +64,16 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				log.Errorf("error: %v", err)
 			}
 			break
 		}
-		c.hub.phone <- message
+		select {
+		case c.hub.phone <- message:
+			log.Debugf("Phone event sent")
+		case <-time.After(1 * time.Millisecond):
+			log.Debugf("Phone event dropped")
+		}
 	}
 }
 
