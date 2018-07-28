@@ -35,12 +35,13 @@ sudo apt-get install -y git tmux vim dnsmasq hostapd
  echo $'\nnetwork={\n    ssid="<WIFI_SSID>"\n    psk="<WIFI_PASSWORD>"\n}' | sudo tee --append /etc/wpa_supplicant/wpa_supplicant.conf
 
 # set static IP address
+echo $'\n# set static ip\n\ninterface eth0\nstatic ip_address=192.168.1.141/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\n\ninterface wlan0\nstatic ip_address=192.168.1.142/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1' | sudo tee --append /etc/dhcpcd.conf
+
+# to make as a wifi access point at 192.168.4.1
+echo $'\ninterface wlan0\nnohook wpa_supplicant' | sudo tee --append /etc/dhcpcd.conf
+#echo $'\ndenyinterfaces wlan0' | sudo tee --append /etc/dhcpcd.conf
 echo $'\n# set static ip\n\ninterface eth0\nstatic ip_address=192.168.4.1/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\n\ninterface wlan0\nstatic ip_address=192.168.1.142/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\nnohook wpa_supplicant' | sudo tee --append /etc/dhcpcd.conf
-
-echo $'\ndenyinterfaces wlan0' | sudo tee --append /etc/dhcpcd.conf
-
 echo $'\ninterface=wlan0\ndhcp-range=192.168.4.2,192.168.4.20,255.255.255.0,24h' | sudo tee --append /etc/dnsmasq.conf
-
 sudo tee /etc/hostapd/hostapd.conf > /dev/null <<'EOF'
 interface=wlan0
 driver=nl80211
@@ -57,17 +58,12 @@ wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP
 EOF
-
 echo $'\nDAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee --append /etc/default/hostapd
-
 echo $'\nnet.ipv4.ip_forward=1' | sudo tee --append /etc/sysctl.conf
-
 sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
-
 # add to end of /etc/rc.local:
 # iptables-restore < /etc/iptables.ipv4.nat
-
 sudo systemctl start hostapd
 sudo systemctl start dnsmasq
 
@@ -97,8 +93,6 @@ sudo raspi-config nonint do_serial 1
 ## Code
 
 ```bash
-
-
 wget https://dl.google.com/go/go1.10.3.linux-armv6l.tar.gz -O /tmp/go1.10.3.linux-armv6l.tar.gz
 sudo tar -xzf /tmp/go1.10.3.linux-armv6l.tar.gz -C /usr/local
 
