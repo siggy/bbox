@@ -50,7 +50,7 @@ func InitFish(level <-chan float64, press <-chan struct{}, w *web.Web) *Fish {
 
 func scaleMotion(x, y, z float64) uint32 {
 	prod := math.Abs(x) * math.Abs(y) * math.Abs(z)
-	return uint32(math.Min(math.Log(prod)*20, 255))
+	return uint32(math.Min(math.Log(prod)*10, 127))
 }
 
 func (f *Fish) Run() {
@@ -66,17 +66,12 @@ func (f *Fish) Run() {
 	strand1 := make([]uint32, LED_COUNT1)
 	strand2 := make([]uint32, LED_COUNT2)
 
-	mode := WEBBY
+	mode := leds.PURPLE_STREAK
 
 	// PURPLE_STREAK mode
 	streakLoc1 := 0.0
 	streakLoc2 := 0.0
-	length := 200
-	speed := 10.0
-	r := 200
-	g := 0
-	b := 100
-	w := 0
+	length := LED_COUNT1 / 3.6
 
 	// STANDARD mode
 	iter := 0
@@ -91,18 +86,25 @@ func (f *Fish) Run() {
 		randColors[i] = leds.MkColor(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(128)))
 	}
 
-	webColor := uint32(0)
+	r := uint32(200)
+	g := uint32(0)
+	b := uint32(100)
+	w := uint32(0)
+
+	webMotion := uint32(0)
 
 	for {
 		select {
 		case phone, more := <-f.w.Phone():
 			if more {
-				webMotion := scaleMotion(
+				webMotion = scaleMotion(
 					phone.Motion.Acceleration.X,
 					phone.Motion.Acceleration.Y,
 					phone.Motion.Acceleration.Z,
 				)
-				webColor = leds.MkColor(phone.R, phone.G, phone.B, webMotion)
+				r = phone.R
+				g = phone.G
+				b = phone.B
 			} else {
 				return
 			}
@@ -130,22 +132,32 @@ func (f *Fish) Run() {
 
 		switch mode {
 		case WEBBY:
-			for i, _ := range strand1 {
+			webColor := leds.MkColor(r, g, b, webMotion)
+			for i := range strand1 {
 				strand1[i] = webColor
 			}
 			ws2811.SetBitmap(0, strand1)
-			for i, _ := range strand2 {
+			for i := range strand2 {
 				strand2[i] = webColor
 			}
 			ws2811.SetBitmap(1, strand2)
 
-		case leds.PURPLE_STREAK:
+			err := ws2811.Render()
+			if err != nil {
+				fmt.Printf("ws2811.Render failed: %+v\n", err)
+				panic(err)
+			}
 
-			speed = 10.0
-			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
-			for i, _ := range strand1 {
+		case leds.PURPLE_STREAK:
+			amped1 := int(f.ampLevel * LED_COUNT1)
+			for i := 0; i < amped1; i++ {
+				strand1[i] = leds.Red
+			}
+			for i := amped1; i < LED_COUNT1; i++ {
 				strand1[i] = leds.Black
 			}
+
+			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
 				strand1[led] = leds.MkColor(
@@ -155,16 +167,27 @@ func (f *Fish) Run() {
 					uint32(multiplier*float64(w)),
 				)
 			}
+
+			speed := math.Max(LED_COUNT1/36, 1)
+			speed = math.Max(float64(webMotion), speed)
+
+			speed = 0
+
 			streakLoc1 += speed
 			if streakLoc1 >= LED_COUNT1 {
 				streakLoc1 = 0
 			}
-
 			ws2811.SetBitmap(0, strand1)
-			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
-			for i, _ := range strand2 {
+
+			amped2 := int(f.ampLevel * LED_COUNT2)
+			for i := 0; i < amped2; i++ {
+				strand2[i] = leds.Red
+			}
+			for i := amped2; i < LED_COUNT2; i++ {
 				strand2[i] = leds.Black
 			}
+
+			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
 				strand2[led] = leds.MkColor(
@@ -182,12 +205,18 @@ func (f *Fish) Run() {
 
 			ws2811.SetBitmap(1, strand2)
 
+			err := ws2811.Render()
+			if err != nil {
+				fmt.Printf("ws2811.Render failed: %+v\n", err)
+				panic(err)
+			}
+
 		case leds.COLOR_STREAKS:
-			speed = 10.0
+			speed := 10.0
 			color := leds.Colors[(iter)%len(leds.Colors)]
 
 			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
-			for i, _ := range strand1 {
+			for i := range strand1 {
 				strand1[i] = leds.Black
 			}
 			for led, value := range sineMap {
@@ -204,7 +233,7 @@ func (f *Fish) Run() {
 			ws2811.SetBitmap(0, strand1)
 
 			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
-			for i, _ := range strand2 {
+			for i := range strand2 {
 				strand2[i] = leds.Black
 			}
 			for led, value := range sineMap {
@@ -219,11 +248,11 @@ func (f *Fish) Run() {
 
 			ws2811.SetBitmap(1, strand2)
 		case leds.FAST_COLOR_STREAKS:
-			speed = 100.0
+			speed := 100.0
 			color := leds.Colors[(iter)%len(leds.Colors)]
 
 			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
-			for i, _ := range strand1 {
+			for i := range strand1 {
 				strand1[i] = leds.Black
 			}
 			for led, value := range sineMap {
@@ -240,7 +269,7 @@ func (f *Fish) Run() {
 			ws2811.SetBitmap(0, strand1)
 
 			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
-			for i, _ := range strand2 {
+			for i := range strand2 {
 				strand2[i] = leds.Black
 			}
 			for led, value := range sineMap {
@@ -255,11 +284,11 @@ func (f *Fish) Run() {
 
 			ws2811.SetBitmap(1, strand2)
 		case leds.SOUND_COLOR_STREAKS:
-			speed = 100.0*f.ampLevel + 10.0
+			speed := 100.0*f.ampLevel + 10.0
 			color := leds.Colors[(iter)%len(leds.Colors)]
 
 			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
-			for i, _ := range strand1 {
+			for i := range strand1 {
 				strand1[i] = leds.Black
 			}
 			for led, value := range sineMap {
@@ -276,7 +305,7 @@ func (f *Fish) Run() {
 			ws2811.SetBitmap(0, strand1)
 
 			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
-			for i, _ := range strand2 {
+			for i := range strand2 {
 				strand2[i] = leds.Black
 			}
 			for led, value := range sineMap {
@@ -541,11 +570,11 @@ func (f *Fish) Run() {
 			panic(err)
 		}
 
-		err = ws2811.Wait()
-		if err != nil {
-			fmt.Printf("ws2811.Wait failed: %+v\n", err)
-			panic(err)
-		}
+		// err = ws2811.Wait()
+		// if err != nil {
+		// 	fmt.Printf("ws2811.Wait failed: %+v\n", err)
+		// 	panic(err)
+		// }
 	}
 }
 
