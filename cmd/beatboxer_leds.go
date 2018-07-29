@@ -1,6 +1,8 @@
 package main
 
 import (
+	// _ "net/http/pprof"
+
 	"fmt"
 	"os"
 	"os/signal"
@@ -31,7 +33,7 @@ func main() {
 	harness := beatboxer.InitHarness(
 		[]render.Renderer{
 			web.InitWeb(),
-			render.InitTerminal(),
+			// render.InitTerminal(),
 			led.InitLed(),
 		},
 		keyboard.Init(bbox.KeyMapsPC),
