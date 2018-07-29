@@ -5,15 +5,12 @@ import (
 
 	"github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/beatboxer/color"
-	"github.com/siggy/bbox/beatboxer/keyboard"
 )
 
-type Terminal struct {
-	kb *keyboard.Keyboard
-}
+type Terminal struct{}
 
-func InitTerminal(kb *keyboard.Keyboard) *Terminal {
-	return &Terminal{kb: kb}
+func InitTerminal() *Terminal {
+	return &Terminal{}
 }
 
 // TODO: dry up
@@ -58,7 +55,5 @@ func (t *Terminal) Render(state State) {
 		}
 	}
 
-	// t.kb.Flush()
 	termbox.Flush()
-	// TODO: map to actual LEDs
 }

@@ -12,4 +12,5 @@
 /record
 .sass-cache/
 _site/
+beatboxer_leds.log
 beatboxer_noleds.log

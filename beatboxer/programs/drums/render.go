@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	TICK_DELAY = 2
+	TICK_DELAY = -6
 )
 
 type Render struct {
@@ -46,7 +46,7 @@ func InitRender(
 func (r *Render) Draw() {
 	state := render.State{}
 
-	newTick := (r.tick + TICK_DELAY) % r.iv.Ticks
+	newTick := (r.tick + r.iv.Ticks + TICK_DELAY) % r.iv.Ticks
 	newLed := newTick / r.iv.TicksPerBeat
 
 	transition := render.Transition{

@@ -9,6 +9,7 @@ import (
 	"github.com/siggy/bbox/beatboxer"
 	"github.com/siggy/bbox/beatboxer/color"
 	"github.com/siggy/bbox/beatboxer/render"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -162,6 +163,7 @@ func (c *Ceottk) runAmp() {
 	for {
 		select {
 		case level, _ := <-c.amp:
+			log.Debugf("Ceottk:amp: %f", level)
 			rs := render.State{}
 			amp := int(math.Min(level*4+1, 4))
 			for row := render.ROWS - 1; row > (render.ROWS - 1 - amp); row-- {
