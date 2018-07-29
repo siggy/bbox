@@ -12,4 +12,7 @@
 /record
 .sass-cache/
 _site/
-beatboxer_noleds.log
+/beatboxer_leds.log
+/beatboxer_noleds.log
+/beatboxer_leds
+/beatboxer_noleds

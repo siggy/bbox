@@ -5,21 +5,18 @@ import (
 
 	"github.com/nsf/termbox-go"
 	"github.com/siggy/bbox/beatboxer/color"
-	"github.com/siggy/bbox/beatboxer/keyboard"
 )
 
-type Terminal struct {
-	kb *keyboard.Keyboard
-}
+type Terminal struct{}
 
-func InitTerminal(kb *keyboard.Keyboard) *Terminal {
-	return &Terminal{kb: kb}
+func InitTerminal() *Terminal {
+	return &Terminal{}
 }
 
 // TODO: dry up
 func (t *Terminal) TBprint(x, y int, msg string) {
 	for _, c := range msg {
-		t.kb.SetCell(x, y, c, termbox.ColorDefault, termbox.ColorDefault)
+		termbox.SetCell(x, y, c, termbox.ColorDefault, termbox.ColorDefault)
 		x++
 	}
 }
@@ -32,7 +29,7 @@ func (t *Terminal) Render(state State) {
 		for col := 0; col < COLUMNS; col++ {
 			// clear everything
 			for i := 0; i < COLS_PER_BEAT; i++ {
-				t.kb.SetCell(col*COLS_PER_BEAT+i, row, ' ', termbox.ColorBlack, termbox.ColorBlack)
+				termbox.SetCell(col*COLS_PER_BEAT+i, row, ' ', termbox.ColorBlack, termbox.ColorBlack)
 			}
 
 			fgColor := termbox.ColorBlack
@@ -51,13 +48,12 @@ func (t *Terminal) Render(state State) {
 
 			if state.Transitions[row][col].Color == color.Make(0, 0, 0, 127) {
 				location := int(COLS_PER_BEAT * state.Transitions[row][col].Location)
-				t.kb.SetCell(col*COLS_PER_BEAT+location, row, 'X', termbox.ColorBlack, termbox.ColorWhite)
+				termbox.SetCell(col*COLS_PER_BEAT+location, row, 'X', termbox.ColorBlack, termbox.ColorWhite)
 			}
 
-			t.kb.SetCell(col*COLS_PER_BEAT, row, rune, termbox.ColorBlack, fgColor)
+			termbox.SetCell(col*COLS_PER_BEAT, row, rune, termbox.ColorBlack, fgColor)
 		}
 	}
 
-	t.kb.Flush()
-	// TODO: map to actual LEDs
+	termbox.Flush()
 }

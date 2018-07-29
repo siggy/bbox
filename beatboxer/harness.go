@@ -22,21 +22,18 @@ type Harness struct {
 	renderers []render.Renderer
 	kb        *keyboard.Keyboard
 	wavs      *wavs.Wavs
-	keyMap    map[bbox.Key]*bbox.Coord
 	amplitude *Amplitude
 	programs  []Program
 }
 
 func InitHarness(
 	renderers []render.Renderer,
-	keyMap map[bbox.Key]*bbox.Coord,
+	kb *keyboard.Keyboard,
 ) *Harness {
-	kb := keyboard.Init(keyMap)
 
 	return &Harness{
-		renderers: append(renderers, render.InitTerminal(kb)),
+		renderers: renderers,
 		wavs:      wavs.InitWavs(),
-		keyMap:    keyMap,
 		amplitude: InitAmplitude(),
 		kb:        kb,
 	}

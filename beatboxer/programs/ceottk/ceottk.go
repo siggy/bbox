@@ -9,6 +9,7 @@ import (
 	"github.com/siggy/bbox/beatboxer"
 	"github.com/siggy/bbox/beatboxer/color"
 	"github.com/siggy/bbox/beatboxer/render"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -162,6 +163,7 @@ func (c *Ceottk) runAmp() {
 	for {
 		select {
 		case level, _ := <-c.amp:
+			log.Debugf("Ceottk:amp: %f", level)
 			rs := render.State{}
 			amp := int(math.Min(level*4+1, 4))
 			for row := render.ROWS - 1; row > (render.ROWS - 1 - amp); row-- {
@@ -272,10 +274,16 @@ func (c *Ceottk) runKB() {
 
 				c.play <- alien
 
-				for aRow := int(math.Max(0, float64(row)-1)); aRow <= int(math.Min(render.ROWS-1, float64(row)+1)); aRow++ {
-					for aCol := int(math.Max(0, float64(col)-1)); aCol <= int(math.Min(render.COLUMNS-1, float64(col)+1)); aCol++ {
-						if aRow != row || aCol != col {
-							rs.LEDs[aRow][aCol] = color.Make(250, 143, 94, 0)
+				rowStart := int(math.Max(0, float64(row)-1))
+				rowEnd := int(math.Min(render.ROWS-1, float64(row)+1))
+				colStart := col - 1
+				colEnd := col + 1
+
+				for aRow := rowStart; aRow <= rowEnd; aRow++ {
+					for aCol := colStart; aCol <= colEnd; aCol++ {
+						c := (aCol + render.COLUMNS) % render.COLUMNS
+						if aRow != row || c != col {
+							rs.LEDs[aRow][c] = color.Make(250, 143, 94, 0)
 						}
 					}
 				}
