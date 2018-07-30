@@ -19,7 +19,10 @@ func InitWeb() *Web {
 	hub := newHub()
 	go hub.run()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "beatboxer/render/web/index.html")
+		http.ServeFile(w, r, "beatboxer/render/web/color.html")
+	})
+	http.HandleFunc("/beatboxer", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "beatboxer/render/web/beatboxer.html")
 	})
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)

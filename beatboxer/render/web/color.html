@@ -1,0 +1,188 @@
+<!-- borrowed from: http://demos.peterfriese.de/gyro/gyro.html. -->
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>Eurythmic</title>
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+    </style>
+  </head>
+
+  <body>
+    <canvas></canvas>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      if (window.DeviceOrientationEvent !== undefined) {
+        window.onload = function () {
+          var conn;
+
+          if (window["WebSocket"]) {
+            conn = new WebSocket("ws://" + document.location.host + "/ws");
+            conn.onmessage = function (evt) {
+              var messages = evt.data.split('\n');
+              for (var i = 0; i < messages.length; i++) {
+                // console.log(messages[i]);
+              }
+            };
+          }
+        };
+
+        var rgbStr = "rgb(0,0,0)";
+
+        function handleMotion(event) {
+          conn.send({
+            'phone': {
+              rgb: rgbStr,
+              motion: {
+                acceleration: event.acceleration,
+                accelerationIncludingGravity: event.accelerationIncludingGravity,
+                rotationRate: event.rotationRate,
+                interval: event.interval
+              }
+            }
+          });
+        }
+
+        function handleOrientation(event) {
+          var msg = {
+            'phone': {
+              rgb: rgbStr,
+              orientation: {
+                alpha: event.alpha,
+                beta: event.beta,
+                gamma: event.gamma,
+              }
+            }
+          }
+          conn.send(msg);
+          // console.log(msg);
+        }
+
+        window.addEventListener("deviceorientation", handleOrientation, false);
+        window.addEventListener("devicemotion", handleMotion, false);
+
+        // from https://github.com/bgrins/colorwheel-1k/
+        var canvas = document.getElementsByTagName('canvas')[0];
+        var context2d = canvas.getContext('2d');
+        document.body.clientWidth; // fix bug in webkit: http://qfox.nl/weblog/218
+
+        (function() {
+
+            // Declare constants and variables to help with minification
+            // Some of these are inlined (with comments to the side with the actual equation)
+            var width = canvas.width = canvas.height = 400,
+                imageData = context2d.createImageData(width, width),
+                pixels = imageData.data,
+                circleOffset = 10,
+                diameter = 380,                  //width-circleOffset*2,
+                radius = 190,                    //diameter / 2,
+                radiusPlusOffset = 200,          //radius + circleOffset
+                radiusSquared = radius * radius,
+                two55 = 255,
+                currentY = 100,
+                currentX = -currentY,
+                wheelPixel = 16040;              // circleOffset*4*width+circleOffset*4;
+
+            // Math helpers
+            var math = Math,
+                PI = math.PI,
+                PI2 = PI * 2,
+                sqrt = math.sqrt,
+                atan2 = math.atan2;
+
+            // Setup DOM properties
+            document.body.style.textAlign="center";
+
+            // Load color wheel data into memory.
+            for (y = 0; y < width; y++) {
+              for (x = 0; x < width; x++) {
+                var rx = x - radius,
+                  ry = y - radius,
+                  d = rx * rx + ry * ry,
+                  rgb = hsvToRgb(
+                    (atan2(ry, rx) + PI) / PI2, // Hue
+                    sqrt(d) / radius,           // Saturation
+                    1                           // Value
+                  );
+
+                // Print current color, but hide if outside the area of the circle
+                pixels[wheelPixel++] = rgb[0];
+                pixels[wheelPixel++] = rgb[1];
+                pixels[wheelPixel++] = rgb[2];
+                pixels[wheelPixel++] = d > radiusSquared ? 0 : two55;
+              }
+            }
+
+            window.addEventListener('touchstart', redraw, false);
+            window.addEventListener('touchmove', redraw, false);
+
+            // Handle manual calls + mousemove event handler + input change event handler all in one place.
+            function redraw(e) {
+              // Only process an actual change if it is triggered by the mousemove or mousedown event.
+              // Otherwise e.pageX will be undefined, which will cause the result to be NaN, so it will fallback to the current value
+              currentX = e.pageX - canvas.offsetLeft - radiusPlusOffset || currentX;
+              currentY = e.pageY - canvas.offsetTop - radiusPlusOffset  || currentY;
+
+              // Scope these locally so the compiler will minify the names.  Will manually remove the 'var' keyword in the minified version.
+              var theta = atan2(currentY, currentX),
+                  d = currentX * currentX + currentY * currentY;
+
+              // If the x/y is not in the circle, find angle between center and mouse point:
+              //   Draw a line at that angle from center with the distance of radius
+              //   Use that point on the circumference as the draggable location
+              if (d > radiusSquared) {
+                  currentX = radius * math.cos(theta);
+                  currentY = radius * math.sin(theta);
+                  theta = atan2(currentY, currentX);
+                  d = currentX * currentX + currentY * currentY;
+              }
+
+              var rgb = hsvToRgb(
+                (theta + PI) / PI2,         // Current hue (how many degrees along the circle)
+                sqrt(d) / radius,           // Current saturation (how close to the middle)
+                1                           // Current value (input type="range" slider value)
+              )
+
+              rgbStr = "rgb("+ ~~rgb[0] + "," + ~~rgb[1] + "," + ~~rgb[2] + ")";
+
+              document.body.style.background = rgbStr;
+
+              // Reset to color wheel and draw a spot on the current location.
+              context2d.putImageData(imageData, 0, 0);
+
+              // Heart:
+              context2d.font = "1em arial";
+              context2d.fillText("♥", currentX+radiusPlusOffset-4,currentY+radiusPlusOffset+4);
+
+              e.preventDefault();
+            }
+
+            // Created a shorter version of the HSV to RGB conversion function in TinyColor
+            // https://github.com/bgrins/TinyColor/blob/master/tinycolor.js
+            function hsvToRgb(h, s, v) {
+              h*=6;
+              var i = ~~h,
+                  f = h - i,
+                  p = v * (1 - s),
+                  q = v * (1 - f * s),
+                  t = v * (1 - (1 - f) * s),
+                  mod = i % 6,
+                  r = [v, q, p, p, t, v][mod] * two55,
+                  g = [t, v, v, q, p, p][mod] * two55,
+                  b = [p, p, t, v, v, q][mod] * two55;
+
+              return [r, g, b];
+            }
+
+            // Kick everything off
+            redraw(0);
+        })();
+      }
+    </script>
+  </body>
+</html>
