@@ -18,6 +18,7 @@ func InitWeb() *Web {
 
 	hub := newHub()
 	go hub.run()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "beatboxer/render/web/color.html")
 	})
@@ -45,7 +46,12 @@ func (w *Web) Render(state render.State) {
 		fmt.Println(err)
 		return
 	}
-	w.hub.send(string(b))
+
+	go func() { w.hub.render <- b }()
+}
+
+func (w *Web) Phone() <-chan phoneEvent {
+	return w.hub.phoneEvents
 }
 
 // func (w *Web) Init(

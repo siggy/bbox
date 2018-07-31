@@ -5,8 +5,6 @@
 package web
 
 import (
-	"bytes"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -70,10 +68,7 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
-		fmt.Printf("MESSAGE")
-		fmt.Printf(string(message))
+		c.hub.phone <- message
 	}
 }
 
