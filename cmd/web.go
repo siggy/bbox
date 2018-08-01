@@ -6,6 +6,7 @@ import (
 	"os/signal"
 
 	"github.com/siggy/bbox/beatboxer/render/web"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -19,8 +20,8 @@ func main() {
 		case <-sig:
 			fmt.Printf("Received OS signal, exiting")
 			return
-		case _ = <-w.Phone():
-			// log.Infof("PHONE EVENT: %+v", p)
+		case p := <-w.Phone():
+			log.Debugf("Phone event: %+v", p)
 		}
 	}
 }

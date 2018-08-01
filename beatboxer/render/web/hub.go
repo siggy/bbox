@@ -6,6 +6,7 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"regexp"
 	"strconv"
@@ -80,6 +81,8 @@ var (
 	MAX_SMOOTHING = math.Pow(0.999, 1.0/100)
 
 	firstRun = true
+
+	rgbRE = regexp.MustCompile(`rgb\(([0-9]+),([0-9]+),([0-9]+)\)`)
 )
 
 func newHub() *Hub {
@@ -95,11 +98,6 @@ func newHub() *Hub {
 
 func (h *Hub) run() {
 	// rgb(1,23,121)
-	rgbRE, err := regexp.Compile(`rgb\(([0-9]+),([0-9]+),([0-9]+)\)`)
-	if err != nil {
-		log.Errorf("Regex compile failed: %s", err)
-		return
-	}
 
 	for {
 		select {
@@ -120,49 +118,65 @@ func (h *Hub) run() {
 				}
 			}
 		case message := <-h.phone:
-			p := phoneEvent{}
-			err := json.Unmarshal(message, &p)
+			p, err := unMarshalPhone(message)
 			if err != nil {
-				log.Errorf("json.Unmarshal failed for %+v: %s", string(message), err)
-			}
-			log.Debugf("Phone event message:      %+v", string(message))
-			log.Debugf("Phone event unmarshalled: %+v", p)
-
-			l := rgbRE.FindStringSubmatch(p.RGB)
-			if len(l) != 4 {
-				log.Errorf("Invalid rgb string: %+v", p)
+				log.Errorf("Failed to unmarshal phone message: %+v", message)
 				continue
 			}
-
-			r, err := strconv.Atoi(l[1])
-			if err != nil {
-				log.Errorf("Invalid rgb int parse: %+v", p)
-				continue
-			}
-			g, err := strconv.Atoi(l[2])
-			if err != nil {
-				log.Errorf("Invalid rgb int parse: %+v", p)
-				continue
-			}
-			b, err := strconv.Atoi(l[3])
-			if err != nil {
-				log.Errorf("Invalid rgb int parse: %+v", p)
-				continue
-			}
-
-			p.R = uint32(r)
-			p.G = uint32(g)
-			p.B = uint32(b)
-
-			p.NormalizedMotion = normalizeMotion(
-				p.Motion.Acceleration.X,
-				p.Motion.Acceleration.Y,
-				p.Motion.Acceleration.Z,
-			)
 
 			h.phoneEvents <- p
 		}
 	}
+}
+
+func unMarshalPhone(message []byte) (phoneEvent, error) {
+	p := phoneEvent{}
+
+	err := json.Unmarshal(message, &p)
+	if err != nil {
+		log.Errorf("json.Unmarshal failed for %+v: %s", string(message), err)
+		return phoneEvent{}, err
+	}
+	log.Debugf("Phone event message:      %+v", string(message))
+	log.Debugf("Phone event unmarshalled: %+v", p)
+
+	l := rgbRE.FindStringSubmatch(p.RGB)
+	if len(l) != 4 {
+		err := fmt.Errorf("Invalid rgb string: %+v", p)
+		log.Error(err)
+		return phoneEvent{}, err
+	}
+
+	r, err := strconv.Atoi(l[1])
+	if err != nil {
+		err := fmt.Errorf("Invalid rgb int parse: %+v", p)
+		log.Error(err)
+		return phoneEvent{}, err
+	}
+	g, err := strconv.Atoi(l[2])
+	if err != nil {
+		err := fmt.Errorf("Invalid rgb int parse: %+v", p)
+		log.Error(err)
+		return phoneEvent{}, err
+	}
+	b, err := strconv.Atoi(l[3])
+	if err != nil {
+		err := fmt.Errorf("Invalid rgb int parse: %+v", p)
+		log.Error(err)
+		return phoneEvent{}, err
+	}
+
+	p.R = uint32(r)
+	p.G = uint32(g)
+	p.B = uint32(b)
+
+	p.NormalizedMotion = normalizeMotion(
+		p.Motion.Acceleration.X,
+		p.Motion.Acceleration.Y,
+		p.Motion.Acceleration.Z,
+	)
+
+	return p, nil
 }
 
 func normalizeMotion(x, y, z float64) float64 {
