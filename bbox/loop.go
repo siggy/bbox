@@ -3,6 +3,8 @@ package bbox
 import (
 	"fmt"
 	"time"
+
+	"github.com/siggy/bbox/beatboxer/wavs"
 )
 
 const (
@@ -36,10 +38,17 @@ type Loop struct {
 	tempoDecay *time.Timer
 
 	ticks []chan<- int
-	wavs  *Wavs
+	wavs  *wavs.Wavs
 
 	iv         Interval
 	intervalCh []chan<- Interval
+}
+
+var sounds = []string{
+	"hihat-808.wav",
+	"kick-classic.wav",
+	"perc-808.wav",
+	"tom-808.wav",
 }
 
 func InitLoop(
@@ -58,7 +67,7 @@ func InitLoop(
 		msgs:    msgs,
 		tempo:   tempo,
 		ticks:   ticks,
-		wavs:    InitWavs(),
+		wavs:    wavs.InitWavs(),
 
 		intervalCh: intervalCh,
 		iv: Interval{
@@ -151,7 +160,7 @@ func (l *Loop) Run() {
 				for i, beat := range l.beats {
 					if beat[tick/l.iv.TicksPerBeat] {
 						// initiate playback
-						l.wavs.Play(i)
+						l.wavs.Play(sounds[i])
 					}
 				}
 			}
