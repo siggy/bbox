@@ -1,6 +1,8 @@
 package main
 
 import (
+	_ "net/http/pprof"
+
 	"fmt"
 	"os"
 	"os/signal"

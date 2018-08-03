@@ -20,8 +20,8 @@ type tbcell struct {
 type Keyboard struct {
 	keyMap  map[bbox.Key]*bbox.Coord
 	pressed chan bbox.Coord // single button press
-	cell    chan tbcell
-	flush   chan struct{}
+	// cell    chan tbcell
+	// flush   chan struct{}
 	closing chan struct{}
 	wg      sync.WaitGroup
 }
@@ -39,8 +39,8 @@ func Init(
 	return &Keyboard{
 		keyMap:  keyMap,
 		pressed: make(chan bbox.Coord),
-		cell:    make(chan tbcell),
-		flush:   make(chan struct{}),
+		// cell:    make(chan tbcell),
+		// flush:   make(chan struct{}),
 		closing: make(chan struct{}),
 		wg:      sync.WaitGroup{},
 	}
@@ -58,43 +58,43 @@ func (kb *Keyboard) Run() {
 
 	// wg := sync.WaitGroup{}
 
-	go kb.input()
-	kb.output()
+	kb.input()
+	// kb.output()
 }
 
 func (kb *Keyboard) Pressed() <-chan bbox.Coord {
 	return kb.pressed
 }
 
-func (kb *Keyboard) SetCell(x, y int, ch rune, fg, bg termbox.Attribute) {
-	kb.cell <- tbcell{
-		x: x,
-		y: y,
-		Cell: termbox.Cell{
-			Ch: ch,
-			Fg: fg,
-			Bg: bg,
-		},
-	}
-}
+// func (kb *Keyboard) SetCell(x, y int, ch rune, fg, bg termbox.Attribute) {
+// 	kb.cell <- tbcell{
+// 		x: x,
+// 		y: y,
+// 		Cell: termbox.Cell{
+// 			Ch: ch,
+// 			Fg: fg,
+// 			Bg: bg,
+// 		},
+// 	}
+// }
 
 func (kb *Keyboard) Closing() <-chan struct{} {
 	return kb.closing
 }
 
-func (kb *Keyboard) Flush() {
-	kb.flush <- struct{}{}
-}
+// func (kb *Keyboard) Flush() {
+// 	kb.flush <- struct{}{}
+// }
 
 func (kb *Keyboard) Close() {
 	log.Debugf("kb.Close: close(kb.pressed)")
 	close(kb.pressed)
 
-	log.Debugf("kb.Close: close(kb.cell)")
-	close(kb.cell)
+	// log.Debugf("kb.Close: close(kb.cell)")
+	// close(kb.cell)
 
-	log.Debugf("kb.Close: close(kb.flush)")
-	close(kb.flush)
+	// log.Debugf("kb.Close: close(kb.flush)")
+	// close(kb.flush)
 
 	// waits for input and output to finish
 	log.Debugf("kb.Close: kb.wg.Wait()")
@@ -157,24 +157,24 @@ func (kb *Keyboard) input() {
 	}
 }
 
-func (kb *Keyboard) output() {
-	kb.wg.Add(1)
-	defer kb.wg.Done()
+// func (kb *Keyboard) output() {
+// 	kb.wg.Add(1)
+// 	defer kb.wg.Done()
 
-	for {
-		select {
-		case cell, more := <-kb.cell:
-			if !more {
-				log.Debugf("output: cell channel closed, closing")
-				return
-			}
-			termbox.SetCell(cell.x, cell.y, cell.Ch, cell.Fg, cell.Bg)
-		case _, more := <-kb.flush:
-			if !more {
-				log.Debugf("output: flush channel closed, closing")
-				return
-			}
-			termbox.Flush()
-		}
-	}
-}
+// 	for {
+// 		select {
+// 		case cell, more := <-kb.cell:
+// 			if !more {
+// 				log.Debugf("output: cell channel closed, closing")
+// 				return
+// 			}
+// 			termbox.SetCell(cell.x, cell.y, cell.Ch, cell.Fg, cell.Bg)
+// 			// case _, more := <-kb.flush:
+// 			// 	if !more {
+// 			// 		log.Debugf("output: flush channel closed, closing")
+// 			// 		return
+// 			// 	}
+// 			// 	termbox.Flush()
+// 		}
+// 	}
+// }
