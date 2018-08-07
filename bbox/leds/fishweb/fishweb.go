@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"time"
 	// "time"
 
 	"github.com/siggy/bbox/bbox/color"
@@ -24,6 +25,8 @@ const (
 
 	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 5*144 // * 2x(5) // 144/m
 	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 10*60 // * 1x(4 + 2 + 4) // 60/m
+
+	DEFAULT_INTERVAL_MS = 2000
 
 	AMPLITUDE_FACTOR = 0.75
 
@@ -67,7 +70,7 @@ func (f *Fish) Run() {
 	// PURPLE_STREAK mode
 	streakLoc1 := 0.0
 	streakLoc2 := 0.0
-	length := LED_COUNT1 / 3.6
+	length := LED_COUNT1 / 3.6 // 5*144 / 3.6 == 200
 
 	// STANDARD mode
 	iter := 0
@@ -87,6 +90,9 @@ func (f *Fish) Run() {
 	phoneB := uint32(100)
 
 	webMotion := uint32(0)
+
+	last := time.Now()
+	interval := 2 * time.Second
 
 	for {
 		select {
@@ -145,15 +151,28 @@ func (f *Fish) Run() {
 			}
 
 		case color.PURPLE_STREAK:
-			amped1 := int(f.ampLevel * LED_COUNT1)
-			for i := 0; i < amped1; i++ {
-				strand1[i] = color.Red
-			}
-			for i := amped1; i < LED_COUNT1; i++ {
+			// amped1 := int(f.ampLevel * LED_COUNT1)
+			// for i := 0; i < amped1; i++ {
+			// 	strand1[i] = color.Red
+			// }
+			for i := 0; i < LED_COUNT1; i++ {
 				strand1[i] = color.Black
 			}
 
-			sineMap := color.GetSineVals(LED_COUNT1, streakLoc1, int(length))
+			interval = time.Duration(math.Max(
+				DEFAULT_INTERVAL_MS-(DEFAULT_INTERVAL_MS*f.ampLevel),
+				100,
+			)) * time.Millisecond
+
+			now := time.Now()
+			loc := 1.0 - float64(now.Sub(last).Nanoseconds())/float64(interval.Nanoseconds())
+
+			if loc < 0 {
+				loc = 1
+				last = now
+			}
+
+			sineMap := color.GetSineVals(LED_COUNT1, LED_COUNT1-loc*LED_COUNT1, int(length))
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
 				strand1[led] = color.Make(
@@ -164,8 +183,9 @@ func (f *Fish) Run() {
 				)
 			}
 
-			speed := math.Max(LED_COUNT1/36, 1)
-			speed = math.Max(float64(webMotion), speed)
+			speed := math.Max(LED_COUNT1/36, 1) // 5*144 / 36 = 20
+			speed = math.Max(float64(f.ampLevel*100), speed)
+			log.Infof("AMP: %+v SPEED: %+v", f.ampLevel, speed)
 
 			streakLoc1 += speed
 			if streakLoc1 >= LED_COUNT1 {
@@ -173,15 +193,15 @@ func (f *Fish) Run() {
 			}
 			ws2811.SetBitmap(0, strand1)
 
-			amped2 := int(f.ampLevel * LED_COUNT2)
-			for i := 0; i < amped2; i++ {
-				strand2[i] = color.Red
-			}
-			for i := amped2; i < LED_COUNT2; i++ {
+			// amped2 := int(f.ampLevel * LED_COUNT2)
+			// for i := 0; i < amped2; i++ {
+			// 	strand2[i] = color.Red
+			// }
+			for i := 0; i < LED_COUNT2; i++ {
 				strand2[i] = color.Black
 			}
 
-			sineMap = color.GetSineVals(LED_COUNT2, streakLoc2, int(length))
+			sineMap = color.GetSineVals(LED_COUNT2, LED_COUNT2-loc*LED_COUNT2, int(length))
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
 				strand2[led] = color.Make(

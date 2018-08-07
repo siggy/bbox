@@ -84,7 +84,6 @@ func (c *Baux) Run() {
 	globeColor2 := color.Black
 
 	last := time.Now()
-
 	interval := 2 * time.Second
 
 	for {
@@ -135,15 +134,15 @@ func (c *Baux) Run() {
 			)) * time.Millisecond
 
 			now := time.Now()
-			weight := 1.0 - float64(now.Sub(last).Nanoseconds())/float64(interval.Nanoseconds())
+			loc := 1.0 - float64(now.Sub(last).Nanoseconds())/float64(interval.Nanoseconds())
 
-			if weight < 0 {
-				weight = 1
+			if loc < 0 {
+				loc = 1
 				last = now
 			}
 
 			// streaks
-			sineMap := color.GetSineVals(BAUX_LED_COUNT1, weight*BAUX_LED_COUNT1, BAUX_STREAK_LENGTH)
+			sineMap := color.GetSineVals(BAUX_LED_COUNT1, loc*BAUX_LED_COUNT1, BAUX_STREAK_LENGTH)
 			for led, value := range sineMap {
 				mag := float64(value) / 254.0
 				strand1[led] = color.Make(
@@ -161,9 +160,9 @@ func (c *Baux) Run() {
 			for i := 0; i < len(globeLeds)-1; i++ {
 				start := globeLeds[i]
 				end := globeLeds[i+1] - 1
-				peak1 := float64(start) + float64(end-start)*weight
+				peak1 := float64(start) + float64(end-start)*loc
 
-				p2 := weight + 0.5 - math.Trunc(weight+0.5)
+				p2 := loc + 0.5 - math.Trunc(loc+0.5)
 				peak2 := float64(start) + float64(end-start)*p2
 
 				sineMap1 := color.GetSineVals(end-start, peak1, (end-start)/2)
