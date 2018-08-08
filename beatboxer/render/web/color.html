@@ -133,15 +133,13 @@
                 var theta = atan2(currentY, currentX),
                     d = currentX * currentX + currentY * currentY;
 
-                // If the x/y is not in the circle, find angle between center and mouse point:
+                // Find angle between center and mouse point:
                 //   Draw a line at that angle from center with the distance of radius
                 //   Use that point on the circumference as the draggable location
-                if (d > radiusSquared) {
-                    currentX = radius * math.cos(theta);
-                    currentY = radius * math.sin(theta);
-                    theta = atan2(currentY, currentX);
-                    d = currentX * currentX + currentY * currentY;
-                }
+                currentX = radius * math.cos(theta);
+                currentY = radius * math.sin(theta);
+                theta = atan2(currentY, currentX);
+                d = currentX * currentX + currentY * currentY;
 
                 var rgb = hsvToRgb(
                   (theta + PI) / PI2,         // Current hue (how many degrees along the circle)
