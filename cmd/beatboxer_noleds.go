@@ -1,8 +1,10 @@
 package main
 
 import (
+	// go tool pprof http://localhost:8080/debug/pprof/profile
 	// _ "net/http/pprof"
 
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -17,6 +19,9 @@ import (
 )
 
 func main() {
+	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
+	flag.Parse()
+
 	// log.SetLevel(log.DebugLevel)
 	// file, err := os.OpenFile("beatboxer_noleds.log", os.O_CREATE|os.O_WRONLY, 0666)
 	// if err == nil {
@@ -29,12 +34,17 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
+	keyMaps := bbox.KeyMapsPC
+	if *bboxKB {
+		keyMaps = bbox.KeyMapsRPI
+	}
+
 	harness := beatboxer.InitHarness(
 		[]render.Renderer{
 			web.InitWeb(),
 			render.InitTerminal(),
 		},
-		keyboard.Init(bbox.KeyMapsPC),
+		keyboard.Init(keyMaps),
 	)
 
 	harness.Register(&drums.DrumMachine{})

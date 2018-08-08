@@ -43,18 +43,6 @@ func (h *Harness) Register(program Program) {
 	h.programs = append(h.programs, program)
 }
 
-// temporary until all the "68, 64, 60, 56" foo is moved over
-// func (h *Harness) toRenderer(rs render.State) {
-// 	for col := 0; col < render.COLUMNS; col++ {
-// 		for row := 0; row < render.ROWS-2; row++ {
-// 			h.renderer.SetLed(0, col, rs.LEDs[row][col])
-// 		}
-// 		for row := render.ROWS - 2; row < render.ROWS; row++ {
-// 			h.renderer.SetLed(1, col, rs.LEDs[row][col])
-// 		}
-// 	}
-// }
-
 func (h *Harness) Run() {
 	go h.amplitude.Run()
 	go h.kb.Run()

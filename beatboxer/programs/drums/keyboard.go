@@ -17,8 +17,8 @@ const (
 	DECAY      = 3 * time.Minute
 	KEEP_ALIVE = 14 * time.Minute
 
-	// if 75% of beats are active, yield to the next program
-	YIELD_LIMIT = (SOUNDS - 1) * BEATS
+	// if 50% of beats are active, yield to the next program
+	YIELD_LIMIT = SOUNDS * BEATS / 2
 )
 
 type Button struct {
@@ -34,7 +34,6 @@ type Button struct {
 type Keyboard struct {
 	presses   <-chan bbox.Coord
 	yield     chan<- struct{}
-	keyMap    map[bbox.Key]*bbox.Coord
 	beats     Beats
 	timers    [SOUNDS][BEATS]*time.Timer
 	keepAlive *time.Timer    // ensure at least one beat is sent periodically to keep speaker alive
@@ -50,14 +49,12 @@ func InitKeyboard(
 	yield chan<- struct{},
 	msgs []chan<- Beats,
 	tempo chan<- int,
-	keyMap map[bbox.Key]*bbox.Coord,
 	debug bool,
 ) *Keyboard {
 
 	kb := Keyboard{
 		presses: presses,
 		yield:   yield,
-		keyMap:  keyMap,
 		beats:   Beats{},
 		msgs:    msgs,
 		tempo:   tempo,

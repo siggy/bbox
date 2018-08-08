@@ -14,7 +14,8 @@ import (
 
 const (
 	SEQUENCE_LENGTH      = 123
-	IMPATIENCE_THRESHOLD = 100
+	IMPATIENCE_THRESHOLD = 20
+	TIMEOUT_THRESHOLD    = 180 * time.Second
 )
 
 var (
@@ -299,6 +300,9 @@ func (c *Ceottk) runKB() {
 					c.setPlaying(false)
 				})
 			}()
+
+		case <-time.After(TIMEOUT_THRESHOLD):
+			c.yield <- struct{}{}
 
 		case <-c.close:
 			return

@@ -3,6 +3,7 @@ package main
 import (
 	// _ "net/http/pprof"
 
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -14,10 +15,12 @@ import (
 	"github.com/siggy/bbox/beatboxer/programs/drums"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/render/led"
-	"github.com/siggy/bbox/beatboxer/render/web"
 )
 
 func main() {
+	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
+	flag.Parse()
+
 	// log.SetLevel(log.DebugLevel)
 	// file, err := os.OpenFile("beatboxer_leds.log", os.O_CREATE|os.O_WRONLY, 0666)
 	// if err == nil {
@@ -30,13 +33,18 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
+	keyMaps := bbox.KeyMapsPC
+	if *bboxKB {
+		keyMaps = bbox.KeyMapsRPI
+	}
+
 	harness := beatboxer.InitHarness(
 		[]render.Renderer{
-			web.InitWeb(),
+			// web.InitWeb(),
 			// render.InitTerminal(),
 			led.InitLed(),
 		},
-		keyboard.Init(bbox.KeyMapsPC),
+		keyboard.Init(keyMaps),
 	)
 
 	harness.Register(&drums.DrumMachine{})

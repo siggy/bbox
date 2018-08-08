@@ -21,7 +21,22 @@ func main() {
 			fmt.Printf("Received OS signal, exiting")
 			return
 		case p := <-w.Phone():
-			log.Debugf("Phone event: %+v", p)
+			log.Infof("Phone event: %+v", p)
 		}
 	}
 }
+
+// 255,0,214
+// 0,255,9
+
+// 255,255,0
+// 0,0,255
+
+// 255,0,0
+// 0,255,255
+
+// 128,0,255
+// 128,255,0
+
+// 166,0,255
+// 58,255,0

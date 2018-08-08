@@ -58,7 +58,7 @@ func (dm *DrumMachine) New(wavDurs map[string]time.Duration) beatboxer.Program {
 		make(chan Interval),
 	}
 	// keyboard broadcasts quit with close(msgs)
-	kb := InitKeyboard(keyboard, yield, WriteonlyBeats(msgs), tempo, bbox.KeyMapsPC, false)
+	kb := InitKeyboard(keyboard, yield, WriteonlyBeats(msgs), tempo, false)
 	loop := InitLoop(play, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
 	r := InitRender(msgs[1], ticks[0], intervals[0], render)
 
