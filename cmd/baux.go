@@ -4,24 +4,10 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/bbox/leds"
+	"github.com/siggy/bbox/beatboxer/render/web"
 )
-
-// LEDS
-var frontLeds = []int{
-	0,
-	29,
-	55,
-	79,
-	102,
-	124,
-	145,
-	165,
-	183,
-	200,
-	216,
-	230,
-}
 
 func main() {
 	sig := make(chan os.Signal, 1)
@@ -29,11 +15,14 @@ func main() {
 
 	level := make(chan float64)
 
-	baux := leds.InitBaux(level)
+	amplitude := bbox.InitAmplitude(level)
+	baux := leds.InitBaux(level, web.InitWeb())
 
 	go baux.Run()
+	go amplitude.Run()
 
 	defer baux.Close()
+	defer amplitude.Close()
 
 	for {
 		select {

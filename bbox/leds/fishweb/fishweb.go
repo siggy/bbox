@@ -49,11 +49,6 @@ func InitFish(level <-chan float64, press <-chan struct{}, w *web.Web) *Fish {
 	}
 }
 
-func scaleMotion(x, y, z float64) uint32 {
-	prod := math.Abs(x) * math.Abs(y) * math.Abs(z)
-	return uint32(math.Min(math.Log(prod)*10, 127))
-}
-
 func (f *Fish) Run() {
 	defer func() {
 		ws2811.Clear()
@@ -97,7 +92,7 @@ func (f *Fish) Run() {
 		select {
 		case phone, more := <-f.w.Phone():
 			if more {
-				webMotion = scaleMotion(
+				webMotion = color.ScaleMotion(
 					phone.Motion.Acceleration.X,
 					phone.Motion.Acceleration.Y,
 					phone.Motion.Acceleration.Z,

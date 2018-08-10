@@ -307,3 +307,8 @@ func Split(color uint32) Color {
 		W: (color & 0xff000000) >> 24,
 	}
 }
+
+func ScaleMotion(x, y, z float64) uint32 {
+	prod := math.Abs(x) * math.Abs(y) * math.Abs(z)
+	return uint32(math.Min(math.Log(prod)*10, 255))
+}

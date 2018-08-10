@@ -57,11 +57,6 @@ func Init(level <-chan float64, w *web.Web) *Human {
 	}
 }
 
-func scaleMotion(x, y, z float64) uint32 {
-	prod := math.Abs(x) * math.Abs(y) * math.Abs(z)
-	return uint32(math.Min(math.Log(prod)*10, 255))
-}
-
 func (h *Human) Run() {
 	defer func() {
 		ws2811.Clear()
@@ -98,7 +93,7 @@ func (h *Human) Run() {
 		select {
 		case phone, more := <-h.w.Phone():
 			if more {
-				webMotion = scaleMotion(
+				webMotion = color.ScaleMotion(
 					phone.Motion.Acceleration.X,
 					phone.Motion.Acceleration.Y,
 					phone.Motion.Acceleration.Z,
