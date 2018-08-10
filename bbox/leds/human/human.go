@@ -27,7 +27,7 @@ const (
 
 	LIGHT_COUNT = 6 // 36 total deepPurple lights turned on at a time
 
-	STREAK_LENGTH = LED_COUNT2 * 3 / 4
+	STREAK_LENGTH = LED_COUNT2 / 3 // 8*60/3 == 160
 
 	// COOLING: How much does the air cool as it rises?
 	// Less cooling = taller flames.  More cooling = shorter flames.
@@ -39,8 +39,6 @@ const (
 	// Default 120, suggested range 50-200.
 	SPARKING = 50
 )
-
-var LIGHT_COLOR = leds.MkColor(0, 123, 55, 0)
 
 type Human struct {
 	ampLevel float64
@@ -61,7 +59,7 @@ func Init(level <-chan float64, w *web.Web) *Human {
 
 func scaleMotion(x, y, z float64) uint32 {
 	prod := math.Abs(x) * math.Abs(y) * math.Abs(z)
-	return uint32(math.Min(math.Log(prod)*10, 127))
+	return uint32(math.Min(math.Log(prod)*10, 255))
 }
 
 func (h *Human) Run() {
@@ -80,19 +78,19 @@ func (h *Human) Run() {
 
 	heat := make([]uint32, LED_COUNT1) // heart heat
 
-	r := uint32(255)
-	g := uint32(0)
-	b := uint32(0)
-
-	webColor := leds.TrueBlue
+	phoneR := uint32(200)
+	phoneG := uint32(0)
+	phoneB := uint32(100)
 	webMotion := uint32(0)
 
 	cp := color.Init([]uint32{
 		leds.Black,
-		leds.TrueRed,
-		leds.MkColor(255, 255, 0, 0),
-		leds.MkColor(0, 0, 0, 127),
+		leds.MkColor(127, 0, 0, 0),
+		leds.MkColor(127, 127, 0, 0),
+		leds.MkColor(0, 0, 0, 64),
 	})
+
+	streakLoc2 := 0.0
 
 	//next := time.Now()
 
@@ -105,11 +103,17 @@ func (h *Human) Run() {
 					phone.Motion.Acceleration.Y,
 					phone.Motion.Acceleration.Z,
 				)
-				r = phone.R
-				g = phone.G
-				b = phone.B
+				phoneR = phone.R
+				phoneG = phone.G
+				phoneB = phone.B
 
-				webColor = leds.MkColor(r, g, b, webMotion)
+				cp = color.Init([]uint32{
+					leds.Black,
+					leds.MkColor(phoneR/2, phoneG/2, phoneB/2, webMotion/4),
+					leds.MkColor(127, 127, 0, 0),
+					leds.MkColor(0, 0, 0, 64),
+				})
+
 			} else {
 				return
 			}
@@ -125,7 +129,6 @@ func (h *Human) Run() {
 			}
 		default:
 		}
-		_ = uint32(255.0 * h.ampLevel)
 
 		if true { // time.Now().After(next) {
 			//next = time.Now().Add(50 * time.Millisecond)
@@ -175,9 +178,32 @@ func (h *Human) Run() {
 		}
 
 		// human/robot
-		// human/robot
-		for i := 0; i < LED_COUNT2; i++ {
-			strand2[i] = webColor
+		amped2 := int(h.ampLevel * LED_COUNT2)
+		// fmt.Printf("AMPED: %+v\n", amped2)
+		for i := 0; i < amped2; i++ {
+			strand2[i] = leds.Red
+		}
+		for i := amped2; i < LED_COUNT2; i++ {
+			strand2[i] = leds.Black
+		}
+
+		sineMap := leds.GetSineVals(LED_COUNT2, streakLoc2, STREAK_LENGTH)
+		for led, value := range sineMap {
+			multiplier := float64(value) / 255.0
+			strand2[led] = leds.MkColor(
+				uint32(multiplier*float64(phoneR/2)),
+				uint32(multiplier*float64(phoneG/2)),
+				uint32(multiplier*float64(phoneB/2)),
+				uint32(multiplier*float64(webMotion/4)),
+			)
+		}
+
+		speed := math.Max(LED_COUNT2/36, 1)
+		speed = math.Max(float64(webMotion/2), speed)
+
+		streakLoc2 += speed
+		if streakLoc2 >= LED_COUNT2 {
+			streakLoc2 = 0
 		}
 
 		ws2811.SetBitmap(1, strand2)

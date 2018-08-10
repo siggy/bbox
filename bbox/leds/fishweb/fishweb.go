@@ -86,10 +86,9 @@ func (f *Fish) Run() {
 		randColors[i] = leds.MkColor(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(128)))
 	}
 
-	r := uint32(200)
-	g := uint32(0)
-	b := uint32(100)
-	w := uint32(0)
+	phoneR := uint32(200)
+	phoneG := uint32(0)
+	phoneB := uint32(100)
 
 	webMotion := uint32(0)
 
@@ -102,9 +101,9 @@ func (f *Fish) Run() {
 					phone.Motion.Acceleration.Y,
 					phone.Motion.Acceleration.Z,
 				)
-				r = phone.R
-				g = phone.G
-				b = phone.B
+				phoneR = phone.R
+				phoneG = phone.G
+				phoneB = phone.B
 			} else {
 				return
 			}
@@ -133,7 +132,7 @@ func (f *Fish) Run() {
 
 		switch mode {
 		case WEBBY:
-			webColor := leds.MkColor(r, g, b, webMotion)
+			webColor := leds.MkColor(phoneR, phoneG, phoneB, webMotion)
 			for i := range strand1 {
 				strand1[i] = webColor
 			}
@@ -162,10 +161,10 @@ func (f *Fish) Run() {
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
 				strand1[led] = leds.MkColor(
-					uint32(multiplier*float64(r)),
-					uint32(multiplier*float64(g)),
-					uint32(multiplier*float64(b)),
-					uint32(multiplier*float64(w)),
+					uint32(multiplier*float64(phoneR)),
+					uint32(multiplier*float64(phoneG)),
+					uint32(multiplier*float64(phoneB)),
+					uint32(multiplier*float64(webMotion)),
 				)
 			}
 
@@ -190,10 +189,10 @@ func (f *Fish) Run() {
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
 				strand2[led] = leds.MkColor(
-					uint32(multiplier*float64(r)),
-					uint32(multiplier*float64(g)),
-					uint32(multiplier*float64(b)),
-					uint32(multiplier*float64(w)),
+					uint32(multiplier*float64(phoneR)),
+					uint32(multiplier*float64(phoneG)),
+					uint32(multiplier*float64(phoneB)),
+					uint32(multiplier*float64(webMotion)),
 				)
 			}
 

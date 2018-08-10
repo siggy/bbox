@@ -316,6 +316,19 @@ sudo ifdown wlan0; sudo ifup wlan0
 sudo systemctl stop hostapd
 sudo systemctl stop dnsmasq
 
+### Mounting / syncing pi
+
+```bash
+# mount pi volume locally
+alias pifs='umount /Volumes/pi; sudo rmdir /Volumes/pi; sudo mkdir /Volumes/pi; sudo chown sig:staff /Volumes/pi && sshfs pi@raspberrypi.local:/ /Volumes/pi -f'
+
+# rsync local repo to pi
+rsync -vr ~/code/go/src/github.com/siggy/bbox/.git /Volumes/pi/home/pi/code/go/src/github.com/siggy/bbox
+
+# remove volume mount
+alias pifsrm='umount /Volumes/pi; sudo rmdir /Volumes/pi; sudo mkdir /Volumes/pi; sudo chown sig:staff /Volumes/pi'
+```
+
 ## Docs
 
 ```bash
