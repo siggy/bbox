@@ -53,6 +53,10 @@ func (h *Harness) Run() {
 	}()
 	defer h.kb.Close()
 
+	for _, renderer := range h.renderers {
+		renderer.Render(render.State{})
+	}
+
 	active := 0
 	cur := h.programs[active].New(h.wavs.Durations())
 

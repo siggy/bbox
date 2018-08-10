@@ -13,6 +13,7 @@ import (
 	"github.com/siggy/bbox/beatboxer/keyboard"
 	"github.com/siggy/bbox/beatboxer/programs/ceottk"
 	"github.com/siggy/bbox/beatboxer/programs/drums"
+	"github.com/siggy/bbox/beatboxer/programs/intro"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/render/led"
 )
@@ -47,6 +48,7 @@ func main() {
 		keyboard.Init(keyMaps),
 	)
 
+	harness.Register(&intro.Intro{})
 	harness.Register(&drums.DrumMachine{})
 	harness.Register(&ceottk.Ceottk{})
 
