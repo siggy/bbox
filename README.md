@@ -252,9 +252,6 @@ iface wlan0 inet static
 #    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 EOF
 
-sudo service dhcpcd restart
-sudo ifdown wlan0; sudo ifup wlan0
-
 sudo tee /etc/hostapd/hostapd.conf > /dev/null <<'EOF'
 interface=wlan0
 driver=nl80211
@@ -292,6 +289,7 @@ sudo tee --append /etc/sysctl.conf > /dev/null <<'EOF'
 net.ipv4.ip_forward=1
 EOF
 
+sudo service dhcpcd restart
 sudo systemctl start hostapd
 sudo systemctl start dnsmasq
 
