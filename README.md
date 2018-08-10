@@ -32,44 +32,34 @@ sudo apt-get update
 sudo apt-get install -y git tmux vim dnsmasq hostapd
 
 # set up wifi (note leading space to avoid bash history)
- echo $'\nnetwork={\n    ssid="<WIFI_SSID>"\n    psk="<WIFI_PASSWORD>"\n}' | sudo tee --append /etc/wpa_supplicant/wpa_supplicant.conf
+sudo tee --append /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null << 'EOF'
+network={
+    ssid="<WIFI_SSID>"
+    psk="<WIFI_PASSWORD>"
+}
+EOF
 
 # set static IP address
-echo $'\n# set static ip\n\ninterface eth0\nstatic ip_address=192.168.1.141/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\n\ninterface wlan0\nstatic ip_address=192.168.1.142/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1' | sudo tee --append /etc/dhcpcd.conf
+sudo tee --append /etc/dhcpcd.conf > /dev/null << 'EOF'
 
-# to make as a wifi access point at 192.168.4.1
-echo $'\ninterface wlan0\nnohook wpa_supplicant' | sudo tee --append /etc/dhcpcd.conf
-#echo $'\ndenyinterfaces wlan0' | sudo tee --append /etc/dhcpcd.conf
-echo $'\n# set static ip\n\ninterface eth0\nstatic ip_address=192.168.4.1/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\n\ninterface wlan0\nstatic ip_address=192.168.1.142/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\nnohook wpa_supplicant' | sudo tee --append /etc/dhcpcd.conf
-echo $'\ninterface=wlan0\ndhcp-range=192.168.4.2,192.168.4.20,255.255.255.0,24h' | sudo tee --append /etc/dnsmasq.conf
-sudo tee /etc/hostapd/hostapd.conf > /dev/null <<'EOF'
-interface=wlan0
-driver=nl80211
-ssid=sigpi
-hw_mode=g
-channel=7
-wmm_enabled=0
-macaddr_acl=0
-auth_algs=1
-ignore_broadcast_ssid=0
-wpa=2
-wpa_passphrase=showmethepi
-wpa_key_mgmt=WPA-PSK
-wpa_pairwise=TKIP
-rsn_pairwise=CCMP
+# set static ip
+
+interface eth0
+static ip_address=192.168.1.141/24
+static routers=192.168.1.1
+static domain_name_servers=192.168.1.1
+
+interface wlan0
+static ip_address=192.168.1.142/24
+static routers=192.168.1.1
+static domain_name_servers=192.168.1.1
 EOF
-echo $'\nDAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee --append /etc/default/hostapd
-echo $'\nnet.ipv4.ip_forward=1' | sudo tee --append /etc/sysctl.conf
-sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE
-sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
-# add to end of /etc/rc.local:
-# iptables-restore < /etc/iptables.ipv4.nat
-sudo systemctl start hostapd
-sudo systemctl start dnsmasq
 
 # reboot to connect over wifi
 sudo shutdown -r now
+```
 
+```bash
 # configure git
 git config --global push.default simple
 git config --global core.editor "vim"
@@ -186,18 +176,22 @@ defaults.pcm.card 0
 ## Build
 
 ```bash
-go build -o beatboxer cmd/bbox.go && \
-    go build cmd/amplitude.go && \
-    go build cmd/aud.go &&       \
-    go build cmd/aux.go &&       \
-    go build cmd/clear.go &&     \
-    go build cmd/crane.go &&     \
-    go build cmd/crawler.go &&   \
-    go build cmd/fish.go &&      \
-    go build cmd/keys.go &&      \
-    go build cmd/leds.go &&      \
-    go build cmd/noleds.go &&    \
-    go build cmd/record.go
+go build cmd/beatboxer_noleds.go && \
+  go build cmd/beatboxer_leds.go && \
+  go build cmd/baux.go &&      \
+  go build cmd/fishweb.go &&   \
+  go build cmd/clear.go &&     \
+  go build cmd/leds.go &&      \
+
+  go build cmd/amplitude.go && \
+  go build cmd/aud.go &&       \
+  go build cmd/aux.go &&       \
+  go build cmd/crane.go &&     \
+  go build cmd/crawler.go &&   \
+  go build cmd/fish.go &&      \
+  go build cmd/keys.go &&      \
+  go build cmd/noleds.go &&    \
+  go build cmd/record.go
 ```
 
 ## Run
@@ -231,6 +225,99 @@ Launch Ubuntu in VirtualBox
 sudo mount /dev/sdb7 ~/usb
 sudo umount /dev/sdb7
 ```
+
+## Wifi access point
+
+Based on:
+https://frillip.com/using-your-raspberry-pi-3-as-a-wifi-access-point-with-hostapd/
+
+```bash
+sudo tee --append /etc/dhcpcd.conf > /dev/null <<'EOF'
+
+# this must go above any `interface` line
+denyinterfaces wlan0
+
+# this must go below `interface wlan0`
+nohook wpa_supplicant
+EOF
+
+sudo tee --append /etc/network/interfaces > /dev/null <<'EOF'
+
+allow-hotplug wlan0
+iface wlan0 inet static
+    address 192.168.4.1
+    netmask 255.255.255.0
+    network 192.168.4.0
+    broadcast 192.168.1.255
+#    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+EOF
+
+sudo service dhcpcd restart
+sudo ifdown wlan0; sudo ifup wlan0
+
+sudo tee /etc/hostapd/hostapd.conf > /dev/null <<'EOF'
+interface=wlan0
+driver=nl80211
+ssid=sigpi
+hw_mode=g
+channel=6
+ieee80211n=1
+wmm_enabled=0
+ht_capab=[HT40][SHORT-GI-20][DSSS_CCK-40]
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_key_mgmt=WPA-PSK
+wpa_passphrase=showmethepi
+# wpa_pairwise=TKIP
+rsn_pairwise=CCMP
+EOF
+
+sudo tee /etc/default/hostapd > /dev/null <<'EOF'
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+EOF
+
+sudo tee --append /etc/dnsmasq.conf > /dev/null <<'EOF'
+
+interface=wlan0
+listen-address=192.168.4.1
+bind-interfaces
+domain-needed
+dhcp-range=192.168.4.2,192.168.4.100,255.255.255.0,24h
+EOF
+
+sudo tee --append /etc/sysctl.conf > /dev/null <<'EOF'
+
+net.ipv4.ip_forward=1
+EOF
+
+sudo systemctl start hostapd
+sudo systemctl start dnsmasq
+
+# reboot to connect over wifi
+sudo shutdown -r now
+```
+
+### To re-enable internet wifi
+
+Comment out from `/etc/dhcpcd.conf`:
+```
+# denyinterfaces wlan0
+# nohook wpa_supplicant
+```
+
+Re-enable in `/etc/network/interfaces`:
+```
+allow-hotplug wlan0
+iface wlan0 inet manual
+    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+```
+
+sudo service dhcpcd restart
+sudo ifdown wlan0; sudo ifup wlan0
+sudo systemctl stop hostapd
+sudo systemctl stop dnsmasq
 
 ## Docs
 

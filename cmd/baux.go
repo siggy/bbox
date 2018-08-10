@@ -8,7 +8,7 @@ import (
 )
 
 // LEDS
-frontLeds = []int{
+var frontLeds = []int{
 	0,
 	29,
 	55,
