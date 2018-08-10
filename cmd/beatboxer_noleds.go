@@ -43,7 +43,7 @@ func main() {
 	harness := beatboxer.InitHarness(
 		[]render.Renderer{
 			web.InitWeb(),
-			render.InitTerminal(),
+			// render.InitTerminal(),
 		},
 		keyboard.Init(keyMaps),
 	)

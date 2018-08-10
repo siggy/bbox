@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
@@ -178,15 +179,15 @@ func (l *LedBeats) Run() {
 
 			// light all leds around current position
 			for i, _ := range rows[0:2] {
-				sineMap := GetSineVals(LED_COUNT, peakVals[i], SINE_PERIOD)
+				sineMap := color.GetSineVals(LED_COUNT, peakVals[i], SINE_PERIOD)
 				for led, value := range sineMap {
-					ws2811.SetLed(0, led, MkColor(0, 0, 0, uint32(value)))
+					ws2811.SetLed(0, led, color.Make(0, 0, 0, uint32(value)))
 				}
 			}
 			for i, _ := range rows[2:4] {
-				sineMap := GetSineVals(LED_COUNT, peakVals[i+2], SINE_PERIOD)
+				sineMap := color.GetSineVals(LED_COUNT, peakVals[i+2], SINE_PERIOD)
 				for led, value := range sineMap {
-					ws2811.SetLed(1, led, MkColor(0, 0, 0, uint32(value)))
+					ws2811.SetLed(1, led, color.Make(0, 0, 0, uint32(value)))
 				}
 			}
 
@@ -198,9 +199,9 @@ func (l *LedBeats) Run() {
 					if t {
 						if j == buttonIdxs[i] {
 							actives++
-							ws2811.SetLed(0, rows[i].buttons[j], purple)
+							ws2811.SetLed(0, rows[i].buttons[j], color.Purple)
 						} else {
-							ws2811.SetLed(0, rows[i].buttons[j], TrueRed)
+							ws2811.SetLed(0, rows[i].buttons[j], color.TrueRed)
 						}
 					}
 				}
@@ -210,9 +211,9 @@ func (l *LedBeats) Run() {
 					if t {
 						if j == buttonIdxs[i+2] {
 							actives++
-							ws2811.SetLed(1, rows[i+2].buttons[j], purple)
+							ws2811.SetLed(1, rows[i+2].buttons[j], color.Purple)
 						} else {
-							ws2811.SetLed(1, rows[i+2].buttons[j], TrueRed)
+							ws2811.SetLed(1, rows[i+2].buttons[j], color.TrueRed)
 						}
 					}
 				}
@@ -223,11 +224,11 @@ func (l *LedBeats) Run() {
 				r := rand.Intn(LED_COUNT - FREEFORM_IDX)
 				ws2811.SetLed(0,
 					r+FREEFORM_IDX,
-					Colors[r%len(Colors)],
+					color.Colors[r%len(color.Colors)],
 				)
 				ws2811.SetLed(1,
 					r+FREEFORM_IDX,
-					Colors[(r+1)%len(Colors)],
+					color.Colors[(r+1)%len(color.Colors)],
 				)
 			}
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/bbox/leds"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
@@ -55,8 +56,8 @@ func main() {
 			ws2811.Clear()
 
 			fmt.Printf("LED: %+v\n", cur)
-			ws2811.SetLed(0, cur, leds.Red)
-			ws2811.SetLed(1, cur, leds.Red)
+			ws2811.SetLed(0, cur, color.Red)
+			ws2811.SetLed(1, cur, color.Red)
 
 			err := ws2811.Render()
 			if err != nil {

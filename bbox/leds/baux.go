@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
@@ -29,7 +30,7 @@ const (
 	BAUX_STREAK_LENGTH = BAUX_LED_COUNT1 * 3 / 4
 )
 
-var BAUX_LIGHT_COLOR = MkColor(0, 123, 55, 0)
+var BAUX_LIGHT_COLOR = color.Make(0, 123, 55, 0)
 
 type Baux struct {
 	ampLevel float64
@@ -64,7 +65,7 @@ func (c *Baux) Run() {
 	lights := make([]uint32, BAUX_LIGHT_COUNT)
 	for i, _ := range lights {
 		r := uint32(rand.Int31n(BAUX_LED_COUNT1))
-		for Contains(lights, r) {
+		for color.Contains(lights, r) {
 			r = uint32(rand.Int31n(BAUX_LED_COUNT1))
 		}
 		lights[i] = r
@@ -72,12 +73,12 @@ func (c *Baux) Run() {
 
 	lightIter := 0
 	nextLight := uint32(rand.Int31n(BAUX_LED_COUNT1))
-	for Contains(lights, nextLight) {
+	for color.Contains(lights, nextLight) {
 		nextLight = uint32(rand.Int31n(BAUX_LED_COUNT1))
 	}
 
-	heartColor1 := TrueRed
-	heartColor2 := black
+	heartColor1 := color.TrueRed
+	heartColor2 := color.Black
 
 	last := time.Now()
 
@@ -108,7 +109,7 @@ func (c *Baux) Run() {
 				lightIter = (lightIter + BAUX_LIGHT_COUNT - 1) % BAUX_LIGHT_COUNT
 
 				nextLight = uint32(rand.Int31n(BAUX_LED_COUNT1))
-				for Contains(lights, nextLight) {
+				for color.Contains(lights, nextLight) {
 					nextLight = uint32(rand.Int31n(BAUX_LED_COUNT1))
 				}
 
@@ -121,24 +122,24 @@ func (c *Baux) Run() {
 			// structure
 			for i, light := range lights {
 				if i == lightIter {
-					strand1[light] = MkColorWeight(BAUX_LIGHT_COLOR, black, weight)
-					strand1[nextLight] = MkColorWeight(black, BAUX_LIGHT_COLOR, weight)
+					strand1[light] = color.MkColorWeight(BAUX_LIGHT_COLOR, color.Black, weight)
+					strand1[nextLight] = color.MkColorWeight(color.Black, BAUX_LIGHT_COLOR, weight)
 				} else {
 					strand1[light] = BAUX_LIGHT_COLOR
 				}
 			}
 
 			// streaks
-			sineMap := GetSineVals(BAUX_LED_COUNT1, weight*BAUX_LED_COUNT1, BAUX_STREAK_LENGTH)
+			sineMap := color.GetSineVals(BAUX_LED_COUNT1, weight*BAUX_LED_COUNT1, BAUX_STREAK_LENGTH)
 			for led, value := range sineMap {
-				if !Contains(lights, uint32(led)) {
+				if !color.Contains(lights, uint32(led)) {
 					mag := float64(value) / 254.0
-					strand1[led] = MkColor(uint32(float64(200)*mag), 0, uint32(float64(100)*mag), 0)
+					strand1[led] = color.Make(uint32(float64(200)*mag), 0, uint32(float64(100)*mag), 0)
 				}
 			}
 
 			// heart
-			heartColor := MkColorWeight(heartColor1, heartColor2, weight)
+			heartColor := color.MkColorWeight(heartColor1, heartColor2, weight)
 			for i := 0; i < BAUX_LED_COUNT2; i++ {
 				strand2[i] = heartColor
 			}

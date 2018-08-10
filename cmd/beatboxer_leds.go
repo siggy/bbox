@@ -16,6 +16,7 @@ import (
 	"github.com/siggy/bbox/beatboxer/programs/intro"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/render/led"
+	"github.com/siggy/bbox/beatboxer/render/web"
 )
 
 func main() {
@@ -41,7 +42,7 @@ func main() {
 
 	harness := beatboxer.InitHarness(
 		[]render.Renderer{
-			// web.InitWeb(),
+			web.InitWeb(),
 			// render.InitTerminal(),
 			led.InitLed(),
 		},

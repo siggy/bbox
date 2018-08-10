@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nsf/termbox-go"
-	"github.com/siggy/bbox/beatboxer/color"
+	"github.com/siggy/bbox/bbox/color"
 )
 
 type Terminal struct{}

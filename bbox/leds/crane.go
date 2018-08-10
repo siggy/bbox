@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
@@ -70,7 +71,7 @@ func (c *Crane) Run() {
 	lights := make([]uint32, LIGHT_COUNT)
 	for i, _ := range lights {
 		r := uint32(rand.Int31n(CRANE_LED_COUNT1))
-		for Contains(append(lights, RED_LIGHT_RANGE...), r) {
+		for color.Contains(append(lights, RED_LIGHT_RANGE...), r) {
 			r = uint32(rand.Int31n(CRANE_LED_COUNT1))
 		}
 		lights[i] = r
@@ -78,14 +79,14 @@ func (c *Crane) Run() {
 
 	lightIter := 0
 	nextLight := uint32(rand.Int31n(CRANE_LED_COUNT1))
-	for Contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
+	for color.Contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
 		nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
 	}
 
 	streakLoc := 0.0
 
-	heartColor1 := TrueRed
-	heartColor2 := trueWhite
+	heartColor1 := color.TrueRed
+	heartColor2 := color.TrueWhite
 
 	last := time.Now()
 
@@ -115,7 +116,7 @@ func (c *Crane) Run() {
 				lightIter = (lightIter + 1) % len(lights)
 
 				nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
-				for Contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
+				for color.Contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
 					nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
 				}
 
@@ -128,19 +129,19 @@ func (c *Crane) Run() {
 			// structure
 			for i, light := range lights {
 				if i == lightIter {
-					strand1[light] = MkColorWeight(trueWhite, black, weight)
-					strand1[nextLight] = MkColorWeight(black, trueWhite, weight)
+					strand1[light] = color.MkColorWeight(color.TrueWhite, color.Black, weight)
+					strand1[nextLight] = color.MkColorWeight(color.Black, color.TrueWhite, weight)
 				} else {
-					strand1[light] = trueWhite
+					strand1[light] = color.TrueWhite
 				}
 			}
 
 			// streaks
-			sineMap := GetSineVals(CRANE_LED_COUNT1, streakLoc, STREAK_LENGTH)
+			sineMap := color.GetSineVals(CRANE_LED_COUNT1, streakLoc, STREAK_LENGTH)
 			for led, value := range sineMap {
-				if !Contains(append(lights, RED_LIGHT_RANGE...), uint32(led)) {
+				if !color.Contains(append(lights, RED_LIGHT_RANGE...), uint32(led)) {
 					mag := float64(value) / 254.0
-					strand1[led] = MkColor(0, uint32(float64(123)*mag), uint32(float64(55)*mag), 0)
+					strand1[led] = color.Make(0, uint32(float64(123)*mag), uint32(float64(55)*mag), 0)
 				}
 			}
 
@@ -150,7 +151,7 @@ func (c *Crane) Run() {
 			}
 
 			// heart
-			heartColor := MkColorWeight(heartColor1, heartColor2, weight)
+			heartColor := color.MkColorWeight(heartColor1, heartColor2, weight)
 			for i := 0; i < CRANE_LED_COUNT2; i++ {
 				strand2[i] = heartColor
 			}

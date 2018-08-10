@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/bbox/leds"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
@@ -53,7 +54,7 @@ func main() {
 
 	streakLoc := 0.0
 
-	black := leds.MkColor(0, 0, 0, 0)
+	black := color.Make(0, 0, 0, 0)
 
 	for {
 		select {
@@ -61,13 +62,13 @@ func main() {
 			return
 		default:
 			// streaks
-			sineMap := leds.GetSineVals(LED_COUNT, streakLoc, int(length))
+			sineMap := color.GetSineVals(LED_COUNT, streakLoc, int(length))
 			for i, _ := range strand {
 				strand[i] = black
 			}
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand[led] = leds.MkColor(
+				strand[led] = color.Make(
 					uint32(multiplier*float64(r)),
 					uint32(multiplier*float64(g)),
 					uint32(multiplier*float64(b)),

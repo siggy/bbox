@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/bbox/leds"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
@@ -96,13 +97,13 @@ func (w *Led) Render(state render.State) {
 		for j, tr := range state.Transitions[i] {
 			if tr.Color != 0 {
 				peak := rows[i].LocationToPeak(float64(j) + tr.Location)
-				sineMap := leds.GetSineVals(LED_COUNT, peak, SINE_PERIOD)
+				sineMap := color.GetSineVals(LED_COUNT, peak, SINE_PERIOD)
 
 				log.Debugf("rows[%d].LocationToPeak(%f): %f", i, float64(j)+tr.Location, peak)
-				log.Debugf("leds.GetSineVals(%d, %f, %d): %f", LED_COUNT, peak, SINE_PERIOD, sineMap)
+				log.Debugf("color.GetSineVals(%d, %f, %d): %f", LED_COUNT, peak, SINE_PERIOD, sineMap)
 
 				for led, value := range sineMap {
-					ws2811.SetLed(channel, led, leds.MultiplyColor(tr.Color, float64(value)/255.0))
+					ws2811.SetLed(channel, led, color.MultiplyColor(tr.Color, float64(value)/255.0))
 				}
 			}
 		}
@@ -128,11 +129,11 @@ func (w *Led) Render(state render.State) {
 		r := rand.Intn(LED_COUNT - FREEFORM_IDX)
 		ws2811.SetLed(0,
 			r+FREEFORM_IDX,
-			leds.Colors[r%len(leds.Colors)],
+			color.Colors[r%len(color.Colors)],
 		)
 		ws2811.SetLed(1,
 			r+FREEFORM_IDX,
-			leds.Colors[(r+1)%len(leds.Colors)],
+			color.Colors[(r+1)%len(color.Colors)],
 		)
 	}
 

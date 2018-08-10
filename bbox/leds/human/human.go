@@ -84,10 +84,10 @@ func (h *Human) Run() {
 	webMotion := uint32(0)
 
 	cp := color.Init([]uint32{
-		leds.Black,
-		leds.MkColor(127, 0, 0, 0),
-		leds.MkColor(127, 127, 0, 0),
-		leds.MkColor(0, 0, 0, 64),
+		color.Black,
+		color.Make(127, 0, 0, 0),
+		color.Make(127, 127, 0, 0),
+		color.Make(0, 0, 0, 64),
 	})
 
 	streakLoc2 := 0.0
@@ -108,10 +108,10 @@ func (h *Human) Run() {
 				phoneB = phone.B
 
 				cp = color.Init([]uint32{
-					leds.Black,
-					leds.MkColor(phoneR/2, phoneG/2, phoneB/2, webMotion/4),
-					leds.MkColor(127, 127, 0, 0),
-					leds.MkColor(0, 0, 0, 64),
+					color.Black,
+					color.Make(phoneR/2, phoneG/2, phoneB/2, webMotion/4),
+					color.Make(127, 127, 0, 0),
+					color.Make(0, 0, 0, 64),
 				})
 
 			} else {
@@ -160,10 +160,10 @@ func (h *Human) Run() {
 				colorIndex := heat[i] * 255 / 240
 				strand1[i] = cp.Get(float64(colorIndex) / float64(255))
 				//rHeat, gHeat, bHeat := color.HeatColor(heat[i])
-				//strand1[i] = leds.MkColor(rHeat, gHeat, bHeat, 0)
+				//strand1[i] = color.Make(rHeat, gHeat, bHeat, 0)
 			}
 
-			// heartColor := leds.MkColorWeight(heartColor1, heartColor2, weight)
+			// heartColor := color.MkColorWeight(heartColor1, heartColor2, weight)
 			// for i := 0; i < LED_COUNT1; i++ {
 			// 	strand1[i] = heartColor
 			// }
@@ -171,7 +171,7 @@ func (h *Human) Run() {
 			// TODO: swap
 			//log.Infof("STRAND1:")
 			//for i := 0; i < LED_COUNT1; i++ {
-			//	leds.PrintColor(strand1[i])
+			//	color.PrintColor(strand1[i])
 			//}
 
 			ws2811.SetBitmap(0, strand1)
@@ -181,16 +181,16 @@ func (h *Human) Run() {
 		amped2 := int(h.ampLevel * LED_COUNT2)
 		// fmt.Printf("AMPED: %+v\n", amped2)
 		for i := 0; i < amped2; i++ {
-			strand2[i] = leds.Red
+			strand2[i] = color.Red
 		}
 		for i := amped2; i < LED_COUNT2; i++ {
-			strand2[i] = leds.Black
+			strand2[i] = color.Black
 		}
 
-		sineMap := leds.GetSineVals(LED_COUNT2, streakLoc2, STREAK_LENGTH)
+		sineMap := color.GetSineVals(LED_COUNT2, streakLoc2, STREAK_LENGTH)
 		for led, value := range sineMap {
 			multiplier := float64(value) / 255.0
-			strand2[led] = leds.MkColor(
+			strand2[led] = color.Make(
 				uint32(multiplier*float64(phoneR/2)),
 				uint32(multiplier*float64(phoneG/2)),
 				uint32(multiplier*float64(phoneB/2)),

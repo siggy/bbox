@@ -1,7 +1,7 @@
 package drums
 
 import (
-	"github.com/siggy/bbox/beatboxer/color"
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/beatboxer/render"
 	log "github.com/sirupsen/logrus"
 )

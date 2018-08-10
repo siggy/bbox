@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	// "time"
 
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/bbox/leds"
 	"github.com/siggy/bbox/beatboxer/render/web"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
@@ -26,7 +27,7 @@ const (
 
 	AMPLITUDE_FACTOR = 0.75
 
-	WEBBY = leds.NUM_MODES
+	WEBBY = color.NUM_MODES
 )
 
 type Fish struct {
@@ -66,7 +67,7 @@ func (f *Fish) Run() {
 	strand1 := make([]uint32, LED_COUNT1)
 	strand2 := make([]uint32, LED_COUNT2)
 
-	mode := leds.PURPLE_STREAK
+	mode := color.PURPLE_STREAK
 
 	// PURPLE_STREAK mode
 	streakLoc1 := 0.0
@@ -83,7 +84,7 @@ func (f *Fish) Run() {
 	// precompute random color rotation
 	randColors := make([]uint32, LED_COUNT1)
 	for i := 0; i < LED_COUNT1; i++ {
-		randColors[i] = leds.MkColor(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(128)))
+		randColors[i] = color.Make(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(128)))
 	}
 
 	phoneR := uint32(200)
@@ -132,13 +133,13 @@ func (f *Fish) Run() {
 
 		switch mode {
 		case WEBBY:
-			webColor := leds.MkColor(phoneR, phoneG, phoneB, webMotion)
+			webcolor := color.Make(phoneR, phoneG, phoneB, webMotion)
 			for i := range strand1 {
-				strand1[i] = webColor
+				strand1[i] = webcolor
 			}
 			ws2811.SetBitmap(0, strand1)
 			for i := range strand2 {
-				strand2[i] = webColor
+				strand2[i] = webcolor
 			}
 			ws2811.SetBitmap(1, strand2)
 
@@ -148,19 +149,19 @@ func (f *Fish) Run() {
 				panic(err)
 			}
 
-		case leds.PURPLE_STREAK:
+		case color.PURPLE_STREAK:
 			amped1 := int(f.ampLevel * LED_COUNT1)
 			for i := 0; i < amped1; i++ {
-				strand1[i] = leds.Red
+				strand1[i] = color.Red
 			}
 			for i := amped1; i < LED_COUNT1; i++ {
-				strand1[i] = leds.Black
+				strand1[i] = color.Black
 			}
 
-			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
+			sineMap := color.GetSineVals(LED_COUNT1, streakLoc1, int(length))
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand1[led] = leds.MkColor(
+				strand1[led] = color.Make(
 					uint32(multiplier*float64(phoneR)),
 					uint32(multiplier*float64(phoneG)),
 					uint32(multiplier*float64(phoneB)),
@@ -179,16 +180,16 @@ func (f *Fish) Run() {
 
 			amped2 := int(f.ampLevel * LED_COUNT2)
 			for i := 0; i < amped2; i++ {
-				strand2[i] = leds.Red
+				strand2[i] = color.Red
 			}
 			for i := amped2; i < LED_COUNT2; i++ {
-				strand2[i] = leds.Black
+				strand2[i] = color.Black
 			}
 
-			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
+			sineMap = color.GetSineVals(LED_COUNT2, streakLoc2, int(length))
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand2[led] = leds.MkColor(
+				strand2[led] = color.Make(
 					uint32(multiplier*float64(phoneR)),
 					uint32(multiplier*float64(phoneG)),
 					uint32(multiplier*float64(phoneB)),
@@ -209,34 +210,34 @@ func (f *Fish) Run() {
 				panic(err)
 			}
 
-		case leds.COLOR_STREAKS:
+		case color.COLOR_STREAKS:
 			speed := 10.0
-			color := leds.Colors[(iter)%len(leds.Colors)]
+			c := color.Colors[(iter)%len(color.Colors)]
 
-			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
+			sineMap := color.GetSineVals(LED_COUNT1, streakLoc1, int(length))
 			for i := range strand1 {
-				strand1[i] = leds.Black
+				strand1[i] = color.Black
 			}
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand1[led] = leds.MultiplyColor(color, multiplier)
+				strand1[led] = color.MultiplyColor(c, multiplier)
 			}
 
 			streakLoc1 += speed
 			if streakLoc1 >= LED_COUNT1 {
 				streakLoc1 = 0
-				iter = (iter + 1) % len(leds.Colors)
+				iter = (iter + 1) % len(color.Colors)
 			}
 
 			ws2811.SetBitmap(0, strand1)
 
-			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
+			sineMap = color.GetSineVals(LED_COUNT2, streakLoc2, int(length))
 			for i := range strand2 {
-				strand2[i] = leds.Black
+				strand2[i] = color.Black
 			}
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand2[led] = leds.MultiplyColor(color, multiplier)
+				strand2[led] = color.MultiplyColor(c, multiplier)
 			}
 
 			streakLoc2 += speed
@@ -245,34 +246,34 @@ func (f *Fish) Run() {
 			}
 
 			ws2811.SetBitmap(1, strand2)
-		case leds.FAST_COLOR_STREAKS:
+		case color.FAST_COLOR_STREAKS:
 			speed := 100.0
-			color := leds.Colors[(iter)%len(leds.Colors)]
+			c := color.Colors[(iter)%len(color.Colors)]
 
-			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
+			sineMap := color.GetSineVals(LED_COUNT1, streakLoc1, int(length))
 			for i := range strand1 {
-				strand1[i] = leds.Black
+				strand1[i] = color.Black
 			}
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand1[led] = leds.MultiplyColor(color, multiplier)
+				strand1[led] = color.MultiplyColor(c, multiplier)
 			}
 
 			streakLoc1 += speed
 			if streakLoc1 >= LED_COUNT1 {
 				streakLoc1 = 0
-				iter = (iter + 1) % len(leds.Colors)
+				iter = (iter + 1) % len(color.Colors)
 			}
 
 			ws2811.SetBitmap(0, strand1)
 
-			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
+			sineMap = color.GetSineVals(LED_COUNT2, streakLoc2, int(length))
 			for i := range strand2 {
-				strand2[i] = leds.Black
+				strand2[i] = color.Black
 			}
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand2[led] = leds.MultiplyColor(color, multiplier)
+				strand2[led] = color.MultiplyColor(c, multiplier)
 			}
 
 			streakLoc2 += speed
@@ -281,34 +282,34 @@ func (f *Fish) Run() {
 			}
 
 			ws2811.SetBitmap(1, strand2)
-		case leds.SOUND_COLOR_STREAKS:
+		case color.SOUND_COLOR_STREAKS:
 			speed := 100.0*f.ampLevel + 10.0
-			color := leds.Colors[(iter)%len(leds.Colors)]
+			c := color.Colors[(iter)%len(color.Colors)]
 
-			sineMap := leds.GetSineVals(LED_COUNT1, streakLoc1, int(length))
+			sineMap := color.GetSineVals(LED_COUNT1, streakLoc1, int(length))
 			for i := range strand1 {
-				strand1[i] = leds.Black
+				strand1[i] = color.Black
 			}
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand1[led] = leds.MultiplyColor(color, multiplier)
+				strand1[led] = color.MultiplyColor(c, multiplier)
 			}
 
 			streakLoc1 += speed
 			if streakLoc1 >= LED_COUNT1 {
 				streakLoc1 = 0
-				iter = (iter + 1) % len(leds.Colors)
+				iter = (iter + 1) % len(color.Colors)
 			}
 
 			ws2811.SetBitmap(0, strand1)
 
-			sineMap = leds.GetSineVals(LED_COUNT2, streakLoc2, int(length))
+			sineMap = color.GetSineVals(LED_COUNT2, streakLoc2, int(length))
 			for i := range strand2 {
-				strand2[i] = leds.Black
+				strand2[i] = color.Black
 			}
 			for led, value := range sineMap {
 				multiplier := float64(value) / 255.0
-				strand2[led] = leds.MultiplyColor(color, multiplier)
+				strand2[led] = color.MultiplyColor(c, multiplier)
 			}
 
 			streakLoc2 += speed
@@ -317,10 +318,10 @@ func (f *Fish) Run() {
 			}
 
 			ws2811.SetBitmap(1, strand2)
-		case leds.FILL_RED:
+		case color.FILL_RED:
 			for i := 0; i < LED_COUNT1; i += 30 {
 				for j := 0; j < i; j++ {
-					ws2811.SetLed(0, j, leds.Red)
+					ws2811.SetLed(0, j, color.Red)
 				}
 
 				err := ws2811.Render()
@@ -336,7 +337,7 @@ func (f *Fish) Run() {
 			}
 			for i := 0; i < LED_COUNT2; i += 30 {
 				for j := 0; j < i; j++ {
-					ws2811.SetLed(1, j, leds.Red)
+					ws2811.SetLed(1, j, color.Red)
 				}
 
 				err := ws2811.Render()
@@ -352,7 +353,7 @@ func (f *Fish) Run() {
 			}
 			for i := 0; i < LED_COUNT1; i += 30 {
 				for j := 0; j < i; j++ {
-					ws2811.SetLed(0, j, leds.MkColor(0, 0, 0, 0))
+					ws2811.SetLed(0, j, color.Make(0, 0, 0, 0))
 				}
 
 				err := ws2811.Render()
@@ -368,7 +369,7 @@ func (f *Fish) Run() {
 			}
 			for i := 0; i < LED_COUNT2; i += 30 {
 				for j := 0; j < i; j++ {
-					ws2811.SetLed(1, j, leds.MkColor(0, 0, 0, 0))
+					ws2811.SetLed(1, j, color.Make(0, 0, 0, 0))
 				}
 
 				err := ws2811.Render()
@@ -382,24 +383,24 @@ func (f *Fish) Run() {
 					panic(err)
 				}
 			}
-		case leds.SLOW_EQUALIZE:
+		case color.SLOW_EQUALIZE:
 			for i := 0; i < STRAND_COUNT1; i++ {
-				color := leds.Colors[(iter+i)%len(leds.Colors)]
+				c := color.Colors[(iter+i)%len(color.Colors)]
 
 				for j := 0; j < STRAND_LEN1; j++ {
-					strand1[i*STRAND_LEN1+j] = color
+					strand1[i*STRAND_LEN1+j] = c
 				}
 			}
 
 			for i := 0; i < STRAND_COUNT2; i++ {
-				color := leds.Colors[(iter+i)%len(leds.Colors)]
+				c := color.Colors[(iter+i)%len(color.Colors)]
 
 				for j := 0; j < STRAND_LEN2; j++ {
-					strand2[i*STRAND_LEN2+j] = color
+					strand2[i*STRAND_LEN2+j] = c
 				}
 			}
 
-			// for i, color := range strand1 {
+			// for i, c := range strand1 {
 			// 	// if i == 0 {
 			// 	// 	PrintColor(color)
 			// 	// }
@@ -417,79 +418,79 @@ func (f *Fish) Run() {
 				weight += 0.01
 			} else {
 				weight = 0
-				iter = (iter + 1) % len(leds.Colors)
+				iter = (iter + 1) % len(color.Colors)
 			}
 
 			// time.Sleep(1 * time.Second)
-		case leds.FILL_EQUALIZE:
+		case color.FILL_EQUALIZE:
 			for i := 0; i < STRAND_COUNT1; i++ {
-				color1 := leds.Colors[(iter+i)%len(leds.Colors)]
-				color2 := leds.Colors[(iter+i+1)%len(leds.Colors)]
-				color := leds.MkColorWeight(color1, color2, weight)
+				color1 := color.Colors[(iter+i)%len(color.Colors)]
+				color2 := color.Colors[(iter+i+1)%len(color.Colors)]
+				c := color.MkColorWeight(color1, color2, weight)
 
 				for j := 0; j < STRAND_LEN1; j++ {
-					strand1[i*STRAND_LEN1+j] = color
+					strand1[i*STRAND_LEN1+j] = c
 				}
 			}
 
 			for i := 0; i < STRAND_COUNT2; i++ {
-				color1 := leds.Colors[(iter+i)%len(leds.Colors)]
-				color2 := leds.Colors[(iter+i+1)%len(leds.Colors)]
-				color := leds.MkColorWeight(color1, color2, weight)
+				color1 := color.Colors[(iter+i)%len(color.Colors)]
+				color2 := color.Colors[(iter+i+1)%len(color.Colors)]
+				c := color.MkColorWeight(color1, color2, weight)
 
 				for j := 0; j < STRAND_LEN2; j++ {
-					strand2[i*STRAND_LEN2+j] = color
+					strand2[i*STRAND_LEN2+j] = c
 				}
 			}
 
-			for i, color := range strand1 {
+			for i, c := range strand1 {
 				// if i == 0 {
-				// 	PrintColor(color)
+				// 	PrintColor(c)
 				// }
-				ws2811.SetLed(0, i, color)
+				ws2811.SetLed(0, i, c)
 				if i%10 == 0 {
 					ws2811.Render()
 				}
 			}
-			for i, color := range strand2 {
+			for i, c := range strand2 {
 				// if i == 0 {
-				// 	PrintColor(color)
+				// 	PrintColor(c)
 				// }
-				ws2811.SetLed(1, i, color)
+				ws2811.SetLed(1, i, c)
 				if i%10 == 0 {
 					ws2811.Render()
 				}
 			}
 
-			iter = (iter + 1) % len(leds.Colors)
+			iter = (iter + 1) % len(color.Colors)
 
 			// time.Sleep(1 * time.Second)
-		case leds.EQUALIZE:
+		case color.EQUALIZE:
 			for i := 0; i < STRAND_COUNT1; i++ {
-				color1 := leds.Colors[(iter+i)%len(leds.Colors)]
-				color2 := leds.Colors[(iter+i+1)%len(leds.Colors)]
-				color := leds.MkColorWeight(color1, color2, weight)
+				color1 := color.Colors[(iter+i)%len(color.Colors)]
+				color2 := color.Colors[(iter+i+1)%len(color.Colors)]
+				c := color.MkColorWeight(color1, color2, weight)
 
 				for j := 0; j < STRAND_LEN1; j++ {
-					strand1[i*STRAND_LEN1+j] = color
+					strand1[i*STRAND_LEN1+j] = c
 				}
 			}
 
 			for i := 0; i < STRAND_COUNT2; i++ {
-				color1 := leds.Colors[(iter+i)%len(leds.Colors)]
-				color2 := leds.Colors[(iter+i+1)%len(leds.Colors)]
-				color := leds.MkColorWeight(color1, color2, weight)
+				color1 := color.Colors[(iter+i)%len(color.Colors)]
+				color2 := color.Colors[(iter+i+1)%len(color.Colors)]
+				c := color.MkColorWeight(color1, color2, weight)
 
 				for j := 0; j < STRAND_LEN2; j++ {
-					strand2[i*STRAND_LEN2+j] = color
+					strand2[i*STRAND_LEN2+j] = c
 				}
 			}
 
-			for i, color := range strand1 {
+			for i, c := range strand1 {
 				// if i == 0 {
-				// 	PrintColor(color)
+				// 	PrintColor(c)
 				// }
-				ws2811.SetLed(0, i, color)
+				ws2811.SetLed(0, i, c)
 				if i%10 == 0 {
 					ws2811.Render()
 				}
@@ -503,17 +504,17 @@ func (f *Fish) Run() {
 				weight += 0.01
 			} else {
 				weight = 0
-				iter = (iter + 1) % len(leds.Colors)
+				iter = (iter + 1) % len(color.Colors)
 			}
 
 			// time.Sleep(1 * time.Second)
 
-		case leds.STANDARD:
+		case color.STANDARD:
 			for i := 0; i < STRAND_COUNT1; i++ {
-				color1 := leds.Colors[(iter+i)%len(leds.Colors)]
-				color2 := leds.Colors[(iter+i+1)%len(leds.Colors)]
-				color := leds.MkColorWeight(color1, color2, weight)
-				ampColor := leds.AmpColor(color, ampLevel)
+				color1 := color.Colors[(iter+i)%len(color.Colors)]
+				color2 := color.Colors[(iter+i+1)%len(color.Colors)]
+				c := color.MkColorWeight(color1, color2, weight)
+				ampColor := color.AmpColor(c, ampLevel)
 
 				for j := 0; j < STRAND_LEN1; j++ {
 					strand1[i*STRAND_LEN1+j] = ampColor
@@ -521,10 +522,10 @@ func (f *Fish) Run() {
 			}
 
 			for i := 0; i < STRAND_COUNT2; i++ {
-				color1 := leds.Colors[(iter+i)%len(leds.Colors)]
-				color2 := leds.Colors[(iter+i+1)%len(leds.Colors)]
-				color := leds.MkColorWeight(color1, color2, weight)
-				ampColor := leds.AmpColor(color, ampLevel)
+				color1 := color.Colors[(iter+i)%len(color.Colors)]
+				color2 := color.Colors[(iter+i+1)%len(color.Colors)]
+				c := color.MkColorWeight(color1, color2, weight)
+				ampColor := color.AmpColor(c, ampLevel)
 
 				for j := 0; j < STRAND_LEN2; j++ {
 					strand2[i*STRAND_LEN2+j] = ampColor
@@ -538,21 +539,21 @@ func (f *Fish) Run() {
 				weight += 0.01
 			} else {
 				weight = 0
-				iter = (iter + 1) % len(leds.Colors)
+				iter = (iter + 1) % len(color.Colors)
 			}
 
-		case leds.FLICKER:
+		case color.FLICKER:
 			for i := 0; i < LED_COUNT1; i++ {
-				ws2811.SetLed(0, i, leds.AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
+				ws2811.SetLed(0, i, color.AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
 			}
 
 			for i := 0; i < LED_COUNT2; i++ {
-				ws2811.SetLed(1, i, leds.AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
+				ws2811.SetLed(1, i, color.AmpColor(randColors[(i+flickerIter)%LED_COUNT1], ampLevel))
 			}
 
 			flickerIter++
-		case leds.AUDIO:
-			ampColor := leds.AmpColor(leds.TrueBlue, ampLevel)
+		case color.AUDIO:
+			ampColor := color.AmpColor(color.TrueBlue, ampLevel)
 			for i := 0; i < LED_COUNT1; i++ {
 				ws2811.SetLed(0, i, ampColor)
 			}

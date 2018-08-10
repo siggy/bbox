@@ -179,8 +179,9 @@ defaults.pcm.card 0
 go build cmd/beatboxer_noleds.go && \
   go build cmd/beatboxer_leds.go && \
   go build cmd/baux.go &&      \
-  go build cmd/fishweb.go &&   \
   go build cmd/clear.go &&     \
+  go build cmd/fishweb.go &&   \
+  go build cmd/human.go &&      \
   go build cmd/leds.go &&      \
 
   go build cmd/amplitude.go && \

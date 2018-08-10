@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/siggy/bbox/bbox"
+	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/beatboxer"
-	"github.com/siggy/bbox/beatboxer/color"
 	"github.com/siggy/bbox/beatboxer/render"
 )
 
 const (
 	POWER_SOURCES = 4
 	POWER_CYCLE   = 500 * time.Millisecond
-	KEEP_ALIVE    = 14 * time.Minute
+	KEEP_ALIVE    = 5 * time.Minute
 )
 
 type Intro struct {
@@ -110,10 +110,17 @@ func (c *Intro) run() {
 				}] = struct{}{}
 
 				for p := range powers {
-					rs.LEDs[p.row][p.col] = color.Colors[rand.Intn(len(color.Colors))]
+					// rs.LEDs[p.row][p.col] = color.Colors[rand.Intn(len(color.Colors))]
+					rs.LEDs[p.row][p.col] = color.Make(
+						uint32(rand.Intn(127)),
+						uint32(rand.Intn(64)),
+						uint32(rand.Intn(32)),
+						0,
+					)
 				}
 			}
 		case <-ticker.C:
+			c.play <- "kick-classic.wav"
 			c.play <- "kick-classic.wav"
 		case <-c.keyboard:
 			c.yield <- struct{}{}
@@ -163,6 +170,21 @@ func (c *Intro) run() {
 		}
 
 		rs = newRs
+
+		for row := 0; row < render.ROWS; row++ {
+			for col := 0; col < render.COLUMNS; col++ {
+				colPost := (col + 1) % render.COLUMNS
+
+				rs.Transitions[row][col].Color = color.MkColorWeight(
+					rs.LEDs[row][col],
+					rs.LEDs[row][colPost],
+					0.5,
+				)
+				rs.Transitions[row][col].Location = 0.5
+				rs.Transitions[row][col].Length = 1.0
+			}
+		}
+
 		c.render <- rs
 	}
 }
