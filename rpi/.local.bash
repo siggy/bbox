@@ -10,5 +10,5 @@ alias vold='sudo amixer set Speaker -- $[$(amixer get Speaker|grep -o [0-9]*%|se
 
 alias tj='tmux attach -t sigpi'
 
-tmux new-session -s sigpi -c /home/pi/code/go/src/github.com/siggy/bbox 'bash --init-file <(echo ". \"$HOME/.bashrc\"; sudo ./fish")'
+tmux new-session -s sigpi -c /home/pi/code/go/src/github.com/siggy/bbox 'bash --init-file <(echo ". \"$HOME/.bashrc\"; while true; do sudo ./beatboxer_leds &>> ~/beatboxer_leds.log; done")'
 # /home/pi/tmuxgo.sh

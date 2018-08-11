@@ -185,7 +185,6 @@ go build cmd/beatboxer_noleds.go && \
 
   go build cmd/amplitude.go && \
   go build cmd/aud.go &&       \
-  go build cmd/aux.go &&       \
   go build cmd/crane.go &&     \
   go build cmd/crawler.go &&   \
   go build cmd/fish.go &&      \
