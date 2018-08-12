@@ -87,13 +87,6 @@ func (h *Human) Run() {
 	webColor := uint32(0)
 	webMotion := uint32(0)
 
-	cp := color.Init([]uint32{
-		leds.Black,
-		leds.TrueRed,
-		leds.MkColor(255, 255, 0, 0),
-		leds.MkColor(0, 0, 0, 127),
-	})
-
 	next := time.Now()
 
 	for {
@@ -155,7 +148,7 @@ func (h *Human) Run() {
 				// Scale the heat value from 0-255 down to 0-240
 				// for best results with color palettes.
 				colorIndex := heat[i] * 255 / 240
-				strand1[i] = cp.Get(float64(colorIndex) / float64(255))
+				strand1[i] = color.HeatColor(colorIndex)
 			}
 
 			// heartColor := leds.MkColorWeight(heartColor1, heartColor2, weight)
