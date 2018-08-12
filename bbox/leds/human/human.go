@@ -148,7 +148,8 @@ func (h *Human) Run() {
 				// Scale the heat value from 0-255 down to 0-240
 				// for best results with color palettes.
 				colorIndex := heat[i] * 255 / 240
-				strand1[i] = color.HeatColor(colorIndex)
+				r, g, b := color.HeatColor(colorIndex)
+				strand1[i] = leds.MkColor(r, g, b, 0)
 			}
 
 			// heartColor := leds.MkColorWeight(heartColor1, heartColor2, weight)
