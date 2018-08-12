@@ -32,8 +32,9 @@ type Button struct {
 // shtudown operation:
 //   '`' -> closing<- {timers.Stop(), close(msgs), close(emit)} -> termbox.Close()
 type Keyboard struct {
+	id        uint32
 	presses   <-chan bbox.Coord
-	yield     chan<- struct{}
+	yield     func(uint32)
 	beats     Beats
 	timers    [SOUNDS][BEATS]*time.Timer
 	keepAlive *time.Timer    // ensure at least one beat is sent periodically to keep speaker alive
@@ -45,14 +46,16 @@ type Keyboard struct {
 }
 
 func InitKeyboard(
+	id uint32,
 	presses <-chan bbox.Coord,
-	yield chan<- struct{},
+	yield func(uint32),
 	msgs []chan<- Beats,
 	tempo chan<- int,
 	debug bool,
 ) *Keyboard {
 
 	kb := Keyboard{
+		id:      id,
 		presses: presses,
 		yield:   yield,
 		beats:   Beats{},
@@ -153,7 +156,7 @@ func (kb *Keyboard) emitter() {
 				kb.beats[button.beat][button.tick] = true
 
 				if kb.activeButtons() == YIELD_LIMIT {
-					kb.yield <- struct{}{}
+					kb.yield(kb.id)
 				}
 
 				// set a decay timer

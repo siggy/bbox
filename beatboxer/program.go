@@ -7,17 +7,19 @@ import (
 	"github.com/siggy/bbox/beatboxer/render"
 )
 
+// ProgramOutput defines the interface Beatboxer programs may send output information
+type ProgramOutput interface {
+	Play(uint32, string)
+	Render(uint32, render.State)
+	Yield(uint32)
+}
+
 // Program defines the interface all Beatboxer programs must satisfy
 type Program interface {
-	New(wavDurs map[string]time.Duration) Program
+	New(uint32, ProgramOutput, map[string]time.Duration) Program
 
 	// input
-	Amplitude() chan<- float64
-	Keyboard() chan<- bbox.Coord
-	Close() chan<- struct{}
-
-	// output
-	Play() <-chan string
-	Render() <-chan render.State
-	Yield() <-chan struct{}
+	Amplitude(float64)
+	Keyboard(bbox.Coord)
+	Close()
 }

@@ -35,6 +35,8 @@ type Interval struct {
 type Beats [SOUNDS][BEATS]bool
 
 type Loop struct {
+	id uint32
+
 	beats   Beats
 	closing chan struct{}
 	msgs    <-chan Beats
@@ -46,20 +48,23 @@ type Loop struct {
 	tempoDecay *time.Timer
 
 	ticks []chan<- int
-	play  chan<- string
+	play  func(uint32, string)
 
 	iv         Interval
 	intervalCh []chan<- Interval
 }
 
 func InitLoop(
-	play chan<- string,
+	id uint32,
+	play func(uint32, string),
 	msgs <-chan Beats,
 	tempo <-chan int,
 	ticks []chan<- int,
 	intervalCh []chan<- Interval,
 ) *Loop {
 	return &Loop{
+		id: id,
+
 		beats: Beats{},
 
 		bpmCh: make(chan int),
@@ -159,7 +164,7 @@ func (l *Loop) Run() {
 				for i, beat := range l.beats {
 					if beat[tick/l.iv.TicksPerBeat] {
 						// initiate playback
-						l.play <- WAVS[i]
+						l.play(l.id, WAVS[i])
 					}
 				}
 			}

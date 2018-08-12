@@ -12,7 +12,6 @@ import (
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer"
 	"github.com/siggy/bbox/beatboxer/keyboard"
-	"github.com/siggy/bbox/beatboxer/programs/ceottk"
 	"github.com/siggy/bbox/beatboxer/programs/drums"
 	"github.com/siggy/bbox/beatboxer/render"
 	"github.com/siggy/bbox/beatboxer/render/web"
@@ -48,7 +47,7 @@ func main() {
 	)
 
 	harness.Register(&drums.DrumMachine{})
-	harness.Register(&ceottk.Ceottk{})
+	// harness.Register(&ceottk.Ceottk{})
 
 	go harness.Run()
 

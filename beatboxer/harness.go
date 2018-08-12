@@ -3,6 +3,7 @@ package beatboxer
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer/keyboard"
@@ -24,6 +25,7 @@ type Harness struct {
 	wavs      *wavs.Wavs
 	amplitude *Amplitude
 	programs  []Program
+	active    uint32
 }
 
 func InitHarness(
@@ -53,14 +55,12 @@ func (h *Harness) Run() {
 	}()
 	defer h.kb.Close()
 
-	active := 0
-	cur := h.programs[active].New(h.wavs.Durations())
+	active := atomic.LoadUint32(&h.active)
+	cur := h.programs[active].New(active, h, h.wavs.Durations())
 
 	for {
 		err := h.runProgram(cur)
-		go func(cur Program) {
-			cur.Close() <- struct{}{}
-		}(cur)
+		go cur.Close()
 		if err != nil {
 			break
 		}
@@ -70,20 +70,17 @@ func (h *Harness) Run() {
 			renderer.Render(render.State{})
 		}
 
-		active = (active + 1) % len(h.programs)
-		cur = h.programs[active].New(h.wavs.Durations())
+		newID := atomic.AddUint32(&h.active, 1)
+		h.programs[newID%uint32(len(h.programs))].New(newID, h, h.wavs.Durations())
 	}
 }
 
 func (h *Harness) runProgram(p Program) error {
 	closing := make(chan struct{})
 	wg := sync.WaitGroup{}
-	wg.Add(5)
+	wg.Add(2)
 
 	go h.runAmp(p, &wg, closing)
-	go h.runRender(p, &wg, closing)
-	go h.runPlay(p, &wg, closing)
-	go h.runYield(p, &wg, closing)
 	err := h.runKB(p, &wg, closing)
 
 	wg.Wait()
@@ -97,7 +94,8 @@ func (h *Harness) runAmp(p Program, wg *sync.WaitGroup, closing chan struct{}) {
 
 	for {
 		select {
-		case p.Amplitude() <- <-h.amplitude.Level():
+		case amp, _ := <-h.amplitude.Level():
+			p.Amplitude(amp)
 		case <-closing:
 			return
 		}
@@ -123,7 +121,7 @@ func (h *Harness) runKB(p Program, wg *sync.WaitGroup, closing chan struct{}) er
 				switcherCount = 0
 			}
 
-			p.Keyboard() <- coord
+			p.Keyboard(coord)
 		case <-h.kb.Closing():
 			close(closing)
 			return errors.New("Exiting")
@@ -133,47 +131,37 @@ func (h *Harness) runKB(p Program, wg *sync.WaitGroup, closing chan struct{}) er
 	}
 }
 
-// output: render
-func (h *Harness) runRender(p Program, wg *sync.WaitGroup, closing chan struct{}) {
-	defer wg.Done()
+func (h *Harness) Play(id uint32, name string) {
+	if id != atomic.LoadUint32(&h.active) {
+		return
+	}
 
-	for {
-		select {
-		case rs, _ := <-p.Render():
-			for _, renderer := range h.renderers {
-				renderer.Render(rs)
-			}
-		case <-closing:
-			return
-		}
+	h.wavs.Play(name)
+}
+func (h *Harness) Render(id uint32, rs render.State) {
+	if id != atomic.LoadUint32(&h.active) {
+		return
+	}
+	for _, renderer := range h.renderers {
+		renderer.Render(rs)
 	}
 }
-
-// output: play
-func (h *Harness) runPlay(p Program, wg *sync.WaitGroup, closing chan struct{}) {
-	defer wg.Done()
-
-	for {
-		select {
-		case name, _ := <-p.Play():
-			h.wavs.Play(name)
-		case <-closing:
-			return
-		}
+func (h *Harness) Yield(id uint32) {
+	active := atomic.LoadUint32(&h.active)
+	if id != active {
+		return
 	}
-}
 
-// output: yield
-func (h *Harness) runYield(p Program, wg *sync.WaitGroup, closing chan struct{}) {
-	defer wg.Done()
+	cur := h.programs[active%uint32(len(h.programs))]
+	go func(cur Program) {
+		cur.Close()
+	}(cur)
 
-	for {
-		select {
-		case <-p.Yield():
-			close(closing)
-			return
-		case <-closing:
-			return
-		}
+	h.wavs.StopAll()
+	for _, renderer := range h.renderers {
+		renderer.Render(render.State{})
 	}
+
+	newID := atomic.AddUint32(&h.active, 1)
+	h.programs[newID%uint32(len(h.programs))].New(newID, h, h.wavs.Durations())
 }

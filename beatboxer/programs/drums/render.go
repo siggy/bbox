@@ -11,6 +11,7 @@ const (
 )
 
 type Render struct {
+	id      uint32
 	beats   Beats
 	closing chan struct{}
 	msgs    <-chan Beats
@@ -20,16 +21,19 @@ type Render struct {
 	iv         Interval
 	intervalCh <-chan Interval
 
-	render chan<- render.State
+	render func(uint32, render.State)
 }
 
 func InitRender(
+	id uint32,
 	msgs <-chan Beats,
 	ticks <-chan int,
 	intervalCh <-chan Interval,
-	render chan<- render.State,
+	render func(uint32, render.State),
 ) *Render {
 	return &Render{
+		id: id,
+
 		closing: make(chan struct{}),
 		msgs:    msgs,
 		ticks:   ticks,
@@ -73,7 +77,7 @@ func (r *Render) Draw() {
 		}
 	}
 
-	r.render <- state
+	r.render(r.id, state)
 }
 
 func (r *Render) Run() {

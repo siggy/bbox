@@ -5,10 +5,11 @@ import (
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/beatboxer"
-	"github.com/siggy/bbox/beatboxer/render"
 )
 
 type DrumMachine struct {
+	id uint32
+
 	kb   *Keyboard
 	loop *Loop
 	r    *Render
@@ -18,21 +19,17 @@ type DrumMachine struct {
 	keyboard chan bbox.Coord
 	close    chan struct{}
 
-	// output
-	play   chan string
-	render chan render.State
-	yield  chan struct{}
+	output beatboxer.ProgramOutput
 }
 
-func (dm *DrumMachine) New(wavDurs map[string]time.Duration) beatboxer.Program {
+func (dm *DrumMachine) New(
+	id uint32,
+	output beatboxer.ProgramOutput,
+	wavDurs map[string]time.Duration,
+) beatboxer.Program {
 	// input
 	close := make(chan struct{})
 	keyboard := make(chan bbox.Coord)
-
-	// output
-	play := make(chan string)
-	render := make(chan render.State)
-	yield := make(chan struct{})
 
 	// beat changes
 	//   keyboard => loop
@@ -58,9 +55,9 @@ func (dm *DrumMachine) New(wavDurs map[string]time.Duration) beatboxer.Program {
 		make(chan Interval),
 	}
 	// keyboard broadcasts quit with close(msgs)
-	kb := InitKeyboard(keyboard, yield, WriteonlyBeats(msgs), tempo, false)
-	loop := InitLoop(play, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
-	r := InitRender(msgs[1], ticks[0], intervals[0], render)
+	kb := InitKeyboard(id, keyboard, output.Yield, WriteonlyBeats(msgs), tempo, false)
+	loop := InitLoop(id, output.Play, msgs[0], tempo, WriteonlyInt(ticks), WriteonlyInterval(intervals))
+	r := InitRender(id, msgs[1], ticks[0], intervals[0], output.Render)
 
 	go loop.Run()
 	go r.Run()
@@ -75,6 +72,7 @@ func (dm *DrumMachine) New(wavDurs map[string]time.Duration) beatboxer.Program {
 	}()
 
 	return &DrumMachine{
+		id:   id,
 		kb:   kb,
 		loop: loop,
 		r:    r,
@@ -85,30 +83,17 @@ func (dm *DrumMachine) New(wavDurs map[string]time.Duration) beatboxer.Program {
 		close:    close,
 
 		// output
-		play:   play,
-		render: render,
-		yield:  yield,
+		output: output,
 	}
 }
 
 // input
-func (dm *DrumMachine) Amplitude() chan<- float64 {
-	return dm.amp
-}
-func (dm *DrumMachine) Keyboard() chan<- bbox.Coord {
-	return dm.keyboard
-}
-func (dm *DrumMachine) Close() chan<- struct{} {
-	return dm.close
-}
+func (dm *DrumMachine) Amplitude(amp float64) {
 
-// output
-func (dm *DrumMachine) Play() <-chan string {
-	return dm.play
 }
-func (dm *DrumMachine) Render() <-chan render.State {
-	return dm.render
+func (dm *DrumMachine) Keyboard(coord bbox.Coord) {
+	dm.keyboard <- coord
 }
-func (dm *DrumMachine) Yield() <-chan struct{} {
-	return dm.yield
+func (dm *DrumMachine) Close() {
+
 }
