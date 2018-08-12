@@ -10,17 +10,17 @@ import (
 	"github.com/siggy/bbox/bbox/leds"
 	"github.com/siggy/bbox/beatboxer/render/web"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
-	log "github.com/sirupsen/logrus"
+	//log "github.com/sirupsen/logrus"
 )
 
 const (
 	// 1x heart, 1x globe
 	STRAND_COUNT1 = 1
-	STRAND_LEN1   = 30
+	STRAND_LEN1   = 60
 
 	// 1 human
 	STRAND_COUNT2 = 1
-	STRAND_LEN2   = 30
+	STRAND_LEN2   = 60
 
 	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 1*60 // 60/m
 	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 1*60 // 60/m
@@ -158,10 +158,10 @@ func (h *Human) Run() {
 			// }
 
 			// TODO: swap
-			log.Infof("STRAND1:")
-			for i := 0; i < LED_COUNT1; i++ {
-				leds.PrintColor(strand1[i])
-			}
+			//log.Infof("STRAND1:")
+			//for i := 0; i < LED_COUNT1; i++ {
+			//	leds.PrintColor(strand1[i])
+			//}
 
 			ws2811.SetBitmap(1, strand1)
 		}
