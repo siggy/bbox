@@ -64,7 +64,7 @@ func (c *Baux) Run() {
 	lights := make([]uint32, BAUX_LIGHT_COUNT)
 	for i, _ := range lights {
 		r := uint32(rand.Int31n(BAUX_LED_COUNT1))
-		for contains(lights, r) {
+		for Contains(lights, r) {
 			r = uint32(rand.Int31n(BAUX_LED_COUNT1))
 		}
 		lights[i] = r
@@ -72,11 +72,11 @@ func (c *Baux) Run() {
 
 	lightIter := 0
 	nextLight := uint32(rand.Int31n(BAUX_LED_COUNT1))
-	for contains(lights, nextLight) {
+	for Contains(lights, nextLight) {
 		nextLight = uint32(rand.Int31n(BAUX_LED_COUNT1))
 	}
 
-	heartColor1 := trueRed
+	heartColor1 := TrueRed
 	heartColor2 := black
 
 	last := time.Now()
@@ -108,7 +108,7 @@ func (c *Baux) Run() {
 				lightIter = (lightIter + BAUX_LIGHT_COUNT - 1) % BAUX_LIGHT_COUNT
 
 				nextLight = uint32(rand.Int31n(BAUX_LED_COUNT1))
-				for contains(lights, nextLight) {
+				for Contains(lights, nextLight) {
 					nextLight = uint32(rand.Int31n(BAUX_LED_COUNT1))
 				}
 
@@ -131,7 +131,7 @@ func (c *Baux) Run() {
 			// streaks
 			sineMap := GetSineVals(BAUX_LED_COUNT1, weight*BAUX_LED_COUNT1, BAUX_STREAK_LENGTH)
 			for led, value := range sineMap {
-				if !contains(lights, uint32(led)) {
+				if !Contains(lights, uint32(led)) {
 					mag := float64(value) / 254.0
 					strand1[led] = MkColor(uint32(float64(200)*mag), 0, uint32(float64(100)*mag), 0)
 				}

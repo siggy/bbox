@@ -126,6 +126,7 @@ func (f *Fish) Run() {
 			if !more {
 				return
 			}
+		default:
 		}
 
 		ampLevel := uint32(255.0 * f.ampLevel * AMPLITUDE_FACTOR)

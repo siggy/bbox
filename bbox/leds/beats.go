@@ -200,7 +200,7 @@ func (l *LedBeats) Run() {
 							actives++
 							ws2811.SetLed(0, rows[i].buttons[j], purple)
 						} else {
-							ws2811.SetLed(0, rows[i].buttons[j], trueRed)
+							ws2811.SetLed(0, rows[i].buttons[j], TrueRed)
 						}
 					}
 				}
@@ -212,7 +212,7 @@ func (l *LedBeats) Run() {
 							actives++
 							ws2811.SetLed(1, rows[i+2].buttons[j], purple)
 						} else {
-							ws2811.SetLed(1, rows[i+2].buttons[j], trueRed)
+							ws2811.SetLed(1, rows[i+2].buttons[j], TrueRed)
 						}
 					}
 				}

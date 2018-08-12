@@ -70,7 +70,7 @@ func (c *Crane) Run() {
 	lights := make([]uint32, LIGHT_COUNT)
 	for i, _ := range lights {
 		r := uint32(rand.Int31n(CRANE_LED_COUNT1))
-		for contains(append(lights, RED_LIGHT_RANGE...), r) {
+		for Contains(append(lights, RED_LIGHT_RANGE...), r) {
 			r = uint32(rand.Int31n(CRANE_LED_COUNT1))
 		}
 		lights[i] = r
@@ -78,13 +78,13 @@ func (c *Crane) Run() {
 
 	lightIter := 0
 	nextLight := uint32(rand.Int31n(CRANE_LED_COUNT1))
-	for contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
+	for Contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
 		nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
 	}
 
 	streakLoc := 0.0
 
-	heartColor1 := trueRed
+	heartColor1 := TrueRed
 	heartColor2 := trueWhite
 
 	last := time.Now()
@@ -115,7 +115,7 @@ func (c *Crane) Run() {
 				lightIter = (lightIter + 1) % len(lights)
 
 				nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
-				for contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
+				for Contains(append(lights, RED_LIGHT_RANGE...), nextLight) {
 					nextLight = uint32(rand.Int31n(CRANE_LED_COUNT1))
 				}
 
@@ -138,7 +138,7 @@ func (c *Crane) Run() {
 			// streaks
 			sineMap := GetSineVals(CRANE_LED_COUNT1, streakLoc, STREAK_LENGTH)
 			for led, value := range sineMap {
-				if !contains(append(lights, RED_LIGHT_RANGE...), uint32(led)) {
+				if !Contains(append(lights, RED_LIGHT_RANGE...), uint32(led)) {
 					mag := float64(value) / 254.0
 					strand1[led] = MkColor(0, uint32(float64(123)*mag), uint32(float64(55)*mag), 0)
 				}

@@ -38,7 +38,7 @@ var (
 	TrueBlue   = trueBlue
 	red        = MkColor(210, 0, 50, 40)
 	lightGreen = MkColor(0, 181, 115, 43)
-	trueRed    = MkColor(255, 0, 0, 0)
+	TrueRed    = MkColor(255, 0, 0, 0)
 	trueWhite  = MkColor(0, 0, 0, 255)
 	purple     = MkColor(82, 0, 197, 52)
 	mint       = MkColor(0, 27, 0, 228)
@@ -50,7 +50,7 @@ var (
 		trueBlue,
 		red,
 		lightGreen,
-		trueRed,
+		TrueRed,
 		deepPurple,
 		trueWhite,
 		purple,
@@ -129,7 +129,7 @@ func SineScale(weight float64) float64 {
 	return math.Sin(PI_FACTOR * weight)
 }
 
-func contains(s []uint32, e uint32) bool {
+func Contains(s []uint32, e uint32) bool {
 	for _, a := range s {
 		if a == e {
 			return true
