@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"time"
+	//"time"
 
 	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/bbox/leds"
@@ -15,15 +15,15 @@ import (
 
 const (
 	// 1x heart, 1x globe
-	STRAND_COUNT1 = 1
+	STRAND_COUNT1 = 4
 	STRAND_LEN1   = 60
 
 	// 1 human
-	STRAND_COUNT2 = 1
+	STRAND_COUNT2 = 8
 	STRAND_LEN2   = 60
 
-	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 1*60 // 60/m
-	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 1*60 // 60/m
+	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 4*60 // 60/m
+	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 8*60 // 60/m
 
 	LIGHT_COUNT = 6 // 36 total deepPurple lights turned on at a time
 
@@ -32,12 +32,12 @@ const (
 	// COOLING: How much does the air cool as it rises?
 	// Less cooling = taller flames.  More cooling = shorter flames.
 	// Default 55, suggested range 20-100
-	COOLING = 55
+	COOLING = 100
 
 	// SPARKING: What chance (out of 255) is there that a new spark will be lit?
 	// Higher chance = more roaring fire.  Lower chance = more flickery fire.
 	// Default 120, suggested range 50-200.
-	SPARKING = 120
+	SPARKING = 50
 )
 
 var LIGHT_COLOR = leds.MkColor(0, 123, 55, 0)
@@ -84,10 +84,17 @@ func (h *Human) Run() {
 	g := uint32(0)
 	b := uint32(0)
 
-	webColor := uint32(0)
+	webColor := leds.TrueBlue
 	webMotion := uint32(0)
 
-	next := time.Now()
+	cp := color.Init([]uint32{
+		leds.Black,
+		leds.TrueRed,
+		leds.MkColor(255, 255, 0, 0),
+		leds.MkColor(0, 0, 0, 127),
+	})
+
+	//next := time.Now()
 
 	for {
 		select {
@@ -120,8 +127,8 @@ func (h *Human) Run() {
 		}
 		_ = uint32(255.0 * h.ampLevel)
 
-		if time.Now().After(next) {
-			next = time.Now().Add(50 * time.Millisecond)
+		if true { // time.Now().After(next) {
+			//next = time.Now().Add(50 * time.Millisecond)
 
 			// from https://learn.adafruit.com/led-campfire/the-code
 
@@ -148,8 +155,9 @@ func (h *Human) Run() {
 				// Scale the heat value from 0-255 down to 0-240
 				// for best results with color palettes.
 				colorIndex := heat[i] * 255 / 240
-				r, g, b := color.HeatColor(colorIndex)
-				strand1[i] = leds.MkColor(r, g, b, 0)
+				strand1[i] = cp.Get(float64(colorIndex) / float64(255))
+				//rHeat, gHeat, bHeat := color.HeatColor(heat[i])
+				//strand1[i] = leds.MkColor(rHeat, gHeat, bHeat, 0)
 			}
 
 			// heartColor := leds.MkColorWeight(heartColor1, heartColor2, weight)
@@ -163,7 +171,7 @@ func (h *Human) Run() {
 			//	leds.PrintColor(strand1[i])
 			//}
 
-			ws2811.SetBitmap(1, strand1)
+			ws2811.SetBitmap(0, strand1)
 		}
 
 		// human/robot
@@ -172,7 +180,7 @@ func (h *Human) Run() {
 			strand2[i] = webColor
 		}
 
-		ws2811.SetBitmap(0, strand2)
+		ws2811.SetBitmap(1, strand2)
 
 		err := ws2811.Render()
 		if err != nil {
