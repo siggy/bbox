@@ -117,7 +117,8 @@ func (w *Wavs) cb(output [][]float32) {
 	out := make([]float32, BUF)
 	for _, wv := range w.wavs {
 		for i := 0; i < BUF; i++ {
-			if wv.remaining > i {
+			loc := wv.length - wv.remaining + i
+			if loc >= 0 && loc < len(wv.buf) {
 				// TODO: do this correctly
 				// add dynamic range compressor
 				out[i] += wv.buf[wv.length-wv.remaining+i]
