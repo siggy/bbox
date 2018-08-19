@@ -160,22 +160,50 @@ func (c *Baux) Run() {
 			for i := 0; i < len(globeLeds)-1; i++ {
 				start := globeLeds[i]
 				end := globeLeds[i+1] - 1
-				peak1 := float64(start) + float64(end-start)*loc
+				length := end - start
 
-				p2 := loc + 0.5 - math.Trunc(loc+0.5)
-				peak2 := float64(start) + float64(end-start)*p2
+				peak1 := float64(length) * loc
 
-				sineMap1 := color.GetSineVals(end-start, peak1, (end-start)/2)
+				loc2 := loc + 0.5 - math.Trunc(loc+0.5)
+				peak2 := float64(length) * loc2
+
+				sineMap1 := color.GetSineVals(length, peak1, length/2)
 				for led, value := range sineMap1 {
 					mag := float64(value) / 254.0
 					strand2[start+led] = color.MultiplyColor(globeColor1, mag)
 				}
 
-				sineMap2 := color.GetSineVals(end-start, peak2, (end-start)/2)
+				sineMap2 := color.GetSineVals(length, peak2, length/2)
 				for led, value := range sineMap2 {
 					mag := float64(value) / 254.0
 					strand2[start+led] = color.MultiplyColor(globeColor2, mag)
 				}
+
+				// if i == 7 {
+				// 	fmt.Printf("\nGLOBE[%2d->%2d]: %3d->%3d peak1: %5.1f peak2: %5.1f\n", i, i+1, start, end, peak1, peak2)
+
+				// 	fmt.Printf("  GetSineVals1(%3d, %5.1f, %3d): ", length, peak1, length/2)
+				// 	keys := []int{}
+				// 	for k := range sineMap1 {
+				// 		keys = append(keys, k)
+				// 	}
+				// 	sort.Ints(keys)
+				// 	for _, k := range keys {
+				// 		fmt.Printf("%d:%3.2f, ", start+k, float64(sineMap1[k])/254.0)
+				// 	}
+				// 	// log.Infof("    %+v", sineMap1)
+
+				// 	fmt.Printf("\n  GetSineVals2(%3d, %5.1f, %3d): ", length, peak2, length/2)
+				// 	keys = []int{}
+				// 	for k := range sineMap2 {
+				// 		keys = append(keys, k)
+				// 	}
+				// 	sort.Ints(keys)
+				// 	for _, k := range keys {
+				// 		fmt.Printf("%d:%3.2f, ", start+k, float64(sineMap2[k])/254.0)
+				// 	}
+				// 	// log.Infof("    %+v", sineMap2)
+				// }
 			}
 
 			ws2811.SetBitmap(0, strand1)
