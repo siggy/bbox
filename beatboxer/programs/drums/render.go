@@ -65,7 +65,7 @@ func (r *Render) Draw() {
 		for j := 0; j < BEATS; j++ {
 			if r.beats[i][j] {
 				if j == newLed {
-					state.LEDs[i][j] = color.Make(127, 127, 0, 127)
+					state.LEDs[i][j] = color.ActiveBeatPurple
 				} else {
 					state.LEDs[i][j] = color.Make(127, 0, 0, 0)
 				}

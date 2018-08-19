@@ -117,9 +117,12 @@ func (w *Led) Render(state render.State) {
 			channel = 1
 		}
 
-		for j, color := range state.LEDs[i] {
-			if color != 0 {
-				ws2811.SetLed(channel, rows[i].buttons[j], color)
+		for j, c := range state.LEDs[i] {
+			if c != 0 {
+				ws2811.SetLed(channel, rows[i].buttons[j], c)
+				if c == color.ActiveBeatPurple {
+					actives++
+				}
 			}
 		}
 	}

@@ -47,6 +47,9 @@ var (
 	trueGreen  = Make(0, 255, 0, 0)
 	deepPurple = Make(200, 0, 100, 0)
 
+	// special color to tell beatboxer an active beat is occurring
+	ActiveBeatPurple = Make(127, 127, 0, 127)
+
 	Colors = []uint32{
 		pink,
 		trueBlue,
