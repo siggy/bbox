@@ -146,7 +146,7 @@ func (w *Wavs) Durations() map[string]time.Duration {
 	durations := map[string]time.Duration{}
 
 	for name, wav := range w.wavs {
-		durations[name] = time.Duration(wav.length*1000/44100) * time.Millisecond
+		durations[name] = time.Duration(float64(wav.length)/44.1) * time.Millisecond
 	}
 
 	return durations
