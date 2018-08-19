@@ -95,6 +95,8 @@ func (c *Intro) run() {
 			rs.LEDs[p.row][p.col] = color.Colors[rand.Intn(len(color.Colors))]
 		}
 	}
+	c.play <- "kick-classic.wav"
+	c.play <- "kick-classic.wav"
 
 	for {
 		select {

@@ -100,10 +100,15 @@ func (kb *Keyboard) allOff() bool {
 }
 
 func (kb *Keyboard) emitter() {
+	timeout := time.NewTimer(DECAY)
+	defer timeout.Stop()
+
 	last := Button{}
 
 	for {
 		select {
+		case <-timeout.C:
+			kb.yield <- struct{}{}
 		case coord, _ := <-kb.presses:
 			go func() {
 				kb.Flip(coord[0], coord[1])
@@ -131,6 +136,12 @@ func (kb *Keyboard) emitter() {
 				// we should never get here
 				panic(1)
 			}
+
+			// button press, reset timeout timer
+			if !timeout.Stop() {
+				<-timeout.C
+			}
+			timeout.Reset(DECAY)
 
 			// TODO: consider re-using timers
 			if kb.timers[button.beat][button.tick] != nil {

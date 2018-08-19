@@ -15,7 +15,7 @@ import (
 const (
 	SEQUENCE_LENGTH      = 123
 	IMPATIENCE_THRESHOLD = 20
-	TIMEOUT_THRESHOLD    = 180 * time.Second
+	TIMEOUT_THRESHOLD    = 3 * time.Minute
 )
 
 var (
@@ -231,11 +231,23 @@ func (c *Ceottk) setPlaying(playing bool) {
 }
 
 func (c *Ceottk) runKB() {
+	timeout := time.NewTimer(TIMEOUT_THRESHOLD)
+	defer timeout.Stop()
+
 	impatience := 0
 
 	for {
 		select {
+		case <-timeout.C:
+			c.yield <- struct{}{}
+
 		case coord, _ := <-c.keyboard:
+			// button press, reset timeout timer
+			if !timeout.Stop() {
+				<-timeout.C
+			}
+			timeout.Reset(TIMEOUT_THRESHOLD)
+
 			row := coord[0]
 			col := coord[1]
 
@@ -300,9 +312,6 @@ func (c *Ceottk) runKB() {
 					c.setPlaying(false)
 				})
 			}()
-
-		case <-time.After(TIMEOUT_THRESHOLD):
-			c.yield <- struct{}{}
 
 		case <-c.close:
 			return
