@@ -185,7 +185,7 @@ func (f *Fish) Run() {
 
 			speed := math.Max(LED_COUNT1/36, 1) // 5*144 / 36 = 20
 			speed = math.Max(float64(f.ampLevel*100), speed)
-			log.Infof("AMP: %+v SPEED: %+v", f.ampLevel, speed)
+			log.Debugf("AMP: %+v SPEED: %+v", f.ampLevel, speed)
 
 			streakLoc1 += speed
 			if streakLoc1 >= LED_COUNT1 {
