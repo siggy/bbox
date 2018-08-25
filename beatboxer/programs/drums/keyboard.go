@@ -18,7 +18,7 @@ const (
 	KEEP_ALIVE = 14 * time.Minute
 
 	// if 50% of beats are active, yield to the next program
-	YIELD_LIMIT = SOUNDS * BEATS / 2
+	YIELD_LIMIT = SOUNDS * BEATS / 3
 )
 
 type Button struct {
