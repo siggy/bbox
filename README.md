@@ -217,6 +217,12 @@ sudo systemctl stop bbox
 sudo kill -2 <PID>
 ```
 
+## Check for voltage drop
+
+```bash
+vcgencmd get_throttled
+```
+
 ## Editing SD card
 
 Launch Ubuntu in VirtualBox

@@ -52,7 +52,7 @@ type Baux struct {
 }
 
 func InitBaux(level <-chan float64, w *web.Web) *Baux {
-	InitLeds(DEFAULT_FREQ, BAUX_LED_COUNT1, BAUX_LED_COUNT2)
+	InitLeds(DEFAULT_FREQ, BAUX_LED_COUNT2, BAUX_LED_COUNT1)
 
 	return &Baux{
 		closing: make(chan struct{}),
@@ -169,13 +169,13 @@ func (c *Baux) Run() {
 
 				sineMap1 := color.GetSineVals(length, peak1, length/2)
 				for led, value := range sineMap1 {
-					mag := (float64(value) / 254.0) * 0.75 // / 2
+					mag := (float64(value) / 254.0) // / 2
 					strand2[start+led] = color.MultiplyColor(globeColor1, mag)
 				}
 
 				sineMap2 := color.GetSineVals(length, peak2, length/2)
 				for led, value := range sineMap2 {
-					mag := (float64(value) / 254.0) * 0.75 // / 2
+					mag := (float64(value) / 254.0) // / 2
 					strand2[start+led] = color.MultiplyColor(globeColor2, mag)
 				}
 
@@ -206,8 +206,8 @@ func (c *Baux) Run() {
 				// }
 			}
 
-			ws2811.SetBitmap(0, strand1)
-			ws2811.SetBitmap(1, strand2)
+			ws2811.SetBitmap(1, strand1)
+			ws2811.SetBitmap(0, strand2)
 
 			err := ws2811.Render()
 			if err != nil {
