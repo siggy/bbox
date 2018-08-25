@@ -90,11 +90,11 @@ func (c *Baux) Run() {
 		select {
 		case phone, more := <-c.w.Phone():
 			if more {
-				webMotion = color.ScaleMotion(
-					phone.Motion.Acceleration.X,
-					phone.Motion.Acceleration.Y,
-					phone.Motion.Acceleration.Z,
-				)
+				//webMotion = color.ScaleMotion(
+				//	phone.Motion.Acceleration.X,
+				//	phone.Motion.Acceleration.Y,
+				//	phone.Motion.Acceleration.Z,
+				//)
 				phoneR = phone.R
 				phoneG = phone.G
 				phoneB = phone.B
@@ -159,7 +159,7 @@ func (c *Baux) Run() {
 			}
 			for i := 0; i < len(globeLeds)-1; i++ {
 				start := globeLeds[i]
-				end := globeLeds[i+1] - 1
+				end := globeLeds[i+1]
 				length := end - start
 
 				peak1 := float64(length) * loc
@@ -169,13 +169,13 @@ func (c *Baux) Run() {
 
 				sineMap1 := color.GetSineVals(length, peak1, length/2)
 				for led, value := range sineMap1 {
-					mag := float64(value) / 254.0
+					mag := (float64(value) / 254.0) * 0.75 // / 2
 					strand2[start+led] = color.MultiplyColor(globeColor1, mag)
 				}
 
 				sineMap2 := color.GetSineVals(length, peak2, length/2)
 				for led, value := range sineMap2 {
-					mag := float64(value) / 254.0
+					mag := (float64(value) / 254.0) * 0.75 // / 2
 					strand2[start+led] = color.MultiplyColor(globeColor2, mag)
 				}
 
