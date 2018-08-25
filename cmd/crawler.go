@@ -6,6 +6,7 @@ import (
 
 	"github.com/siggy/bbox/bbox"
 	"github.com/siggy/bbox/bbox/leds"
+	"github.com/siggy/bbox/beatboxer/render/web"
 )
 
 func main() {
@@ -15,9 +16,11 @@ func main() {
 	level := make(chan float64)
 	press := make(chan struct{})
 
+	w := web.InitWeb()
+
 	amplitude := bbox.InitAmplitude(level)
 	gpio := bbox.InitGpio(press)
-	crawler := leds.InitCrawler(level, press)
+	crawler := leds.InitCrawler(level, press, w)
 
 	go amplitude.Run()
 	go gpio.Run()

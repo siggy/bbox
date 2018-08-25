@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/siggy/bbox/bbox/color"
+	"github.com/siggy/bbox/beatboxer/render/web"
 	"github.com/siggy/rpi_ws281x/golang/ws2811"
 )
 
@@ -26,15 +27,17 @@ type Crawler struct {
 	closing  chan struct{}
 	level    <-chan float64
 	press    <-chan struct{}
+	w        *web.Web
 }
 
-func InitCrawler(level <-chan float64, press <-chan struct{}) *Crawler {
+func InitCrawler(level <-chan float64, press <-chan struct{}, w *web.Web) *Crawler {
 	InitLeds(DEFAULT_FREQ, CRAWLER_LED_COUNT1, 0)
 
 	return &Crawler{
 		closing: make(chan struct{}),
 		level:   level,
 		press:   press,
+		w:       w,
 	}
 }
 
@@ -56,10 +59,6 @@ func (c *Crawler) Run() {
 	streakLoc1 := 0.0
 	length := 200
 	speed := 0.1
-	r := 200
-	g := 0
-	b := 100
-	w := 0
 
 	// STANDARD mode
 	iter := 0
@@ -74,8 +73,27 @@ func (c *Crawler) Run() {
 		randColors[i] = color.Make(0, uint32(rand.Int31n(256)), uint32(rand.Int31n(256)), uint32(rand.Int31n(256)))
 	}
 
+	phoneR := uint32(200)
+	phoneG := uint32(0)
+	phoneB := uint32(100)
+
+	webMotion := uint32(0)
+
 	for {
 		select {
+		case phone, more := <-c.w.Phone():
+			if more {
+				webMotion = color.ScaleMotion(
+					phone.Motion.Acceleration.X,
+					phone.Motion.Acceleration.Y,
+					phone.Motion.Acceleration.Z,
+				)
+				phoneR = phone.R
+				phoneG = phone.G
+				phoneB = phone.B
+			} else {
+				return
+			}
 		case _, more := <-c.press:
 			if more {
 				mode = (mode + 1) % color.NUM_MODES
@@ -101,13 +119,14 @@ func (c *Crawler) Run() {
 				for i, _ := range strand1 {
 					strand1[i] = color.Black
 				}
+
 				for led, value := range sineMap {
 					multiplier := float64(value) / 255.0
 					strand1[led] = color.Make(
-						uint32(multiplier*float64(r)),
-						uint32(multiplier*float64(g)),
-						uint32(multiplier*float64(b)),
-						uint32(multiplier*float64(w)),
+						uint32(multiplier*float64(phoneR)),
+						uint32(multiplier*float64(phoneG)),
+						uint32(multiplier*float64(phoneB)),
+						uint32(multiplier*float64(webMotion)),
 					)
 				}
 

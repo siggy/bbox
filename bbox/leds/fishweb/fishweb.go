@@ -17,16 +17,16 @@ import (
 const (
 	// 2x side fins
 	STRAND_COUNT1 = 5
-	STRAND_LEN1   = 144
+	STRAND_LEN1   = 30
 
 	// 1x top and back fins
-	STRAND_COUNT2 = 10
-	STRAND_LEN2   = 60
+	STRAND_COUNT2 = 5
+	STRAND_LEN2   = 30
 
 	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 5*144 // * 2x(5) // 144/m
 	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 10*60 // * 1x(4 + 2 + 4) // 60/m
 
-	DEFAULT_INTERVAL_MS = 2000
+	DEFAULT_INTERVAL_MS = 8000
 
 	AMPLITUDE_FACTOR = 0.75
 
@@ -70,7 +70,7 @@ func (f *Fish) Run() {
 	// PURPLE_STREAK mode
 	streakLoc1 := 0.0
 	streakLoc2 := 0.0
-	length := LED_COUNT1 / 3.6 // 5*144 / 3.6 == 200
+	length := LED_COUNT1 / 1.8 // 5*144 / 3.6 == 200
 
 	// STANDARD mode
 	iter := 0
@@ -183,8 +183,8 @@ func (f *Fish) Run() {
 				)
 			}
 
-			speed := math.Max(LED_COUNT1/36, 1) // 5*144 / 36 = 20
-			speed = math.Max(float64(f.ampLevel*100), speed)
+			speed := 1.0//math.Max(LED_COUNT1/576, 1) // 5*144 / 36 = 20
+			//speed = math.Max(float64(f.ampLevel*10), speed)
 			log.Debugf("AMP: %+v SPEED: %+v", f.ampLevel, speed)
 
 			streakLoc1 += speed
