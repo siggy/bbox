@@ -336,6 +336,20 @@ rsync -vr ~/code/go/src/github.com/siggy/bbox/.git /Volumes/pi/home/pi/code/go/s
 alias pifsrm='umount /Volumes/pi; sudo rmdir /Volumes/pi; sudo mkdir /Volumes/pi; sudo chown sig:staff /Volumes/pi'
 ```
 
+### Set restart crontab
+
+```bash
+sudo crontab -e
+```
+
+```
+*/10 * *   *   *     sudo /sbin/shutdown -r now
+```
+
+```
+sudo crontab -l
+```
+
 ## Docs
 
 ```bash

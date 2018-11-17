@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+
 	//"time"
 
 	"github.com/siggy/bbox/bbox/color"
@@ -14,13 +15,13 @@ import (
 )
 
 const (
-	// 1x heart, 1x globe
-	STRAND_COUNT1 = 4
+	// 1x heart, 1x human
+	STRAND_COUNT1 = 8
 	STRAND_LEN1   = 60
 
-	// 1 human
-	STRAND_COUNT2 = 8
-	STRAND_LEN2   = 60
+	// 1 human base
+	STRAND_COUNT2 = 5
+	STRAND_LEN2   = 30
 
 	LED_COUNT1 = STRAND_COUNT1 * STRAND_LEN1 // 4*60 // 60/m
 	LED_COUNT2 = STRAND_COUNT2 * STRAND_LEN2 // 8*60 // 60/m
@@ -37,7 +38,7 @@ const (
 	// SPARKING: What chance (out of 255) is there that a new spark will be lit?
 	// Higher chance = more roaring fire.  Lower chance = more flickery fire.
 	// Default 120, suggested range 50-200.
-	SPARKING = 50
+	SPARKING = 120
 )
 
 type Human struct {

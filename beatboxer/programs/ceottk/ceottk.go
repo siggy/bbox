@@ -14,7 +14,7 @@ import (
 
 const (
 	SEQUENCE_LENGTH      = 123
-	IMPATIENCE_THRESHOLD = 20
+	IMPATIENCE_THRESHOLD = 100
 	TIMEOUT_THRESHOLD    = 3 * time.Minute
 )
 
