@@ -28,7 +28,7 @@ const (
 
 	LIGHT_COUNT = 6 // 36 total deepPurple lights turned on at a time
 
-	STREAK_LENGTH = LED_COUNT2 / 3 // 8*60/3 == 160
+	STREAK_LENGTH = 10 // LED_COUNT2 / 2 // 8*60/3 == 160
 
 	// COOLING: How much does the air cool as it rises?
 	// Less cooling = taller flames.  More cooling = shorter flames.
@@ -90,6 +90,21 @@ func (h *Human) Run() {
 
 	//next := time.Now()
 
+	//for i := 0; i < LED_COUNT2/8; i ++ {
+	//        strand2[i] = color.Make(
+	//                uint32(float64(phoneR/4)),
+	//                uint32(float64(phoneG/4)),
+	//                uint32(float64(phoneB/4)),
+	//                0, //uint32(float64(webMotion/4)),
+	//        )
+	//}
+	//ws2811.SetBitmap(1, strand2)
+	//err := ws2811.Render()
+	//if err != nil {
+	//    fmt.Printf("ws2811.Render failed: %+v\n", err)
+	//    panic(err)
+	//}
+
 	for {
 		select {
 		case phone, more := <-h.w.Phone():
@@ -150,11 +165,13 @@ func (h *Human) Run() {
 			}
 
 			// Step 4.  Map from heat cells to LED colors
-			for i := 0; i < LED_COUNT1; i++ {
+			for i := 0; i < LED_COUNT1/2; i++ {
 				// Scale the heat value from 0-255 down to 0-240
 				// for best results with color palettes.
 				colorIndex := heat[i] * 255 / 240
-				strand1[i] = cp.Get(float64(colorIndex) / float64(255))
+				c := cp.Get(float64(colorIndex) / float64(255))
+				strand1[i] = c
+				strand1[i+LED_COUNT1/2] = c
 				//rHeat, gHeat, bHeat := color.HeatColor(heat[i])
 				//strand1[i] = color.Make(rHeat, gHeat, bHeat, 0)
 			}
@@ -174,15 +191,23 @@ func (h *Human) Run() {
 		}
 
 		// human/robot
-		amped2 := int(h.ampLevel * LED_COUNT2)
+		//amped2 := int(h.ampLevel * LED_COUNT2)
 		// fmt.Printf("AMPED: %+v\n", amped2)
-		for i := 0; i < amped2; i++ {
-			strand2[i] = color.Red
-		}
-		for i := amped2; i < LED_COUNT2; i++ {
-			strand2[i] = color.Black
-		}
+		//for i := 0; i < amped2; i++ {
+		//	strand2[i] = color.Red
+		//}
+		//for i := amped2; i < LED_COUNT2; i++ {
+		//	strand2[i] = color.Black
+		//}
 
+		for i := 0; i < LED_COUNT2; i++ {
+			strand2[i] = color.Make(
+				2,
+				0,
+				1,
+				0, //uint32(float64(webMotion/4)),
+			)
+		}
 		sineMap := color.GetSineVals(LED_COUNT2, streakLoc2, STREAK_LENGTH)
 		for led, value := range sineMap {
 			multiplier := float64(value) / 255.0
@@ -190,12 +215,13 @@ func (h *Human) Run() {
 				uint32(multiplier*float64(phoneR/2)),
 				uint32(multiplier*float64(phoneG/2)),
 				uint32(multiplier*float64(phoneB/2)),
-				uint32(multiplier*float64(webMotion/4)),
+				0, //uint32(multiplier*float64(webMotion/4)),
 			)
 		}
 
-		speed := math.Max(LED_COUNT2/36, 1)
-		speed = math.Max(float64(webMotion/2), speed)
+		speed := float64(0.1)
+		//speed := math.Max(LED_COUNT2/14400, 1)
+		//speed = math.Max(float64(webMotion/2), speed)
 
 		streakLoc2 += speed
 		if streakLoc2 >= LED_COUNT2 {
@@ -210,7 +236,7 @@ func (h *Human) Run() {
 			panic(err)
 		}
 
-		err = ws2811.Wait()
+		//err = ws2811.Wait()
 		if err != nil {
 			fmt.Printf("ws2811.Wait failed: %+v\n", err)
 			panic(err)
