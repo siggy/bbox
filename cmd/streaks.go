@@ -1,13 +1,9 @@
-// usage:
-//   ./streaks length speed r g b w
-
 package main
 
 import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 
 	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/bbox/leds"
@@ -17,21 +13,18 @@ import (
 const (
 	LED_COUNT1 = 150
 	LED_COUNT2 = 300
+
+	LENGTH = 10
+	SPEED  = 10.0
 )
 
-func parseArg(arg string) uint32 {
-	tmp, _ := strconv.ParseUint(arg, 10, 32)
-	return uint32(tmp)
-}
-
 func main() {
-	args := os.Args[1:]
-	length := parseArg(args[0])
-	speed, _ := strconv.ParseFloat(args[1], 10)
-	r := parseArg(args[2])
-	g := parseArg(args[3])
-	b := parseArg(args[4])
-	w := parseArg(args[5])
+	length := LENGTH
+	speed = SPEED
+	r := 200
+	g := 0
+	b := 100
+	w := 0
 
 	fmt.Printf("length: %+v\n", length)
 	fmt.Printf("speed: %+v\n", speed)
