@@ -20,7 +20,7 @@ const (
 
 func main() {
 	length := LENGTH
-	speed = SPEED
+	speed := SPEED
 	r := 200
 	g := 0
 	b := 100
