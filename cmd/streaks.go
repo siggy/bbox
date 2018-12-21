@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	LED_COUNT = 150
+	LED_COUNT1 = 150
+	LED_COUNT2 = 300
 )
 
 func parseArg(arg string) uint32 {
@@ -42,8 +43,8 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
-	leds.InitLeds(LED_COUNT, LED_COUNT)
-	strand := make([]uint32, LED_COUNT)
+	leds.InitLeds(leds.DEFAULT_FREQ, LED_COUNT1, LED_COUNT2)
+	strand := make([]uint32, LED_COUNT1)
 
 	defer func() {
 		ws2811.Clear()
@@ -62,7 +63,7 @@ func main() {
 			return
 		default:
 			// streaks
-			sineMap := color.GetSineVals(LED_COUNT, streakLoc, int(length))
+			sineMap := color.GetSineVals(LED_COUNT1, streakLoc, int(length))
 			for i, _ := range strand {
 				strand[i] = black
 			}
@@ -77,7 +78,7 @@ func main() {
 			}
 
 			streakLoc += speed
-			if streakLoc >= LED_COUNT {
+			if streakLoc >= LED_COUNT1 {
 				streakLoc = 0
 			}
 
