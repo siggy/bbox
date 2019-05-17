@@ -8,7 +8,7 @@ permalink: /
 
 This is the story of building Beatboxer:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/2gNIAz0s2dg" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/dJoFQYvSYmA" frameborder="0" allowfullscreen></iframe>
 
 ## Prior Art
 
@@ -115,7 +115,9 @@ With all the pieces in place, my good friends Rob and [@cecbayan](https://www.in
 
 Upon arrival setup went surprisingly smooth. The awesome folks at [The Artery](https://burningman.org/event/art-performance/artist-resources/) guided us to our placement location. The rest of the week was spent swapping and charging batteries and speakers, which proved a bit more challenging due to Beatboxer getting a lot more use than anticipated (an exciting problem to have). In the end it was fully functional roughly 90% of the week, with outages only due to batteries. The structure, buttons, and electronics held up to the elements.
 
-<a href="assets/images/beatboxer_playa.jpg" data-lightbox="beatboxer_playa" data-title="Beatboxer On Playa"><img src="assets/images/beatboxer_playa.jpg" alt="Beatboxer On Playa" class="thumbnail"></a>
+2017 and 2018, respectively:
+
+<a href="assets/images/beatboxer_playa.jpg" data-lightbox="beatboxer_playa" data-title="Beatboxer On Playa"><img src="assets/images/beatboxer_playa.jpg" alt="Beatboxer On Playa" class="thumbnail"></a><a href="assets/images/beatboxer_playa_2018.jpg" data-lightbox="beatboxer_playa" data-title="Beatboxer On Playa 2018"><img src="assets/images/beatboxer_playa_2018.jpg" alt="Beatboxer On Playa 2018" class="thumbnail"></a>
 
 ## Lessons learned
 
@@ -165,7 +167,7 @@ The Fish is Brian's mutant vehicle, built on top of an airport luggage carrier. 
 
 Thanks for reading. If you have any questions or comments, you can <a href="https://github.com/siggy/bbox/issues">file an issue against this repo in Github</a>, or just hit me up on Twitter at <a href="https://twitter.com/siggy">@siggy</a>.
 
-Published 2017.10.02.
+Published 2017.10.02. Updated 2019.05.17 with 2018 content.
 
 ## Beatboxer in real life
 
