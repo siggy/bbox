@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/eiannone/keyboard"
 	"github.com/siggy/bbox/bbox2/keys"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
@@ -48,13 +49,18 @@ func main() {
 
 	for {
 		select {
-		case key := <-keys.Get():
-			fmt.Printf("key: %q\n", key)
-			// if key == keyboard.KeyEsc {
-			// 	break
-			// }
+		case press := <-keys.Get():
+			fmt.Printf("press: %+v\n", press)
+			if press.Key == keyboard.KeyCtrlC {
+				log.Info("Detected Ctrl+C, exiting...")
+				break
+			}
+			if press.Key == keyboard.KeyEsc {
+				log.Info("Detected escape, exiting...")
+				break
+			}
 		case <-ctx.Done():
-			return
+			break
 		}
 	}
 }

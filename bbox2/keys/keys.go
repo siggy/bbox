@@ -5,7 +5,12 @@ import (
 )
 
 type Keys struct {
-	presses chan rune
+	presses chan Press
+}
+
+type Press struct {
+	Rune rune
+	Key  keyboard.Key
 }
 
 func Init() (*Keys, error) {
@@ -13,20 +18,20 @@ func Init() (*Keys, error) {
 		return nil, err
 	}
 
-	return &Keys{presses: make(chan rune, 100)}, nil
+	return &Keys{presses: make(chan Press, 100)}, nil
 }
 
 func (k *Keys) Run() error {
 	for {
-		char, _, err := keyboard.GetKey()
+		char, key, err := keyboard.GetKey()
 		if err != nil {
 			return err
 		}
-		k.presses <- char
+		k.presses <- Press{char, key}
 	}
 }
 
-func (k *Keys) Get() <-chan rune {
+func (k *Keys) Get() <-chan Press {
 	return k.presses
 }
 
