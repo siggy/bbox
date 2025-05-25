@@ -4,6 +4,7 @@ go 1.24.3
 
 require (
 	github.com/ebitengine/oto/v3 v3.3.3
+	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
 	github.com/gorilla/websocket v1.5.3
 	github.com/nsf/termbox-go v1.1.1

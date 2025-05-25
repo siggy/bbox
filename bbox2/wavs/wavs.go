@@ -1,4 +1,4 @@
-package bbox2
+package wavs
 
 import (
 	"bytes"
@@ -12,13 +12,13 @@ import (
 	"github.com/youpy/go-wav"
 )
 
-type Wav struct {
+type Wavs struct {
 	ctx     *oto.Context
 	buffers map[string][]byte
 	players []*oto.Player
 }
 
-func Init() (*Wav, error) {
+func Init() (*Wavs, error) {
 	ctx, ready, err := oto.NewContext(&oto.NewContextOptions{
 		SampleRate:   44100,
 		ChannelCount: 1,
@@ -48,13 +48,13 @@ func Init() (*Wav, error) {
 		buffers[filename] = buf
 	}
 
-	return &Wav{
+	return &Wavs{
 		ctx:     ctx,
 		buffers: buffers,
 	}, nil
 }
 
-func (w *Wav) Play(filename string) {
+func (w *Wavs) Play(filename string) {
 	buf, ok := w.buffers[filename]
 	if !ok {
 		return
@@ -67,13 +67,13 @@ func (w *Wav) Play(filename string) {
 	w.players = append(w.players, player)
 }
 
-func (w *Wav) StopAll() {
+func (w *Wavs) StopAll() {
 	for _, player := range w.players {
 		player.Close()
 	}
 }
 
-func (w *Wav) Close() {
+func (w *Wavs) Close() {
 	w.StopAll()
 	w.ctx.Suspend()
 }
