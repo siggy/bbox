@@ -51,6 +51,35 @@ mkdir -p ~/code/
 git clone https://github.com/siggy/bbox.git ~/code/bbox
 ```
 
+### USB Audio
+
+Plug in USB audio device and run:
+```bash
+# note the card number of the USB audio device
+aplay -l
+
+sudo tee /etc/asound.conf > /dev/null <<'EOF'
+defaults.pcm.card 0
+defaults.ctl.card 0
+EOF
+
+aplay /usr/share/sounds/alsa/Front_Center.wav
+```
+
+### Audio support for Go
+
+```bash
+sudo apt-get install -y libasound2-dev
+```
+
+
+
+
+
+
+# OLD
+
+
 ### portaudio
 
 ```bash
