@@ -2,39 +2,52 @@ package keys
 
 import (
 	"github.com/eiannone/keyboard"
+	log "github.com/sirupsen/logrus"
 )
 
-type Keys struct {
-	presses chan Press
-}
+const keyBuffer = 100
 
-type Press struct {
-	Rune rune
-	Key  keyboard.Key
+type Keys struct {
+	keyEvents <-chan keyboard.KeyEvent
 }
 
 func Init() (*Keys, error) {
-	if err := keyboard.Open(); err != nil {
+	keyEvents, err := keyboard.GetKeys(keyBuffer)
+	if err != nil {
 		return nil, err
 	}
 
-	return &Keys{presses: make(chan Press, 100)}, nil
+	return &Keys{keyEvents: keyEvents}, nil
 }
 
-func (k *Keys) Run() error {
-	for {
-		char, key, err := keyboard.GetKey()
-		if err != nil {
-			return err
+func (k *Keys) Run() <-chan rune {
+	ch := make(chan rune, keyBuffer)
+
+	go func() {
+		defer func() {
+			keyboard.Close()
+			close(ch)
+		}()
+
+		for {
+			event := <-k.keyEvents
+			if event.Err != nil {
+				return
+			}
+			log.Debugf("You pressed: rune %q, key %X", event.Rune, event.Key)
+
+			switch event.Key {
+			case keyboard.KeyEsc:
+				log.Debug("Detected Escape, exiting...")
+				return
+			case keyboard.KeyCtrlC:
+				log.Debug("Detected Ctrl+C, exiting...")
+				return
+			}
+
+			ch <- event.Rune
 		}
-		k.presses <- Press{char, key}
-	}
-}
+	}()
 
-func (k *Keys) Get() <-chan Press {
-	return k.presses
-}
-
-func (k *Keys) Close() error {
-	return keyboard.Close()
+	return ch
 }
