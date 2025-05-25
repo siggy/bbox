@@ -1,0 +1,18 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Deploy to CIRCUITPY",
+      "type": "shell",
+      "command": "[ -d /Volumes/CIRCUITPY ] && rsync -av --include='code.py' --include='lib/' --include='lib/***' --exclude='*' ./scorpio/ /Volumes/CIRCUITPY/ || echo 'CIRCUITPY drive not found. Skipping deploy.'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

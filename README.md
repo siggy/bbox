@@ -78,18 +78,6 @@ aplay /usr/share/sounds/alsa/Front_Center.wav
 sudo apt-get install -y libasound2-dev
 ```
 
-## Scorpio setup
-
-### Install CircuitPython
-
-Based on:
-https://learn.adafruit.com/introducing-feather-rp2040-scorpio/install-circuitpython
-
-https://circuitpython.org/board/adafruit_feather_rp2040_scorpio/
-
-```bash
-
-```
 
 
 

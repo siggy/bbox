@@ -17,3 +17,9 @@ _site/
 /beatboxer_noleds.log
 /beatboxer_leds
 /beatboxer_noleds
+
+# for scorpio
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
