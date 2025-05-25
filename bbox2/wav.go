@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/ebitengine/oto/v3"
-	"github.com/go-audio/audio"
-	"github.com/go-audio/wav"
+	"github.com/youpy/go-wav"
 )
 
 type Wav struct {
@@ -25,7 +25,7 @@ func Init() (*Wav, error) {
 		Format:       oto.FormatSignedInt16LE,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create Oto context: %v", err)
+		return nil, fmt.Errorf("failed to create Oto context: %v", err)
 	}
 	<-ready
 
@@ -85,43 +85,54 @@ func getPlayer(ctx *oto.Context, pcm []byte) *oto.Player {
 }
 
 func fileToAudioBytes(filename string) ([]byte, error) {
-	fileBytes, err := os.ReadFile(filename)
+	file, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open failed: %w", err)
 	}
+	defer file.Close()
 
-	decoder := wav.NewDecoder(bytes.NewReader(fileBytes))
-	if !decoder.IsValidFile() {
-		return nil, fmt.Errorf("invalid WAV file: %s", filename)
-	}
-
-	buf, err := decoder.FullPCMBuffer()
+	reader := wav.NewReader(file)
+	format, err := reader.Format()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get format: %w", err)
 	}
 
-	if buf.Format.SampleRate == 0 || buf.Format.NumChannels == 0 {
-		return nil, fmt.Errorf("missing WAV format information: %v", buf.Format)
+	if format.NumChannels != 1 || format.SampleRate != 44100 {
+		return nil, fmt.Errorf("unsupported format: %v", format)
 	}
 
-	// fmt.Printf("filename: %s\n", filename)
-	// fmt.Printf("Audio format code: %d\n", decoder.WavAudioFormat)
-	// fmt.Printf("WAV file format: %v\n", buf.Format)
+	var pcm []byte
+	for {
+		samples, err := reader.ReadSamples()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return nil, fmt.Errorf("ReadSamples failed on file %s with error: %s", filename, err)
+			}
+		}
+		for _, sample := range samples {
+			var sampleValue int16
+			switch format.AudioFormat {
+			case wav.AudioFormatPCM:
+				sampleValue = int16(reader.IntValue(sample, 0))
+			case wav.AudioFormatIEEEFloat:
+				floatVal := reader.FloatValue(sample, 0)
+				if floatVal > 1.0 {
+					floatVal = 1.0
+				} else if floatVal < -1.0 {
+					floatVal = -1.0
+				}
+				sampleValue = int16(floatVal * 32767)
+			default:
+				return nil, fmt.Errorf("unsupported audio format code: %d", format.AudioFormat)
+			}
 
-	pcm := intBufferTo16LEBytes(buf)
+			b := make([]byte, 2)
+			binary.LittleEndian.PutUint16(b, uint16(sampleValue))
+			pcm = append(pcm, b...)
+		}
+	}
 
 	return pcm, nil
-}
-
-func intBufferTo16LEBytes(buf *audio.IntBuffer) []byte {
-	out := make([]byte, len(buf.Data)*2)
-	for i, sample := range buf.Data {
-		if sample > 32767 {
-			sample = 32767
-		} else if sample < -32768 {
-			sample = -32768
-		}
-		binary.LittleEndian.PutUint16(out[i*2:], uint16(int16(sample)))
-	}
-	return out
 }

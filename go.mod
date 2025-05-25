@@ -4,8 +4,6 @@ go 1.24.3
 
 require (
 	github.com/ebitengine/oto/v3 v3.3.3
-	github.com/go-audio/audio v1.0.0
-	github.com/go-audio/wav v1.1.0
 	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
 	github.com/gorilla/websocket v1.5.3
 	github.com/nsf/termbox-go v1.1.1
@@ -17,7 +15,6 @@ require (
 
 require (
 	github.com/ebitengine/purego v0.8.0 // indirect
-	github.com/go-audio/riff v1.0.0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/youpy/go-riff v0.1.0 // indirect
 	github.com/zaf/g711 v0.0.0-20190814101024-76a4a538f52b // indirect

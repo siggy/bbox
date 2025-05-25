@@ -13,8 +13,19 @@ func main() {
 		log.Fatalf("init failed: %v", err)
 	}
 
-	// wavs.Play("perc-808.wav")
-	wavs.Play("tom-808.wav")
+	wavs.Play("perc-808.wav")
+	for range 5 {
+		wavs.Play("perc-808.wav")
+		time.Sleep(250 * time.Millisecond)
+		wavs.Play("hihat-808.wav")
+		time.Sleep(250 * time.Millisecond)
+		wavs.Play("kick-classic.wav")
+		time.Sleep(250 * time.Millisecond)
+		wavs.Play("tom-808.wav")
+		time.Sleep(250 * time.Millisecond)
+	}
 
 	time.Sleep(2000 * time.Millisecond)
+
+	wavs.Close()
 }
