@@ -1,3 +1,9 @@
+# TODO
+
+- modify keys.go to handle different keyboard mappings, consider returning button press
+  coordinates (row 2, col 3)
+- scorpio comms
+
 # BBox
 
 Beatboxer in Go
