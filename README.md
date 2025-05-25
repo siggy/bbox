@@ -6,88 +6,49 @@ Beatboxer in Go
 
 ### OS
 
-1. Download Raspian Lite: https://downloads.raspberrypi.org/raspbian_lite_latest
-2. Flash `2017-07-05-raspbian-jessie-lite.zip` using Etcher
-3. Remove/reinsert flash drive
-4. Add `ssh` file:
-```bash
-touch /Volumes/boot/ssh
-diskutil umount /Volumes/boot
-```
+1. Install Raspberry Pi Imager: https://www.raspberrypi.com/software/
+2. Choose `Raspberry Pi 5`, `Raspberry Pi OS Lite (64-bit)` and
+   `USB Mass Storage` in the Imager
+3. Select:
+  - `Set hostname` to `raspberrypi`
+  - `Set username and password`: `sig`
+  - `Set locale` to `en_US.UTF-8`
+  - `Configure wireless LAN`
+  - `Enable SSH`: `Allow public-key authentication only`
 
 ### First Boot
 
 ```bash
-ssh pi@raspberrypi.local
-# password: raspberry
-
-# change default password
-passwd
-
-# set quiet boot
-sudo sed -i '${s/$/ quiet loglevel=1/}' /boot/cmdline.txt
+ssh sig@raspberrypi.local
 
 # install packages
 sudo apt-get update
-sudo apt-get install -y git tmux vim dnsmasq hostapd
+sudo apt-get install -y git tmux vim
 
-# set up wifi (note leading space to avoid bash history)
-sudo tee --append /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null << 'EOF'
-network={
-    ssid="<WIFI_SSID>"
-    psk="<WIFI_PASSWORD>"
-}
-EOF
+git clone https://github.com/siggy/dotfiles.git ~/code/dotfiles
+cp ~/code/dotfiles/.local.bash.pi ~/.local.bash
+cp ~/code/dotfiles/.curlrc        ~/
+cp ~/code/dotfiles/.gitconfig     ~/
+cp ~/code/dotfiles/.tmux.conf     ~/
+cp ~/code/dotfiles/.vimrc         ~/
+cp ~/code/dotfiles/.wgetrc        ~/
 
-# set static IP address
-sudo tee --append /etc/dhcpcd.conf > /dev/null << 'EOF'
+mkdir -p ~/.vim/backups
+mkdir -p ~/.vim/swaps
+cp -a ~/code/dotfiles/.vim/colors ~/.vim
 
-# set static ip
-
-interface eth0
-static ip_address=192.168.1.141/24
-static routers=192.168.1.1
-static domain_name_servers=192.168.1.1
-
-interface wlan0
-static ip_address=192.168.1.142/24
-static routers=192.168.1.1
-static domain_name_servers=192.168.1.1
-EOF
-
-# reboot to connect over wifi
-sudo shutdown -r now
-```
-
-```bash
-# configure git
-git config --global push.default simple
-git config --global core.editor "vim"
-git config --global user.email "you@example.com"
-git config --global user.name "Your Name"
-
-# disable services
-sudo systemctl disable hciuart
-sudo systemctl disable bluetooth
-sudo systemctl disable plymouth
-
-# remove unnecessary packages
-sudo apt-get -y purge libx11-6 libgtk-3-common xkb-data lxde-icon-theme raspberrypi-artwork penguinspuzzle ntp plymouth*
-sudo apt-get -y autoremove
-
-sudo raspi-config nonint do_boot_behaviour B2 0
-sudo raspi-config nonint do_boot_wait 1
-sudo raspi-config nonint do_serial 1
+echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.profile
 ```
 
 ## Code
 
 ```bash
-wget https://dl.google.com/go/go1.10.3.linux-armv6l.tar.gz -O /tmp/go1.10.3.linux-armv6l.tar.gz
-sudo tar -xzf /tmp/go1.10.3.linux-armv6l.tar.gz -C /usr/local
+curl -L -o /tmp/go1.24.3.linux-arm64.tar.gz https://go.dev/dl/go1.24.3.linux-arm64.tar.gz
+sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go1.24.3.linux-arm64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
 
-mkdir -p ~/code/go/src/github.com/siggy
-git clone https://github.com/siggy/bbox.git ~/code/go/src/github.com/siggy/bbox
+mkdir -p ~/code/
+git clone https://github.com/siggy/bbox.git ~/code/bbox
 ```
 
 ### portaudio
