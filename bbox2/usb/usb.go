@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	devicePath = "/dev/tty.usbmodem103" // macbook
-	// devicePath = "/dev/ttyACM0" // pi
+	// devicePath = "/dev/tty.usbmodem103" // macbook
+	devicePath = "/dev/ttyACM1" // pi
 
 	baudRate = 115200
 )
