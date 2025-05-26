@@ -17,7 +17,7 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 
 	usb.Run()
-	os.Exit(0) // Exit after running USB to avoid blocking the main thread
+	os.Exit(0)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

@@ -5,11 +5,20 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial"
+	"golang.org/x/exp/slices"
 )
 
 const (
-	devicePath = "/dev/tty.usbmodem103" // Adjust for your platform
-	baudRate   = 115200
+	devicePath = "/dev/tty.usbmodem103" // macbook
+	// devicePath = "/dev/ttyACM0" // pi
+
+	baudRate = 115200
+)
+
+var (
+	// should match scorpio/code.py
+	stripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
+	totalStrips  = len(stripLengths)
 )
 
 func Run() {
@@ -23,24 +32,44 @@ func Run() {
 	log.Debug("Connected to device.")
 
 	for {
-		for light := 0; light < 30; light++ {
-			// Build pixel updates for LEDs 0–9
+		for light := 0; light < slices.Max(stripLengths); light++ {
 			var payload []byte
-			for i := 0; i < 30; i++ {
-				index := byte(i)
-				g := byte(0)
-				r := byte(0)
-				b := byte(0)
-				w := byte(0)
-				if i == light {
-					r = byte(10)
+
+			for strip := 0; strip < totalStrips; strip++ {
+				if light >= stripLengths[strip] {
+					continue
 				}
-				payload = append(payload, index, g, r, b, w)
+
+				for i := 0; i < stripLengths[strip]; i++ {
+					pixel := byte(i)
+					g := byte(0)
+					r := byte(0)
+					b := byte(0)
+					w := byte(0)
+					if i == light {
+						switch strip % 4 {
+						case 0:
+							g = byte(10)
+						case 1:
+							r = byte(10)
+						case 2:
+							b = byte(10)
+						case 3:
+							w = byte(10)
+						}
+					}
+					payload = append(payload, byte(strip), pixel, g, r, b, w)
+				}
 			}
 
 			packet := buildPacket(payload)
-			port.Write(packet)
-			log.Debug("Batch GRBW packet sent.")
+			n, err := port.Write(packet)
+			if err != nil {
+				log.Debugf("Write failed: %v", err)
+				os.Exit(1)
+			}
+
+			log.Debugf("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
 		}
 	}
 }

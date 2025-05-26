@@ -13,6 +13,7 @@ require (
 	github.com/stianeikeland/go-rpio v4.2.0+incompatible
 	github.com/youpy/go-wav v0.3.2
 	go.bug.st/serial v1.6.4
+	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 )
 
 require (

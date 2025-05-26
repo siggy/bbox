@@ -46,7 +46,7 @@ cp -a ~/code/dotfiles/.vim/colors ~/.vim
 echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.profile
 ```
 
-## Code
+### Code
 
 ```bash
 curl -L -o /tmp/go1.24.3.linux-arm64.tar.gz https://go.dev/dl/go1.24.3.linux-arm64.tar.gz
@@ -78,6 +78,11 @@ aplay /usr/share/sounds/alsa/Front_Center.wav
 sudo apt-get install -y libasound2-dev
 ```
 
+## Run
+
+```bash
+go run cmd/bbox2/main.go
+```
 
 
 
