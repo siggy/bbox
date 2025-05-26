@@ -19,31 +19,36 @@ import time
 import board
 import neopixel
 
-pixels = neopixel.NeoPixel(board.NEOPIXEL, 1)
+pixels = neopixel.NeoPixel(
+    board.NEOPIXEL0,
+    30,
+    pixel_order=neopixel.GRBW,
+    bpp=4,
+    auto_write=False,
+    brightness=1.0
+)
 
 while True:
-    print("Hello, CircuitPython for vscode4!")
-    pixels.fill((255, 0, 0))
-    time.sleep(0.1)
-    pixels.fill((0, 0, 0))
-    time.sleep(0.1)
-    pixels.fill((255, 0, 0))
-    time.sleep(0.1)
-    pixels.fill((0, 0, 0))
-    time.sleep(0.1)
-    pixels.fill((255, 0, 0))
-    time.sleep(0.1)
-    pixels.fill((0, 255, 0))
-    time.sleep(0.5)
-    pixels.fill((0, 0, 255))
-    time.sleep(0.5)
-    pixels.fill((255, 255, 0))
-    time.sleep(0.5)
-    pixels.fill((255, 0, 255))
-    time.sleep(0.5)
-    pixels.fill((0, 255, 255))
-    time.sleep(0.5)
-    pixels.fill((255, 255, 255))
-    time.sleep(0.5)
-    pixels.fill((0, 0, 0))
-    time.sleep(0.5)
+    for i in range(len(pixels)):
+        pixels.fill((0, 0, 0, 0))           # turn all off
+        pixels[i] = (10, 0, 0, 0)           # red
+        pixels.show()
+        time.sleep(0.05)
+
+    for i in range(len(pixels)):
+        pixels.fill((0, 0, 0, 0))
+        pixels[i] = (0, 10, 0, 0)           # green
+        pixels.show()
+        time.sleep(0.05)
+
+    for i in range(len(pixels)):
+        pixels.fill((0, 0, 0, 0))
+        pixels[i] = (0, 0, 10, 0)           # blue
+        pixels.show()
+        time.sleep(0.05)
+
+    for i in range(len(pixels)):
+        pixels.fill((0, 0, 0, 0))
+        pixels[i] = (0, 0, 0, 10)           # white
+        pixels.show()
+        time.sleep(0.05)
