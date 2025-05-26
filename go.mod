@@ -12,9 +12,11 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stianeikeland/go-rpio v4.2.0+incompatible
 	github.com/youpy/go-wav v0.3.2
+	go.bug.st/serial v1.6.4
 )
 
 require (
+	github.com/creack/goselect v0.1.2 // indirect
 	github.com/ebitengine/purego v0.8.0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/youpy/go-riff v0.1.0 // indirect

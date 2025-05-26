@@ -8,12 +8,16 @@ import (
 	"time"
 
 	"github.com/siggy/bbox/bbox2/keys"
+	"github.com/siggy/bbox/bbox2/usb"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 	log.SetLevel(log.DebugLevel)
+
+	usb.Run()
+	os.Exit(0) // Exit after running USB to avoid blocking the main thread
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
