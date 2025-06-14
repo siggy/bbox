@@ -1,6 +1,7 @@
 package beats
 
 import (
+	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/programs"
 )
 
@@ -17,7 +18,7 @@ type (
 		coordsCh chan programs.Coord
 		// beatsCh  chan BeatState
 		playCh chan string
-		ledsCh chan programs.LEDs
+		ledsCh chan leds.LEDs
 	}
 )
 
@@ -42,7 +43,7 @@ func New() *Beats {
 		coordsCh: make(chan programs.Coord, programs.ChannelBuffer),
 		// beatsCh:  make(chan BeatState, programs.ChannelBuffer),
 		playCh: make(chan string, programs.ChannelBuffer),
-		ledsCh: make(chan programs.LEDs, programs.ChannelBuffer),
+		ledsCh: make(chan leds.LEDs, programs.ChannelBuffer),
 	}
 }
 
@@ -53,7 +54,7 @@ func (b *Beats) Press(press programs.Coord) {
 func (b *Beats) Play() <-chan string {
 	return b.playCh
 }
-func (b *Beats) Render() <-chan programs.LEDs {
+func (b *Beats) Render() <-chan leds.LEDs {
 	return b.ledsCh
 }
 

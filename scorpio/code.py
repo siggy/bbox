@@ -94,7 +94,7 @@ try:
             for i in range(0, len(packet), 6):
                 strip_index = packet[i]
                 pixel_index = packet[i+1]
-                g, r, b, w = packet[i+2:i+6]
+                r, g, b, w = packet[i+2:i+6]
                 if strip_index < TOTAL_STRIPS:
                     if pixel_index < strip_lengths[strip_index]:
                         strips[strip_index][pixel_index] = (r, g, b, w)
