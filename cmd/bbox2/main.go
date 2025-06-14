@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/siggy/bbox/bbox2/keys"
-	"github.com/siggy/bbox/bbox2/usb"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,8 +15,8 @@ import (
 func main() {
 	log.SetLevel(log.DebugLevel)
 
-	usb.Run()
-	os.Exit(0)
+	// usb.Run()
+	// os.Exit(0)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

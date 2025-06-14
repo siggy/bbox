@@ -1,5 +1,7 @@
 # TODO
 
+- faster boot
+- access point wifi
 - modify keys.go to handle different keyboard mappings, consider returning button press
   coordinates (row 2, col 3)
 - scorpio comms
@@ -84,7 +86,27 @@ sudo apt-get install -y libasound2-dev
 go run cmd/bbox2/main.go
 ```
 
+## Configure to connect over ethernet
 
+```bash
+sudo nmcli con add type ethernet ifname eth0 con-name eth0-static ipv4.addresses 192.168.2.2/24 ipv4.method manual
+sudo nmcli con up eth0-static
+```
+
+```bash
+alias pi='ssh sig@raspberrypi.local'
+alias pieth='ssh sig@192.168.2.2'
+```
+
+## Configure to connect as Wifi AP
+```bash
+rfkill list
+sudo rfkill unblock wifi
+rfkill list
+sudo nmcli radio wifi on
+sudo nmcli dev wifi hotspot ifname wlan0 ssid sigpi password showmethepi
+sudo nmcli connection modify Hotspot autoconnect yes
+```
 
 
 # OLD
