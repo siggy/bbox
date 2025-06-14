@@ -7,10 +7,20 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/siggy/bbox/bbox2/keys"
+	"github.com/siggy/bbox/bbox2/beats"
+	"github.com/siggy/bbox/bbox2/keyboard"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
+
+// keyboard -> beats -> ticks -> wavs
+//                        -> leds
+//
+// keyboard
+//   <-presses
+// wavs
+//   wavs.Play("filename.wav")
+// buttons
 
 func main() {
 	log.SetLevel(log.DebugLevel)
@@ -27,7 +37,7 @@ func main() {
 	}
 	defer wavs.Close()
 
-	for range 2 {
+	for range 1 {
 		wavs.Play("perc-808.wav")
 		time.Sleep(250 * time.Millisecond)
 		wavs.Play("hihat-808.wav")
@@ -36,23 +46,34 @@ func main() {
 		time.Sleep(250 * time.Millisecond)
 		wavs.Play("tom-808.wav")
 		time.Sleep(250 * time.Millisecond)
+		wavs.Play("ceottk001_human.wav")
+		time.Sleep(250 * time.Millisecond)
 	}
 
-	keys, err := keys.Init()
+	keyboard, err := keyboard.New()
 	if err != nil {
-		log.Fatalf("init failed: %v", err)
+		log.Fatalf("keyboard.New failed: %v", err)
 	}
+	beats := beats.New(beats.KeyMapsPC)
 
-	presses := keys.Run()
+	presses := keyboard.Presses()
+	beatStates := beats.State()
+
+	go keyboard.Run()
+	go beats.Run()
 
 	for {
 		select {
 		case press, more := <-presses:
 			if !more {
-				log.Info("key channel closed, exiting...")
+				log.Info("keyboard channel closed, exiting...")
 				return
 			}
 			log.Debugf("press: %q", press)
+
+			beats.Press(press)
+		case beatState := <-beatStates:
+			log.Debugf("beat state:\n%s", beatState)
 		case <-ctx.Done():
 			log.Info("context done")
 			return
