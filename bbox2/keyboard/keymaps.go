@@ -1,4 +1,4 @@
-package beats
+package keyboard
 
 type (
 	Coord struct {
@@ -7,7 +7,7 @@ type (
 	}
 )
 
-var KeyMapsPC = map[rune]*Coord{
+var KeyMapsPC = map[rune]Coord{
 	'1': {0, 0},
 	'2': {0, 1},
 	'3': {0, 2},
@@ -94,7 +94,7 @@ var KeyMapsPC = map[rune]*Coord{
 // | - | = | . | , | / | ; | space | enter |
 
 // mapping from keyboard box
-var KeyMapsRPI = map[rune]*Coord{
+var KeyMapsRPI = map[rune]Coord{
 	// 2 x 21 = [volume down]
 	// 2 x 24 = [mute]
 	// 3 x 19 = ` (quit)

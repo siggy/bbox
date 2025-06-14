@@ -18,7 +18,7 @@ type Wavs struct {
 	players []*oto.Player
 }
 
-func Init() (*Wavs, error) {
+func New() (*Wavs, error) {
 	ctx, ready, err := oto.NewContext(&oto.NewContextOptions{
 		SampleRate:   44100,
 		ChannelCount: 1,

@@ -6,8 +6,9 @@ import (
 )
 
 type Keyboard struct {
+	keymaps   map[rune]Coord
 	keyEvents <-chan keyboard.KeyEvent
-	presses   chan rune
+	presses   chan Coord
 }
 
 const keyBuffer = 100
@@ -18,19 +19,20 @@ var runeMap = map[keyboard.Key]rune{
 	keyboard.KeyEnter: '9',
 }
 
-func New() (*Keyboard, error) {
+func New(keymaps map[rune]Coord) (*Keyboard, error) {
 	keyEvents, err := keyboard.GetKeys(keyBuffer)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Keyboard{
+		keymaps:   keymaps,
 		keyEvents: keyEvents,
-		presses:   make(chan rune, keyBuffer),
+		presses:   make(chan Coord, keyBuffer),
 	}, nil
 }
 
-func (k *Keyboard) Presses() <-chan rune {
+func (k *Keyboard) Presses() <-chan Coord {
 	return k.presses
 }
 
@@ -66,6 +68,12 @@ func (k *Keyboard) Run() {
 			}
 		}
 
-		k.presses <- r
+		coord, ok := k.keymaps[r]
+		if !ok {
+			log.Warnf("No coordinates for key %q", r)
+			continue
+		}
+
+		k.presses <- coord
 	}
 }

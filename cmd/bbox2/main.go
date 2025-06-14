@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,6 +24,14 @@ import (
 // buttons
 
 func main() {
+	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
+	flag.Parse()
+
+	keyMaps := keyboard.KeyMapsPC
+	if *bboxKB {
+		keyMaps = keyboard.KeyMapsRPI
+	}
+
 	log.SetLevel(log.DebugLevel)
 
 	// usb.Run()
@@ -31,36 +40,51 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	wavs, err := wavs.Init()
+	// init
+	wavs, err := wavs.New()
 	if err != nil {
-		log.Fatalf("init failed: %v", err)
+		log.Fatalf("wavs.New failed: %v", err)
 	}
 	defer wavs.Close()
 
-	for range 1 {
-		wavs.Play("perc-808.wav")
-		time.Sleep(250 * time.Millisecond)
-		wavs.Play("hihat-808.wav")
-		time.Sleep(250 * time.Millisecond)
-		wavs.Play("kick-classic.wav")
-		time.Sleep(250 * time.Millisecond)
-		wavs.Play("tom-808.wav")
-		time.Sleep(250 * time.Millisecond)
-		wavs.Play("ceottk001_human.wav")
-		time.Sleep(250 * time.Millisecond)
-	}
+	beats := beats.New()
 
-	keyboard, err := keyboard.New()
+	keyboard, err := keyboard.New(keyMaps)
 	if err != nil {
 		log.Fatalf("keyboard.New failed: %v", err)
 	}
-	beats := beats.New(beats.KeyMapsPC)
 
-	presses := keyboard.Presses()
 	beatStates := beats.State()
+	presses := keyboard.Presses()
+
+	// sound check
+
+	for range 1 {
+		wavs.Play("perc-808.wav")
+		time.Sleep(100 * time.Millisecond)
+		wavs.Play("hihat-808.wav")
+		time.Sleep(100 * time.Millisecond)
+		wavs.Play("kick-classic.wav")
+		time.Sleep(100 * time.Millisecond)
+		wavs.Play("tom-808.wav")
+		time.Sleep(100 * time.Millisecond)
+		wavs.Play("ceottk001_human.wav")
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// run
 
 	go keyboard.Run()
 	go beats.Run()
+
+	// TODO:
+	// program interface {
+	// 	Press() Coord<-
+	//  Play() <-String
+	//  Render() <-LEDs
+	// }
+
+	// var programs = []program{}
 
 	for {
 		select {

@@ -1,6 +1,6 @@
 package beats
 
-import log "github.com/sirupsen/logrus"
+import "github.com/siggy/bbox/bbox2/keyboard"
 
 const (
 	sounds = 4
@@ -11,10 +11,9 @@ type (
 	BeatState [sounds][beats]bool
 
 	Beats struct {
-		keymaps map[rune]*Coord
-		beats   BeatState
-		keyCh   chan rune
-		beatsCh chan BeatState
+		beats    BeatState
+		coordsCh chan keyboard.Coord
+		beatsCh  chan BeatState
 	}
 )
 
@@ -33,17 +32,16 @@ func (b BeatState) String() string {
 	return str
 }
 
-func New(keymaps map[rune]*Coord) *Beats {
+func New() *Beats {
 	return &Beats{
-		keymaps: keymaps,
-		beats:   BeatState{},
-		keyCh:   make(chan rune, 100),
-		beatsCh: make(chan BeatState, 100),
+		beats:    BeatState{},
+		coordsCh: make(chan keyboard.Coord, 100),
+		beatsCh:  make(chan BeatState, 100),
 	}
 }
 
-func (b *Beats) Press(press rune) {
-	b.keyCh <- press
+func (b *Beats) Press(press keyboard.Coord) {
+	b.coordsCh <- press
 }
 
 func (b *Beats) State() <-chan BeatState {
@@ -51,14 +49,9 @@ func (b *Beats) State() <-chan BeatState {
 }
 
 // TODO: decay
+// TODO: tempo changes?
 func (b *Beats) Run() {
-	for press := range b.keyCh {
-		coords, ok := b.keymaps[press]
-		if !ok {
-			log.Warnf("No coordinates for key %q", press)
-			continue
-		}
-
+	for coords := range b.coordsCh {
 		sound := coords.Row
 		beat := coords.Col
 
