@@ -8,8 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/siggy/bbox/bbox2/beats"
 	"github.com/siggy/bbox/bbox2/keyboard"
+	"github.com/siggy/bbox/bbox2/programs"
+	"github.com/siggy/bbox/bbox2/programs/beats"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
@@ -24,15 +25,20 @@ import (
 // buttons
 
 func main() {
+	logLevel := flag.String("log-level", "debug", "set log level (debug, info, warn, error, fatal, panic)")
 	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
 	flag.Parse()
+
+	lvl, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		log.Fatalf("Invalid log level: %v", err)
+	}
+	log.SetLevel(lvl)
 
 	keyMaps := keyboard.KeyMapsPC
 	if *bboxKB {
 		keyMaps = keyboard.KeyMapsRPI
 	}
-
-	log.SetLevel(log.DebugLevel)
 
 	// usb.Run()
 	// os.Exit(0)
@@ -54,7 +60,6 @@ func main() {
 		log.Fatalf("keyboard.New failed: %v", err)
 	}
 
-	beatStates := beats.State()
 	presses := keyboard.Presses()
 
 	// sound check
@@ -84,9 +89,12 @@ func main() {
 	//  Render() <-LEDs
 	// }
 
-	// var programs = []program{}
+	programs := []programs.Program{beats}
+	cur := 0
 
 	for {
+		program := programs[cur]
+
 		select {
 		case press, more := <-presses:
 			if !more {
@@ -94,10 +102,19 @@ func main() {
 				return
 			}
 			log.Debugf("press: %q", press)
+			program.Press(press)
 
-			beats.Press(press)
-		case beatState := <-beatStates:
-			log.Debugf("beat state:\n%s", beatState)
+		case leds := <-program.Render():
+			log.Debugf("leds:\n%s", leds)
+
+		case play := <-program.Play():
+			log.Debugf("play: %s", play)
+			wavs.Play(play)
+
+		case <-program.Yield():
+			log.Debugf("yield")
+			cur = (cur + 1) % len(programs)
+
 		case <-ctx.Done():
 			log.Info("context done")
 			return

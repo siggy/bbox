@@ -3,6 +3,7 @@ package usb
 import (
 	"os"
 
+	"github.com/siggy/bbox/bbox2/programs"
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial"
 	"golang.org/x/exp/slices"
@@ -13,12 +14,6 @@ const (
 	// devicePath = "/dev/ttyACM1" // pi
 
 	baudRate = 115200
-)
-
-var (
-	// should match scorpio/code.py
-	stripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
-	totalStrips  = len(stripLengths)
 )
 
 func Run() {
@@ -32,15 +27,15 @@ func Run() {
 	log.Debug("Connected to device.")
 
 	for {
-		for light := 0; light < slices.Max(stripLengths); light++ {
+		for light := 0; light < slices.Max(programs.StripLengths); light++ {
 			var payload []byte
 
-			for strip := 0; strip < totalStrips; strip++ {
-				if light >= stripLengths[strip] {
+			for strip := 0; strip < len(programs.StripLengths); strip++ {
+				if light >= programs.StripLengths[strip] {
 					continue
 				}
 
-				for i := 0; i < stripLengths[strip]; i++ {
+				for i := 0; i < programs.StripLengths[strip]; i++ {
 					pixel := byte(i)
 					g := byte(0)
 					r := byte(0)
