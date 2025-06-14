@@ -1,7 +1,12 @@
 # TODO
 
 - autorun at boot time, systemd?
+- generic interface for LED lighting
+- validation program for testing individual LEDs
+- modify keys.go to handle different keyboard mappings, consider returning button press
+  coordinates (row 2, col 3)
 - scorpio comms
+- update .local.bash to auto-boot pi 5, maybe systemd, or tmux?
 
 # BBox
 
