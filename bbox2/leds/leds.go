@@ -1,11 +1,10 @@
 package leds
 
 import (
-	"os"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial"
-	"golang.org/x/exp/slices"
 )
 
 type (
@@ -16,7 +15,8 @@ type (
 		W uint8 // 0-255, white channel for RGBW LEDs
 	}
 
-	LEDs [][]Color
+	// map[strip][pixel]Color
+	leds map[int]map[int]Color
 )
 
 const (
@@ -26,82 +26,88 @@ const (
 	baudRate = 115200
 )
 
-var (
-	// should match scorpio/code.py
-	StripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
-)
-
-func NewLEDs(stripLengths []int) LEDs {
-	strips := make(LEDs, len(stripLengths))
-	for i, length := range stripLengths {
-		strips[i] = make([]Color, length)
-	}
-	return strips
+type Strips struct {
+	port         serial.Port
+	stripLengths []int
+	ledBuffer    leds
 }
 
-func (leds LEDs) String() string {
-	var str string
-	for strip, stripLEDs := range leds {
-		str += "Strip " + string(rune(strip)) + ": "
-		for _, led := range stripLEDs {
-			str += "[" + string(led.R) + "," + string(led.G) + "," + string(led.B) + "," + string(led.W) + "] "
-		}
-		str += "\n"
-	}
-	return str
-}
-
-func Run() {
+func New(stripLengths []int) (*Strips, error) {
 	port, err := serial.Open(devicePath, &serial.Mode{BaudRate: baudRate})
 	if err != nil {
-		log.Errorf("Failed to open serial port: %v", err)
-		os.Exit(1)
+		return nil, err
 	}
-	defer port.Close()
+	log.Debugf("Connected to %s", devicePath)
+	return &Strips{
+		port:         port,
+		stripLengths: stripLengths,
+		ledBuffer:    leds{},
+	}, nil
+}
 
-	log.Debug("Connected to device.")
+func (s *Strips) Close() error {
+	if s.port != nil {
+		return s.port.Close()
+	}
+	return nil
+}
 
-	for {
-		for light := 0; light < slices.Max(StripLengths); light++ {
-			var payload []byte
+func (s *Strips) Clear() {
+	if err := s.write(s.all()); err != nil {
+		log.Errorf("Failed to clear LEDs: %v", err)
+	}
+}
 
-			for strip := 0; strip < len(StripLengths); strip++ {
-				if light >= StripLengths[strip] {
-					continue
-				}
+func (s *Strips) Set(strip int, pixel int, color Color) error {
+	if strip < 0 || strip >= len(s.stripLengths) {
+		return fmt.Errorf("Invalid strip index: %d", strip)
+	}
+	if pixel < 0 || pixel >= s.stripLengths[strip] {
+		return fmt.Errorf("Invalid pixel index: %d for strip %d", pixel, strip)
+	}
 
-				for i := 0; i < StripLengths[strip]; i++ {
-					pixel := byte(i)
-					g := byte(0)
-					r := byte(0)
-					b := byte(0)
-					w := byte(0)
-					if i == light {
-						switch strip % 4 {
-						case 0:
-							r = byte(10)
-						case 1:
-							g = byte(10)
-						case 2:
-							b = byte(10)
-						case 3:
-							w = byte(10)
-						}
-					}
-					payload = append(payload, byte(strip), pixel, r, g, b, w)
-				}
-			}
+	if _, ok := s.ledBuffer[strip]; !ok {
+		s.ledBuffer[strip] = make(map[int]Color)
+	}
+	s.ledBuffer[strip][pixel] = color
 
-			packet := buildPacket(payload)
-			n, err := port.Write(packet)
-			if err != nil {
-				log.Debugf("Write failed: %v", err)
-				os.Exit(1)
-			}
+	return nil
+}
 
-			log.Debugf("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
+func (s *Strips) Write() error {
+	err := s.write(s.ledBuffer)
+	s.ledBuffer = leds{}
+	return err
+}
+
+func (s *Strips) all() leds {
+	leds := leds{}
+	for strip, length := range s.stripLengths {
+		leds[strip] = make(map[int]Color)
+		for pixel := 0; pixel < length; pixel++ {
+			leds[strip][pixel] = Color{0, 0, 0, 0}
 		}
 	}
+	return leds
+}
+
+func (s *Strips) write(leds leds) error {
+	var payload []byte
+
+	for strip, stripLEDs := range leds {
+		for pixel, color := range stripLEDs {
+			payload = append(payload, byte(strip), byte(pixel), color.R, color.G, color.B, color.W)
+		}
+	}
+
+	packet := buildPacket(payload)
+	n, err := s.port.Write(packet)
+	if err != nil {
+		return err
+	}
+
+	log.Debugf("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
+	return nil
 }
 
 func buildPacket(payload []byte) []byte {
