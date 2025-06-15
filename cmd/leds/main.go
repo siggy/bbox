@@ -33,15 +33,15 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
-	strips, err := leds.New(stripLengths)
+	ledStrips, err := leds.New(stripLengths)
 	if err != nil {
 		log.Errorf("leds.New failed: %+v", err)
 		os.Exit(1)
 	}
 
-	defer strips.Close()
+	defer ledStrips.Close()
 
-	strips.Clear()
+	ledStrips.Clear()
 
 	prev := 0
 	cur := 0
@@ -67,23 +67,28 @@ func main() {
 				}
 			}
 
-			// strips.Clear()
-
 			fmt.Printf("LED: %+v\n", cur)
+			state := leds.State{}
 			for strip := range stripLengths {
-				err := strips.Set(strip, prev, leds.Color{R: 0, G: 0, B: 0, W: 0})
-				if err != nil {
-					log.Errorf("strips.Set failed: %+v\n", err)
+				if _, ok := state[strip]; !ok {
+					// Initialize the strip state if it doesn't exist
+					state[strip] = make(map[int]leds.Color)
 				}
-				err = strips.Set(strip, cur, leds.Color{R: 255, G: 0, B: 0, W: 0})
-				if err != nil {
-					log.Errorf("strips.Set failed: %+v\n", err)
-				}
+				state[strip][prev] = leds.Color{R: 0, G: 0, B: 0, W: 0}
+				state[strip][cur] = leds.Color{R: 255, G: 0, B: 0, W: 0}
+				// err := ledStrips.Set(strip, prev, leds.Color{R: 0, G: 0, B: 0, W: 0})
+				// if err != nil {
+				// 	log.Errorf("strips.Set failed: %+v\n", err)
+				// }
+				// err = ledStrips.Set(strip, cur, leds.Color{R: 255, G: 0, B: 0, W: 0})
+				// if err != nil {
+				// 	log.Errorf("strips.Set failed: %+v\n", err)
+				// }
 			}
 
-			err := strips.Write()
+			err := ledStrips.Write(state)
 			if err != nil {
-				log.Errorf("strips.Write failed: %+v\n", err)
+				log.Errorf("ledStrips.Write failed: %+v\n", err)
 			}
 
 			prev = cur

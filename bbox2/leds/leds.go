@@ -16,7 +16,7 @@ type (
 	}
 
 	// map[strip][pixel]Color
-	leds map[int]map[int]Color
+	State map[int]map[int]Color
 )
 
 const (
@@ -26,75 +26,63 @@ const (
 	baudRate = 115200
 )
 
-type Strips struct {
+type Leds struct {
 	port         serial.Port
 	stripLengths []int
-	ledBuffer    leds
 }
 
-func New(stripLengths []int) (*Strips, error) {
+func New(stripLengths []int) (*Leds, error) {
 	port, err := serial.Open(devicePath, &serial.Mode{BaudRate: baudRate})
 	if err != nil {
 		return nil, err
 	}
 	log.Debugf("Connected to %s", devicePath)
-	return &Strips{
+	return &Leds{
 		port:         port,
 		stripLengths: stripLengths,
-		ledBuffer:    leds{},
 	}, nil
 }
 
-func (s *Strips) Close() error {
+func (s *Leds) Close() error {
 	if s.port != nil {
 		return s.port.Close()
 	}
 	return nil
 }
 
-func (s *Strips) Clear() {
-	if err := s.write(s.all()); err != nil {
-		log.Errorf("Failed to clear LEDs: %v", err)
-	}
+func (s *Leds) Clear() error {
+	return s.write(s.all())
 }
 
-func (s *Strips) Set(strip int, pixel int, color Color) error {
-	if strip < 0 || strip >= len(s.stripLengths) {
-		return fmt.Errorf("Invalid strip index: %d", strip)
-	}
-	if pixel < 0 || pixel >= s.stripLengths[strip] {
-		return fmt.Errorf("Invalid pixel index: %d for strip %d", pixel, strip)
-	}
-
-	if _, ok := s.ledBuffer[strip]; !ok {
-		s.ledBuffer[strip] = make(map[int]Color)
-	}
-	s.ledBuffer[strip][pixel] = color
-
-	return nil
-}
-
-func (s *Strips) Write() error {
-	err := s.write(s.ledBuffer)
-	s.ledBuffer = leds{}
-	return err
-}
-
-func (s *Strips) all() leds {
-	leds := leds{}
-	for strip, length := range s.stripLengths {
-		leds[strip] = make(map[int]Color)
-		for pixel := 0; pixel < length; pixel++ {
-			leds[strip][pixel] = Color{0, 0, 0, 0}
+func (s *Leds) Write(state State) error {
+	for strip, stripLEDs := range state {
+		if strip < 0 || strip >= len(s.stripLengths) {
+			return fmt.Errorf("invalid strip index: %d", strip)
+		}
+		for pixel := range stripLEDs {
+			if pixel < 0 || pixel >= s.stripLengths[strip] {
+				return fmt.Errorf("invalid pixel index: %d for strip %d", pixel, strip)
+			}
 		}
 	}
-	return leds
+	return s.write(state)
 }
 
-func (s *Strips) write(leds leds) error {
+func (s *Leds) all() State {
+	state := State{}
+	for strip, length := range s.stripLengths {
+		state[strip] = make(map[int]Color)
+		for pixel := 0; pixel < length; pixel++ {
+			state[strip][pixel] = Color{0, 0, 0, 0}
+		}
+	}
+	return state
+}
+
+func (s *Leds) write(state State) error {
 	var payload []byte
 
-	for strip, stripLEDs := range leds {
+	for strip, stripLEDs := range state {
 		for pixel, color := range stripLEDs {
 			payload = append(payload, byte(strip), byte(pixel), color.R, color.G, color.B, color.W)
 		}
