@@ -70,20 +70,8 @@ func main() {
 			fmt.Printf("LED: %+v\n", cur)
 			state := leds.State{}
 			for strip := range stripLengths {
-				if _, ok := state[strip]; !ok {
-					// Initialize the strip state if it doesn't exist
-					state[strip] = make(map[int]leds.Color)
-				}
-				state[strip][prev] = leds.Color{R: 0, G: 0, B: 0, W: 0}
-				state[strip][cur] = leds.Color{R: 255, G: 0, B: 0, W: 0}
-				// err := ledStrips.Set(strip, prev, leds.Color{R: 0, G: 0, B: 0, W: 0})
-				// if err != nil {
-				// 	log.Errorf("strips.Set failed: %+v\n", err)
-				// }
-				// err = ledStrips.Set(strip, cur, leds.Color{R: 255, G: 0, B: 0, W: 0})
-				// if err != nil {
-				// 	log.Errorf("strips.Set failed: %+v\n", err)
-				// }
+				state.Set(strip, prev, leds.Color{R: 0, G: 0, B: 0, W: 0})
+				state.Set(strip, cur, leds.Color{R: 255, G: 0, B: 0, W: 0})
 			}
 
 			err := ledStrips.Write(state)

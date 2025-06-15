@@ -15,7 +15,7 @@ type (
 
 		// output
 		Play() <-chan string
-		Render() <-chan leds.LEDs
+		Render() <-chan leds.State
 		Yield() <-chan struct{}
 	}
 )

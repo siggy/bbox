@@ -7,18 +7,6 @@ import (
 	"go.bug.st/serial"
 )
 
-type (
-	Color struct {
-		R uint8 // 0-255
-		G uint8 // 0-255
-		B uint8 // 0-255
-		W uint8 // 0-255, white channel for RGBW LEDs
-	}
-
-	// map[strip][pixel]Color
-	State map[int]map[int]Color
-)
-
 const (
 	devicePath = "/dev/tty.usbmodem103" // macbook
 	// devicePath = "/dev/ttyACM1" // pi

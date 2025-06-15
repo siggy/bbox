@@ -18,7 +18,7 @@ type (
 		coordsCh chan programs.Coord
 		// beatsCh  chan BeatState
 		playCh chan string
-		ledsCh chan leds.LEDs
+		ledsCh chan leds.State
 	}
 )
 
@@ -43,7 +43,7 @@ func New() *Beats {
 		coordsCh: make(chan programs.Coord, programs.ChannelBuffer),
 		// beatsCh:  make(chan BeatState, programs.ChannelBuffer),
 		playCh: make(chan string, programs.ChannelBuffer),
-		ledsCh: make(chan leds.LEDs, programs.ChannelBuffer),
+		ledsCh: make(chan leds.State, programs.ChannelBuffer),
 	}
 }
 
@@ -54,7 +54,7 @@ func (b *Beats) Press(press programs.Coord) {
 func (b *Beats) Play() <-chan string {
 	return b.playCh
 }
-func (b *Beats) Render() <-chan leds.LEDs {
+func (b *Beats) Render() <-chan leds.State {
 	return b.ledsCh
 }
 
