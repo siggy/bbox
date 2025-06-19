@@ -1,14 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 
 	"github.com/siggy/bbox/bbox2/leds"
 	log "github.com/sirupsen/logrus"
@@ -50,22 +46,24 @@ func main() {
 		case <-sig:
 			return
 		default:
-			reader := bufio.NewReader(os.Stdin)
-			fmt.Print("Enter LED: ")
-			text, _ := reader.ReadString('\n')
-			text = strings.Replace(text, "\n", "", -1)
+			// reader := bufio.NewReader(os.Stdin)
+			// fmt.Print("Enter LED: ")
+			// text, _ := reader.ReadString('\n')
+			// text = strings.Replace(text, "\n", "", -1)
 
-			if text == ";" {
-				cur = int(math.Abs(float64(cur - 1)))
-			} else if text == "'" {
-				cur = cur + 1
-			} else {
-				cur, err = strconv.Atoi(text)
-				if err != nil {
-					fmt.Printf("strconv.Atoi failed: %+v\n", err)
-					continue
-				}
-			}
+			// if text == ";" {
+			// 	cur = int(math.Abs(float64(cur - 1)))
+			// } else if text == "'" {
+			// 	cur = cur + 1
+			// } else {
+			// 	cur, err = strconv.Atoi(text)
+			// 	if err != nil {
+			// 		fmt.Printf("strconv.Atoi failed: %+v\n", err)
+			// 		continue
+			// 	}
+			// }
+
+			cur = (cur + 1) % stripLengths[0]
 
 			fmt.Printf("LED: %+v\n", cur)
 			state := leds.State{}
