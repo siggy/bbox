@@ -6,12 +6,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/siggy/bbox/bbox2/keyboard"
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
 	"github.com/siggy/bbox/bbox2/programs/beats"
+	"github.com/siggy/bbox/bbox2/programs/ledtest"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
@@ -90,18 +90,18 @@ func main() {
 
 	// sound check
 
-	for range 1 {
-		wavs.Play("perc-808.wav")
-		time.Sleep(100 * time.Millisecond)
-		wavs.Play("hihat-808.wav")
-		time.Sleep(100 * time.Millisecond)
-		wavs.Play("kick-classic.wav")
-		time.Sleep(100 * time.Millisecond)
-		wavs.Play("tom-808.wav")
-		time.Sleep(100 * time.Millisecond)
-		wavs.Play("ceottk001_human.wav")
-		time.Sleep(100 * time.Millisecond)
-	}
+	// for range 1 {
+	// 	wavs.Play("perc-808.wav")
+	// 	time.Sleep(100 * time.Millisecond)
+	// 	wavs.Play("hihat-808.wav")
+	// 	time.Sleep(100 * time.Millisecond)
+	// 	wavs.Play("kick-classic.wav")
+	// 	time.Sleep(100 * time.Millisecond)
+	// 	wavs.Play("tom-808.wav")
+	// 	time.Sleep(100 * time.Millisecond)
+	// 	wavs.Play("ceottk001_human.wav")
+	// 	time.Sleep(100 * time.Millisecond)
+	// }
 
 	// run
 
@@ -117,7 +117,7 @@ func main() {
 
 	programs := []program.ProgramFactory{
 		beats.NewProgram,
-		beats.NewProgram,
+		ledtest.NewProgram,
 		// other.NewProgram,
 		// …
 	}
@@ -147,7 +147,7 @@ func main() {
 			program.Press(press)
 
 		case leds := <-program.Render():
-			log.Debugf("leds: %+v", leds)
+			log.Debugf("leds: %s", leds)
 
 			err := ledStrips.Write(leds)
 			if err != nil {
@@ -170,8 +170,6 @@ func main() {
 			cur = (cur + 1) % len(programs)
 			progCtx, cancelProg = context.WithCancel(ctx)
 			program = programs[cur](progCtx)
-
-			cur = (cur + 1) % len(programs)
 
 		case <-ctx.Done():
 			log.Info("context done")

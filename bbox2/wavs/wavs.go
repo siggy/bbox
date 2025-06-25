@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ebitengine/oto/v3"
+	log "github.com/sirupsen/logrus"
 	"github.com/youpy/go-wav"
 )
 
@@ -16,6 +17,8 @@ type Wavs struct {
 	ctx     *oto.Context
 	buffers map[string][]byte
 	players []*oto.Player
+
+	log *log.Entry
 }
 
 func New() (*Wavs, error) {
@@ -51,12 +54,15 @@ func New() (*Wavs, error) {
 	return &Wavs{
 		ctx:     ctx,
 		buffers: buffers,
+		log:     log.WithField("bbox2", "wavs"),
 	}, nil
 }
 
 func (w *Wavs) Play(filename string) {
+	w.log.Debugf("Play %s", filename)
 	buf, ok := w.buffers[filename]
 	if !ok {
+		w.log.Warnf("Unknown: %s", filename)
 		return
 	}
 

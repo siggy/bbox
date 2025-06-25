@@ -50,6 +50,9 @@ func (b beatState) String() string {
 }
 
 func NewProgram(ctx context.Context) program.Program {
+	log := log.WithField("program", "beats")
+	log.Debug("NewProgram ")
+
 	ctx, cancel := context.WithCancel(ctx)
 	b := &beats{
 		ctx:    ctx,
@@ -62,10 +65,12 @@ func NewProgram(ctx context.Context) program.Program {
 		render: make(chan leds.State, program.ChannelBuffer),
 		yield:  make(chan struct{}, program.ChannelBuffer),
 
-		log: log.WithField("program", "beats"),
+		log: log,
 	}
+
 	b.wg.Add(1)
 	go b.run() // fan-in keyboard, timers, etc
+
 	return b
 }
 
@@ -77,7 +82,7 @@ func (b *beats) Close() {
 }
 
 func (b *beats) Press(press program.Coord) {
-	b.log.Debugf("Press: %+v", press)
+	b.log.Debugf("Received press: %+v", press)
 
 	select {
 	case <-b.ctx.Done():
@@ -126,7 +131,7 @@ func (b *beats) run() {
 	defer ticker.Stop()
 
 	// pattern: kick, rest, snare, rest
-	sounds := []string{"kick.wav", "", "snare.wav", ""}
+	sounds := []string{"perc-808.wav", "hihat-808.wav", "kick-classic.wav", "tom-808.wav"}
 
 	l := leds.State{}
 	l.Set(0, 0, leds.Red) // first pixel lit
@@ -139,20 +144,23 @@ func (b *beats) run() {
 
 		case <-ticker.C:
 			if sounds[step] != "" {
-				b.play <- sounds[step]
+				// b.play <- sounds[step]
 			}
-			b.render <- l
 			step = (step + 1) % len(sounds)
 
-		case <-b.in:
-			// ignore other presses here
+			l.Set(0, step, leds.Red)
+			// b.render <- l
+
+		case press := <-b.in:
+			b.log.Debugf("Processing press: %+v", press)
+			if press.Row == 3 && press.Col == 15 {
+				b.yield <- struct{}{}
+				return
+			}
 		}
 	}
-
 }
 
 func (b *beats) Yield() <-chan struct{} {
-	b.log.Debug("Yield")
-
 	return b.yield
 }
