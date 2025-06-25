@@ -105,20 +105,6 @@ func (b *beats) Render() <-chan leds.State {
 func (b *beats) run() {
 	defer b.wg.Done()
 
-	state := state{}
-	iv := interval{
-		ticksPerBeat: defaultTicksPerBeat,
-		ticks:        defaultTicks,
-	}
-	bpm := defaultBPM
-	bpmCh := make(chan int, program.ChannelBuffer)
-	lastPress := program.Coord{Row: -1, Col: -1}
-
-	ticker := time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
-	defer ticker.Stop()
-	tick := 0
-	tickTime := time.Now()
-
 	sounds := []string{
 		"hihat-808.wav",
 		"kick-classic.wav",
@@ -126,7 +112,22 @@ func (b *beats) run() {
 		"tom-808.wav",
 	}
 
-	l := leds.State{}
+	beatState := state{}
+	iv := interval{
+		ticksPerBeat: defaultTicksPerBeat,
+		ticks:        defaultTicks,
+	}
+	bpm := defaultBPM
+	bpmCh := make(chan int, program.ChannelBuffer)
+
+	ledsState := leds.State{}
+
+	ticker := time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
+	defer ticker.Stop()
+	tick := 0
+	tickTime := time.Now()
+
+	lastPress := program.Coord{Row: -1, Col: -1}
 
 	// starter beat
 	b.in <- program.Coord{Row: 1, Col: 0}
@@ -143,7 +144,7 @@ func (b *beats) run() {
 
 			// for each beat type
 			if tick%iv.ticksPerBeat == 0 {
-				for i, beat := range state {
+				for i, beat := range beatState {
 					if beat[tick/iv.ticksPerBeat] {
 						// initiate playback
 						b.play <- sounds[i]
@@ -172,16 +173,16 @@ func (b *beats) run() {
 			}
 
 			// toggle the beat state
-			disabling := state[press.Row][press.Col]
-			state[press.Row][press.Col] = !disabling
+			disabling := beatState[press.Row][press.Col]
+			beatState[press.Row][press.Col] = !disabling
 
-			b.log.Debugf("Updated beat state:\n%s", state)
+			b.log.Debugf("Updated beat state:\n%s", beatState)
 
 			if disabling {
 				// disabling a beat
-				l.Set(press.Row, press.Col, leds.Black)
+				ledsState.Set(press.Row, press.Col, leds.Black)
 
-				if state.allOff() {
+				if beatState.allOff() {
 					b.keepAlive = time.AfterFunc(keepAlive, func() {
 						// enable a beat to keep the speaker alive
 						b.log.Debug("Keep alive timer expired")
@@ -191,10 +192,10 @@ func (b *beats) run() {
 				}
 			} else {
 				// enabling a beat
-				l.Set(press.Row, press.Col, leds.Red)
+				ledsState.Set(press.Row, press.Col, leds.Red)
 
-				if state.activeButtons() >= beatLimit {
-					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", state.activeButtons())
+				if beatState.activeButtons() >= beatLimit {
+					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", beatState.activeButtons())
 					select {
 					case b.yield <- struct{}{}:
 					default:
