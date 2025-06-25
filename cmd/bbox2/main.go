@@ -12,6 +12,7 @@ import (
 	"github.com/siggy/bbox/bbox2/program"
 	"github.com/siggy/bbox/bbox2/programs/beats"
 	"github.com/siggy/bbox/bbox2/programs/ledtest"
+	"github.com/siggy/bbox/bbox2/programs/nice"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
@@ -85,6 +86,7 @@ func main() {
 	programs := []program.ProgramFactory{
 		beats.NewProgram,
 		ledtest.NewProgram,
+		nice.NewProgram,
 	}
 
 	cur := 0
@@ -103,6 +105,7 @@ func main() {
 			progCtx, cancelProg = context.WithCancel(ctx)
 			curProgram = programs[cur](progCtx)
 			ledStrips.Clear()
+			wavs.StopAll()
 			yieldCount = 0
 
 			log.Debugf("yield new program: %s", curProgram.Name())

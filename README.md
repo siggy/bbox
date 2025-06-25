@@ -1,5 +1,7 @@
 # TODO
 
+- consider secret code to access nice
+- need amplitude input into the programs
 - autorun at boot time, systemd?
 - update .local.bash to auto-boot pi 5, maybe systemd, or tmux?
 - generic interface for LED lighting

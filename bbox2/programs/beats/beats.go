@@ -196,11 +196,8 @@ func (b *beats) run() {
 
 				if beatState.activeButtons() >= beatLimit {
 					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", beatState.activeButtons())
-					select {
-					case b.yield <- struct{}{}:
-					default:
-						b.log.Warn("Yield channel is full")
-					}
+					b.yield <- struct{}{}
+					return
 				}
 
 				// set a decay timer
