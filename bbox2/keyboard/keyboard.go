@@ -10,6 +10,8 @@ type Keyboard struct {
 	keymaps   map[rune]program.Coord
 	keyEvents <-chan keyboard.KeyEvent
 	presses   chan program.Coord
+
+	log *log.Entry
 }
 
 const keyBuffer = 100
@@ -30,6 +32,8 @@ func New(keymaps map[rune]program.Coord) (*Keyboard, error) {
 		keymaps:   keymaps,
 		keyEvents: keyEvents,
 		presses:   make(chan program.Coord, keyBuffer),
+
+		log: log.WithField("bbox2", "keyboard"),
 	}, nil
 }
 
@@ -48,14 +52,14 @@ func (k *Keyboard) Run() {
 		if event.Err != nil {
 			return
 		}
-		log.Debugf("You pressed: rune %q, key %X", event.Rune, event.Key)
+		k.log.Debugf("You pressed: rune %q, key %X", event.Rune, event.Key)
 
 		switch event.Key {
 		case keyboard.KeyEsc:
-			log.Debug("Detected Escape, exiting...")
+			k.log.Debug("Detected Escape, exiting...")
 			return
 		case keyboard.KeyCtrlC:
-			log.Debug("Detected Ctrl+C, exiting...")
+			k.log.Debug("Detected Ctrl+C, exiting...")
 			return
 		}
 
@@ -64,14 +68,14 @@ func (k *Keyboard) Run() {
 			ok := false
 			r, ok = runeMap[event.Key]
 			if !ok {
-				log.Warnf("Key %X has no mapped rune, skipping", event.Key)
+				k.log.Warnf("Key %X has no mapped rune, skipping", event.Key)
 				continue
 			}
 		}
 
 		coord, ok := k.keymaps[r]
 		if !ok {
-			log.Warnf("No coordinates for key %q", r)
+			k.log.Warnf("No coordinates for key %q", r)
 			continue
 		}
 

@@ -10,11 +10,13 @@ type fake struct {
 }
 
 func NewFake(stripLengths []int) (LEDs, error) {
+	log := log.WithField("leds", "fake")
+
 	log.Debugf("NewFake: %+v", stripLengths)
 
 	return &fake{
 		stripLengths: stripLengths,
-		log:          log.WithField("leds", "fake"),
+		log:          log,
 	}, nil
 }
 

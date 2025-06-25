@@ -42,6 +42,7 @@ func main() {
 		log.Fatalf("Invalid log level: %v", err)
 	}
 	log.SetLevel(lvl)
+	log := log.WithField("bbox2", "main")
 
 	keyMaps := keyboard.KeyMapsPC
 	if *bboxKB {
@@ -146,7 +147,7 @@ func main() {
 			program.Press(press)
 
 		case leds := <-program.Render():
-			log.Debugf("leds:\n%+v", leds)
+			log.Debugf("leds: %+v", leds)
 
 			err := ledStrips.Write(leds)
 			if err != nil {

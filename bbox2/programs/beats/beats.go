@@ -7,6 +7,7 @@ import (
 
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,6 +29,8 @@ type (
 		yield  chan struct{}
 
 		state beatState
+
+		log *log.Entry
 	}
 )
 
@@ -58,6 +61,8 @@ func NewProgram(ctx context.Context) program.Program {
 		play:   make(chan string, program.ChannelBuffer),
 		render: make(chan leds.State, program.ChannelBuffer),
 		yield:  make(chan struct{}, program.ChannelBuffer),
+
+		log: log.WithField("program", "beats"),
 	}
 	b.wg.Add(1)
 	go b.run() // fan-in keyboard, timers, etc
@@ -72,6 +77,8 @@ func (b *beats) Close() {
 }
 
 func (b *beats) Press(press program.Coord) {
+	b.log.Debugf("Press: %+v", press)
+
 	select {
 	case <-b.ctx.Done():
 		return
@@ -145,5 +152,7 @@ func (b *beats) run() {
 }
 
 func (b *beats) Yield() <-chan struct{} {
+	b.log.Debug("Yield")
+
 	return b.yield
 }
