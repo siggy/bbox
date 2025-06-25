@@ -25,6 +25,9 @@ type (
 		iv    interval
 		bpm   int
 
+		timers    timers
+		keepAlive *time.Timer // ensure at least one beat is sent periodically to keep speaker alive
+
 		log *log.Entry
 	}
 )
@@ -45,11 +48,11 @@ func NewProgram(ctx context.Context) program.Program {
 		},
 		bpm: defaultBPM,
 
-		in:     make(chan program.Coord),
-		play:   make(chan string),
-		render: make(chan leds.State),
+		in:     make(chan program.Coord, program.ChannelBuffer),
+		play:   make(chan string, program.ChannelBuffer),
+		render: make(chan leds.State, program.ChannelBuffer),
 
-		yield: make(chan struct{}, 1),
+		yield: make(chan struct{}, program.ChannelBuffer),
 
 		log: log,
 	}
@@ -69,6 +72,18 @@ func (b *beats) Close() {
 	b.wg.Wait()
 	close(b.play)
 	close(b.render)
+
+	if b.keepAlive != nil {
+		b.keepAlive.Stop()
+	}
+
+	for _, arr := range b.timers {
+		for _, t := range arr {
+			if t != nil {
+				t.Stop()
+			}
+		}
+	}
 }
 
 func (b *beats) Press(press program.Coord) {
@@ -94,7 +109,6 @@ func (b *beats) Render() <-chan leds.State {
 	return b.render
 }
 
-// TODO: decay
 // TODO: tempo changes?
 func (b *beats) run() {
 	defer b.wg.Done()
@@ -104,11 +118,19 @@ func (b *beats) run() {
 	tick := 0
 	tickTime := time.Now()
 
-	// pattern: kick, rest, snare, rest
-	sounds := []string{"perc-808.wav", "hihat-808.wav", "kick-classic.wav", "tom-808.wav"}
+	sounds := []string{
+		"hihat-808.wav",
+		"kick-classic.wav",
+		"perc-808.wav",
+		"tom-808.wav",
+	}
 
 	l := leds.State{}
 	l.Set(0, 0, leds.Red) // first pixel lit
+
+	// starter beat
+	b.in <- program.Coord{Row: 1, Col: 0}
+	b.in <- program.Coord{Row: 1, Col: 8}
 
 	for {
 		select {
@@ -143,15 +165,48 @@ func (b *beats) run() {
 				continue
 			}
 
-			// toggle the beat state
-			b.state[press.Row][press.Col] = !b.state[press.Row][press.Col]
+			// disable decay timer
+			if b.timers[press.Row][press.Col] != nil {
+				b.timers[press.Row][press.Col].Stop()
+			}
 
-			if b.state.activeButtons() >= beatLimit {
-				b.log.Debugf("Beat limit reached (%d active buttons), yielding...", b.state.activeButtons())
-				select {
-				case b.yield <- struct{}{}:
-				default:
-					b.log.Warn("Yield channel is full, skipping yield")
+			// toggle the beat state
+			disabling := b.state[press.Row][press.Col]
+			b.state[press.Row][press.Col] = !disabling
+
+			if disabling {
+				// disabling a beat
+				if b.state.allOff() {
+					b.keepAlive = time.AfterFunc(keepAlive, func() {
+						// enable a beat to keep the speaker alive
+						b.log.Debug("Keep alive timer expired")
+
+						b.in <- program.Coord{Row: 1, Col: 0}
+					})
+				}
+			} else {
+				// enabling a beat
+				if b.state.activeButtons() >= beatLimit {
+					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", b.state.activeButtons())
+					select {
+					case b.yield <- struct{}{}:
+					default:
+						b.log.Warn("Yield channel is full")
+					}
+				}
+
+				// set a decay timer
+				b.timers[press.Row][press.Col] = time.AfterFunc(decay, func() {
+					b.log.Debugf("Decay timer expired for press: %+v", press)
+					b.in <- program.Coord{
+						Row: press.Row,
+						Col: press.Col,
+					}
+				})
+
+				// we've enabled a beat, kill keepAlive
+				if b.keepAlive != nil {
+					b.keepAlive.Stop()
 				}
 			}
 

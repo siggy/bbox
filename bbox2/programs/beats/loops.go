@@ -19,16 +19,17 @@ const (
 
 	// if 33% of beats are active, yield to the next program
 	beatLimit = soundCount * beatCount / 3
+
+	// test
+	decay     = 2 * time.Second
+	keepAlive = 5 * time.Second
+
+	// prod
+	// decay     = 3 * time.Minute
+	// keepAlive = 14 * time.Minute
 )
 
 type interval struct {
 	ticksPerBeat int
 	ticks        int
-}
-
-var sounds = []string{
-	"hihat-808.wav",
-	"kick-classic.wav",
-	"perc-808.wav",
-	"tom-808.wav",
 }
