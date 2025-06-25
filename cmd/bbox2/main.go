@@ -16,14 +16,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// keyboard -> beats -> ticks -> wavs
-//                        -> leds
-//
-// keyboard
-//   <-presses
-// wavs
-//   wavs.Play("filename.wav")
-// buttons
+const (
+	yieldLimit = 5 // number of yields repetition keys before switching programs
+)
 
 var (
 	// should match scorpio/code.py
@@ -79,58 +74,39 @@ func main() {
 	defer ledStrips.Close()
 	ledStrips.Clear()
 
-	// beats := beats.New()
-
 	keyboard, err := keyboard.New(keyMaps)
 	if err != nil {
 		log.Fatalf("keyboard.New failed: %v", err)
 	}
-
 	presses := keyboard.Presses()
 
-	// sound check
-
-	// for range 1 {
-	// 	wavs.Play("perc-808.wav")
-	// 	time.Sleep(100 * time.Millisecond)
-	// 	wavs.Play("hihat-808.wav")
-	// 	time.Sleep(100 * time.Millisecond)
-	// 	wavs.Play("kick-classic.wav")
-	// 	time.Sleep(100 * time.Millisecond)
-	// 	wavs.Play("tom-808.wav")
-	// 	time.Sleep(100 * time.Millisecond)
-	// 	wavs.Play("ceottk001_human.wav")
-	// 	time.Sleep(100 * time.Millisecond)
-	// }
-
-	// run
-
 	go keyboard.Run()
-	// go beats.Run()
-
-	// TODO:
-	// program interface {
-	// 	Press() Coord<-
-	//  Play() <-String
-	//  Render() <-LEDs
-	// }
 
 	programs := []program.ProgramFactory{
 		beats.NewProgram,
 		ledtest.NewProgram,
-		// other.NewProgram,
-		// …
 	}
 
-	// programs := []programs.Program{beats}
-	// index of the active program
 	cur := 0
-	// contexts and the running Program
 	progCtx, cancelProg := context.WithCancel(ctx)
-	program := programs[cur](progCtx)
+	curProgram := programs[cur](progCtx)
+
+	yieldCount := 0
 
 	for {
-		// program := programs[cur]
+		yield := func() {
+			log.Debugf("yield prev program: %s", curProgram.Name())
+
+			cancelProg()
+			curProgram.Close()
+			cur = (cur + 1) % len(programs)
+			progCtx, cancelProg = context.WithCancel(ctx)
+			curProgram = programs[cur](progCtx)
+			ledStrips.Clear()
+			yieldCount = 0
+
+			log.Debugf("yield new program: %s", curProgram.Name())
+		}
 
 		select {
 		case press, ok := <-presses:
@@ -138,15 +114,26 @@ func main() {
 				log.Info("keyboard channel closed, exiting...")
 
 				cancelProg()
-				program.Close()
+				curProgram.Close()
 				return
 			}
 
 			log.Debugf("press: %q", press)
 
-			program.Press(press)
+			if press.Col == program.Cols-1 && press.Row == program.Rows-1 {
+				yieldCount++
+				log.Debugf("yieldCount: %d", yieldCount)
+				if yieldCount >= yieldLimit {
+					yield()
+					continue
+				}
+			} else {
+				yieldCount = 0
+			}
 
-		case leds := <-program.Render():
+			curProgram.Press(press)
+
+		case leds := <-curProgram.Render():
 			log.Debugf("leds: %s", leds)
 
 			err := ledStrips.Write(leds)
@@ -154,28 +141,19 @@ func main() {
 				log.Errorf("leds.Write failed: %v", err)
 			}
 
-		case play := <-program.Play():
+		case play := <-curProgram.Play():
 			log.Tracef("play: %s", play)
 
 			wavs.Play(play)
 
-		case <-program.Yield():
-			log.Debugf("yield: program %d", cur)
-
-			// tear down old:
-			cancelProg()
-			program.Close()
-
-			// pick next
-			cur = (cur + 1) % len(programs)
-			progCtx, cancelProg = context.WithCancel(ctx)
-			program = programs[cur](progCtx)
+		case <-curProgram.Yield():
+			yield()
 
 		case <-ctx.Done():
 			log.Info("context done")
 
 			cancelProg()
-			program.Close()
+			curProgram.Close()
 			return
 		}
 	}

@@ -14,6 +14,8 @@ type (
 
 	// Program defines the interface all Beatboxer programs must satisfy
 	Program interface {
+		Name() string
+
 		// input
 		Press(press Coord)
 
@@ -30,6 +32,9 @@ type (
 )
 
 const (
+	Rows = 4
+	Cols = 16
+
 	// TODO: remove?
 	ChannelBuffer = 100
 )

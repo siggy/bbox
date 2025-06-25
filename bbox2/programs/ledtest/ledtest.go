@@ -45,6 +45,10 @@ func NewProgram(ctx context.Context) program.Program {
 	return l
 }
 
+func (l *ledTest) Name() string {
+	return "ledTest"
+}
+
 func (l *ledTest) Close() {
 	l.cancel()
 	l.wg.Wait()
@@ -98,11 +102,6 @@ func (l *ledTest) run() {
 
 		case press := <-l.in:
 			l.log.Debugf("Processing press: %+v", press)
-
-			if press.Row == 3 && press.Col == 15 {
-				l.yield <- struct{}{}
-				return
-			}
 
 			lState.Set(press.Row, press.Col, leds.Red)
 
