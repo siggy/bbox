@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/ebitengine/oto/v3"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +17,9 @@ import (
 type Wavs struct {
 	ctx     *oto.Context
 	buffers map[string][]byte
-	players []*oto.Player
+
+	playersLock sync.Mutex
+	players     []*oto.Player
 
 	log *log.Entry
 }
@@ -69,11 +72,16 @@ func (w *Wavs) Play(filename string) {
 	player := getPlayer(w.ctx, buf)
 	player.Play()
 
-	// not thread safe
+	w.playersLock.Lock()
+	defer w.playersLock.Unlock()
+
 	w.players = append(w.players, player)
 }
 
 func (w *Wavs) StopAll() {
+	w.playersLock.Lock()
+	defer w.playersLock.Unlock()
+
 	for _, player := range w.players {
 		player.Close()
 	}
