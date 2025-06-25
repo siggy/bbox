@@ -10,13 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	sounds    = 4
-	beatCount = 16
-)
-
 type (
-	beatState [sounds][beatCount]bool
+	beatState [soundCount][beatCount]bool
 
 	beats struct {
 		ctx    context.Context
@@ -29,6 +24,8 @@ type (
 		yield  chan struct{}
 
 		state beatState
+		iv    interval
+		bpm   int
 
 		log *log.Entry
 	}
@@ -37,7 +34,7 @@ type (
 func (b beatState) String() string {
 	var str string
 	for row := range sounds {
-		for col := range beatCount {
+		for col := range b[row] {
 			if b[row][col] {
 				str += "X"
 			} else {
@@ -59,11 +56,20 @@ func NewProgram(ctx context.Context) program.Program {
 		cancel: cancel,
 
 		state: beatState{},
+		iv: interval{
+			ticksPerBeat: defaultTicksPerBeat,
+			ticks:        defaultTicks,
+		},
+		bpm: defaultBPM,
 
-		in:     make(chan program.Coord, program.ChannelBuffer),
-		play:   make(chan string, program.ChannelBuffer),
-		render: make(chan leds.State, program.ChannelBuffer),
-		yield:  make(chan struct{}, program.ChannelBuffer),
+		// in:     make(chan program.Coord, program.ChannelBuffer),
+		// play:   make(chan string, program.ChannelBuffer),
+		// render: make(chan leds.State, program.ChannelBuffer),
+		in:     make(chan program.Coord),
+		play:   make(chan string),
+		render: make(chan leds.State),
+
+		yield: make(chan struct{}, 1),
 
 		log: log,
 	}
@@ -126,9 +132,10 @@ func (b *beats) run() {
 
 	defer b.wg.Done()
 
-	// 120 BPM → 500ms per step
-	ticker := time.NewTicker(time.Minute / 120)
+	ticker := time.NewTicker(b.bpmToInterval(b.bpm))
 	defer ticker.Stop()
+	tick := 0
+	tickTime := time.Now()
 
 	// pattern: kick, rest, snare, rest
 	sounds := []string{"perc-808.wav", "hihat-808.wav", "kick-classic.wav", "tom-808.wav"}
@@ -136,31 +143,70 @@ func (b *beats) run() {
 	l := leds.State{}
 	l.Set(0, 0, leds.Red) // first pixel lit
 
-	step := 0
+	// step := 0
 	for {
 		select {
 		case <-b.ctx.Done():
 			return
 
-		case <-ticker.C:
-			if sounds[step] != "" {
-				// b.play <- sounds[step]
-			}
-			step = (step + 1) % len(sounds)
+		case <-ticker.C: // for every time interval
+			// next interval
+			tick = (tick + 1) % b.iv.ticks
+			// tmp := tick
 
-			l.Set(0, step, leds.Red)
-			// b.render <- l
+			// for _, ch := range b.ticks {
+			// 	ch <- tmp
+			// }
+
+			// for each beat type
+			if tick%b.iv.ticksPerBeat == 0 {
+				for i, beat := range b.state {
+					if beat[tick/b.iv.ticksPerBeat] {
+						// initiate playback
+						b.play <- sounds[i]
+					}
+				}
+			}
+
+			t := time.Now()
+			b.log.Tracef("BPM:__%+v_", b.bpm)
+			b.log.Tracef("int:__%+v_", b.bpmToInterval(b.bpm))
+			b.log.Tracef("time:_%+v_", t.Sub(tickTime))
+			b.log.Tracef("tick:_%+v_", tick)
+			tickTime = t
+			// if sounds[step] != "" {
+			// 	// b.play <- sounds[step]
+			// }
+			// step = (step + 1) % len(sounds)
+
+			// l.Set(0, step, leds.Red)
+			// // b.render <- l
 
 		case press := <-b.in:
 			b.log.Debugf("Processing press: %+v", press)
+
 			if press.Row == 3 && press.Col == 15 {
 				b.yield <- struct{}{}
 				return
 			}
+
+			if press.Row < 0 || press.Row >= soundCount || press.Col < 0 || press.Col >= beatCount {
+				b.log.Warnf("Invalid press coordinates: %+v", press)
+				continue
+			}
+
+			// toggle the beat state
+			b.state[press.Row][press.Col] = !b.state[press.Row][press.Col]
+
+			b.log.Debugf("Updated beat state:\n%s", b.state)
 		}
 	}
 }
 
 func (b *beats) Yield() <-chan struct{} {
 	return b.yield
+}
+
+func (b *beats) bpmToInterval(bpm int) time.Duration {
+	return 60 * time.Second / time.Duration(bpm) / (beatCount / 4) / time.Duration(b.iv.ticksPerBeat) // 4 beats per interval
 }

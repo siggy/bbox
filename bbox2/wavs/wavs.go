@@ -59,7 +59,7 @@ func New() (*Wavs, error) {
 }
 
 func (w *Wavs) Play(filename string) {
-	w.log.Debugf("Play %s", filename)
+	w.log.Tracef("play: %s", filename)
 	buf, ok := w.buffers[filename]
 	if !ok {
 		w.log.Warnf("Unknown: %s", filename)

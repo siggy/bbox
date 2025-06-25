@@ -155,7 +155,7 @@ func main() {
 			}
 
 		case play := <-program.Play():
-			log.Debugf("play: %s", play)
+			log.Tracef("play: %s", play)
 
 			wavs.Play(play)
 

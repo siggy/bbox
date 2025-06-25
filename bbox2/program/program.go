@@ -30,6 +30,7 @@ type (
 )
 
 const (
+	// TODO: remove?
 	ChannelBuffer = 100
 )
 
