@@ -19,7 +19,8 @@ type (
 )
 
 var (
-	Red = Color{R: 255, G: 0, B: 0, W: 0}
+	Black = Color{R: 0, G: 0, B: 0, W: 0}
+	Red   = Color{R: 255, G: 0, B: 0, W: 0}
 )
 
 func (c Color) String() string {

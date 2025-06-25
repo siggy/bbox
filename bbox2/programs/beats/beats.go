@@ -21,12 +21,6 @@ type (
 		render chan leds.State
 		yield  chan struct{}
 
-		bpmCh chan int
-
-		state state
-		iv    interval
-		bpm   int
-
 		timers     timers
 		keepAlive  *time.Timer // ensure at least one beat is sent periodically to keep speaker alive
 		tempoDecay *time.Timer // decay timer for tempo changes
@@ -44,19 +38,10 @@ func NewProgram(ctx context.Context) program.Program {
 		ctx:    ctx,
 		cancel: cancel,
 
-		state: state{},
-		iv: interval{
-			ticksPerBeat: defaultTicksPerBeat,
-			ticks:        defaultTicks,
-		},
-		bpm: defaultBPM,
-
 		in:     make(chan program.Coord, program.ChannelBuffer),
 		play:   make(chan string, program.ChannelBuffer),
 		render: make(chan leds.State, program.ChannelBuffer),
 		yield:  make(chan struct{}, program.ChannelBuffer),
-
-		bpmCh: make(chan int, program.ChannelBuffer),
 
 		log: log,
 	}
@@ -120,7 +105,16 @@ func (b *beats) Render() <-chan leds.State {
 func (b *beats) run() {
 	defer b.wg.Done()
 
-	ticker := time.NewTicker(b.getInterval())
+	state := state{}
+	iv := interval{
+		ticksPerBeat: defaultTicksPerBeat,
+		ticks:        defaultTicks,
+	}
+	bpm := defaultBPM
+	bpmCh := make(chan int, program.ChannelBuffer)
+	lastPress := program.Coord{Row: -1, Col: -1}
+
+	ticker := time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 	defer ticker.Stop()
 	tick := 0
 	tickTime := time.Now()
@@ -133,13 +127,10 @@ func (b *beats) run() {
 	}
 
 	l := leds.State{}
-	l.Set(0, 0, leds.Red) // first pixel lit
 
 	// starter beat
 	b.in <- program.Coord{Row: 1, Col: 0}
 	b.in <- program.Coord{Row: 1, Col: 8}
-
-	lastPress := program.Coord{Row: -1, Col: -1}
 
 	for {
 		select {
@@ -148,12 +139,12 @@ func (b *beats) run() {
 
 		// beat loop
 		case <-ticker.C:
-			tick = (tick + 1) % b.iv.ticks
+			tick = (tick + 1) % iv.ticks
 
 			// for each beat type
-			if tick%b.iv.ticksPerBeat == 0 {
-				for i, beat := range b.state {
-					if beat[tick/b.iv.ticksPerBeat] {
+			if tick%iv.ticksPerBeat == 0 {
+				for i, beat := range state {
+					if beat[tick/iv.ticksPerBeat] {
 						// initiate playback
 						b.play <- sounds[i]
 					}
@@ -161,8 +152,8 @@ func (b *beats) run() {
 			}
 
 			t := time.Now()
-			b.log.Tracef("BPM:__%+v_", b.bpm)
-			b.log.Tracef("int:__%+v_", b.getInterval())
+			b.log.Tracef("BPM:__%+v_", bpm)
+			b.log.Tracef("int:__%+v_", getInterval(bpm, iv.ticksPerBeat))
 			b.log.Tracef("time:_%+v_", t.Sub(tickTime))
 			b.log.Tracef("tick:_%+v_", tick)
 			tickTime = t
@@ -181,24 +172,16 @@ func (b *beats) run() {
 			}
 
 			// toggle the beat state
-			disabling := b.state[press.Row][press.Col]
-			b.state[press.Row][press.Col] = !disabling
+			disabling := state[press.Row][press.Col]
+			state[press.Row][press.Col] = !disabling
 
-			increasingTempo := lastPress == tempoUp && press == tempoUp && b.bpm < maxBPM
-			decreasingTempo := lastPress == tempoDown && press == tempoDown && b.bpm > minBPM
-			if increasingTempo || decreasingTempo {
-				if increasingTempo {
-					b.bpmCh <- b.bpm + 4
-				}
-				if decreasingTempo {
-					b.bpmCh <- b.bpm - 4
-				}
-			}
-			lastPress = press
+			b.log.Debugf("Updated beat state:\n%s", state)
 
 			if disabling {
 				// disabling a beat
-				if b.state.allOff() {
+				l.Set(press.Row, press.Col, leds.Black)
+
+				if state.allOff() {
 					b.keepAlive = time.AfterFunc(keepAlive, func() {
 						// enable a beat to keep the speaker alive
 						b.log.Debug("Keep alive timer expired")
@@ -208,8 +191,10 @@ func (b *beats) run() {
 				}
 			} else {
 				// enabling a beat
-				if b.state.activeButtons() >= beatLimit {
-					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", b.state.activeButtons())
+				l.Set(press.Row, press.Col, leds.Red)
+
+				if state.activeButtons() >= beatLimit {
+					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", state.activeButtons())
 					select {
 					case b.yield <- struct{}{}:
 					default:
@@ -232,22 +217,33 @@ func (b *beats) run() {
 				}
 			}
 
-			b.log.Debugf("Updated beat state:\n%s", b.state)
-		case bpm := <-b.bpmCh:
-			b.log.Debugf("BPM changed to %d", bpm)
+			// check for tempo changes
+			increasingTempo := lastPress == tempoUp && press == tempoUp && bpm < maxBPM
+			decreasingTempo := lastPress == tempoDown && press == tempoDown && bpm > minBPM
+			if increasingTempo || decreasingTempo {
+				if increasingTempo {
+					bpmCh <- bpm + 4
+				}
+				if decreasingTempo {
+					bpmCh <- bpm - 4
+				}
+			}
+			lastPress = press
+		case newBPM := <-bpmCh:
+			b.log.Debugf("BPM changed to %d", newBPM)
 
-			b.bpm = bpm
+			bpm = newBPM
 
 			// set a decay timer
 			if b.tempoDecay != nil {
 				b.tempoDecay.Stop()
 			}
 			b.tempoDecay = time.AfterFunc(tempoDecay, func() {
-				b.bpmCh <- defaultBPM
+				bpmCh <- defaultBPM
 			})
 
 			ticker.Stop()
-			ticker = time.NewTicker(b.getInterval())
+			ticker = time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 			defer ticker.Stop()
 		}
 	}
@@ -257,6 +253,6 @@ func (b *beats) Yield() <-chan struct{} {
 	return b.yield
 }
 
-func (b *beats) getInterval() time.Duration {
-	return 60 * time.Second / time.Duration(b.bpm) / (beatCount / 4) / time.Duration(b.iv.ticksPerBeat) // 4 beats per interval
+func getInterval(bpm int, ticksPerBeat int) time.Duration {
+	return 60 * time.Second / time.Duration(bpm) / (beatCount / 4) / time.Duration(ticksPerBeat) // 4 beats per interval
 }

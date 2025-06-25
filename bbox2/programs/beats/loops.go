@@ -8,7 +8,7 @@ import (
 
 type interval struct {
 	ticksPerBeat int
-	ticks        int
+	ticks        int // TODO: what to do with this?
 }
 
 const (
