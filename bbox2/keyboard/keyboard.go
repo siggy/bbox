@@ -2,14 +2,14 @@ package keyboard
 
 import (
 	"github.com/eiannone/keyboard"
-	"github.com/siggy/bbox/bbox2/programs"
+	"github.com/siggy/bbox/bbox2/program"
 	log "github.com/sirupsen/logrus"
 )
 
 type Keyboard struct {
-	keymaps   map[rune]programs.Coord
+	keymaps   map[rune]program.Coord
 	keyEvents <-chan keyboard.KeyEvent
-	presses   chan programs.Coord
+	presses   chan program.Coord
 }
 
 const keyBuffer = 100
@@ -20,7 +20,7 @@ var runeMap = map[keyboard.Key]rune{
 	keyboard.KeyEnter: '9',
 }
 
-func New(keymaps map[rune]programs.Coord) (*Keyboard, error) {
+func New(keymaps map[rune]program.Coord) (*Keyboard, error) {
 	keyEvents, err := keyboard.GetKeys(keyBuffer)
 	if err != nil {
 		return nil, err
@@ -29,11 +29,11 @@ func New(keymaps map[rune]programs.Coord) (*Keyboard, error) {
 	return &Keyboard{
 		keymaps:   keymaps,
 		keyEvents: keyEvents,
-		presses:   make(chan programs.Coord, keyBuffer),
+		presses:   make(chan program.Coord, keyBuffer),
 	}, nil
 }
 
-func (k *Keyboard) Presses() <-chan programs.Coord {
+func (k *Keyboard) Presses() <-chan program.Coord {
 	return k.presses
 }
 

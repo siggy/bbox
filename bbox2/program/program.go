@@ -1,6 +1,10 @@
-package programs
+package program
 
-import "github.com/siggy/bbox/bbox2/leds"
+import (
+	"context"
+
+	"github.com/siggy/bbox/bbox2/leds"
+)
 
 type (
 	Coord struct {
@@ -17,7 +21,12 @@ type (
 		Play() <-chan string
 		Render() <-chan leds.State
 		Yield() <-chan struct{}
+
+		// clean up
+		Close()
 	}
+
+	ProgramFactory func(ctx context.Context) Program
 )
 
 const (

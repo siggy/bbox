@@ -1,0 +1,32 @@
+package leds
+
+import (
+	log "github.com/sirupsen/logrus"
+)
+
+type fake struct {
+	stripLengths []int
+	log          *log.Entry
+}
+
+func NewFake(stripLengths []int) (LEDs, error) {
+	log.Debugf("NewFake: %+v", stripLengths)
+
+	return &fake{
+		stripLengths: stripLengths,
+		log:          log.WithField("leds", "fake"),
+	}, nil
+}
+
+func (f *fake) Close() error {
+	return nil
+}
+
+func (f *fake) Clear() error {
+	return f.Write(all(f.stripLengths))
+}
+
+func (f *fake) Write(state State) error {
+	f.log.Debugf("Write: %+v", state)
+	return nil
+}

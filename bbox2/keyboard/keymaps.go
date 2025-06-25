@@ -1,8 +1,8 @@
 package keyboard
 
-import "github.com/siggy/bbox/bbox2/programs"
+import "github.com/siggy/bbox/bbox2/program"
 
-var KeyMapsPC = map[rune]programs.Coord{
+var KeyMapsPC = map[rune]program.Coord{
 	'1': {Row: 0, Col: 0},
 	'2': {Row: 0, Col: 1},
 	'3': {Row: 0, Col: 2},
@@ -89,7 +89,7 @@ var KeyMapsPC = map[rune]programs.Coord{
 // | - | = | . | , | / | ; | space | enter |
 
 // mapping from keyboard box
-var KeyMapsRPI = map[rune]programs.Coord{
+var KeyMapsRPI = map[rune]program.Coord{
 	// 2 x 21 = [volume down]
 	// 2 x 24 = [mute]
 	// 3 x 19 = ` (quit)

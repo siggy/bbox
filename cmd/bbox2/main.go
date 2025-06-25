@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/siggy/bbox/bbox2/keyboard"
-	"github.com/siggy/bbox/bbox2/programs"
+	"github.com/siggy/bbox/bbox2/leds"
+	"github.com/siggy/bbox/bbox2/program"
 	"github.com/siggy/bbox/bbox2/programs/beats"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
@@ -24,9 +25,16 @@ import (
 //   wavs.Play("filename.wav")
 // buttons
 
+var (
+	// should match scorpio/code.py
+	// StripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
+	stripLengths = []int{30}
+)
+
 func main() {
 	logLevel := flag.String("log-level", "debug", "set log level (debug, info, warn, error, fatal, panic)")
 	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
+	fakeLEDs := flag.Bool("fake-leds", false, "enable fake LEDs")
 	flag.Parse()
 
 	lvl, err := log.ParseLevel(*logLevel)
@@ -53,7 +61,24 @@ func main() {
 	}
 	defer wavs.Close()
 
-	beats := beats.New()
+	var ledStrips leds.LEDs
+	if *fakeLEDs {
+		ledStrips, err = leds.NewFake(stripLengths)
+		if err != nil {
+			log.Errorf("leds.NewFake failed: %+v", err)
+			os.Exit(1)
+		}
+	} else {
+		ledStrips, err = leds.New(stripLengths)
+		if err != nil {
+			log.Errorf("leds.New failed: %+v", err)
+			os.Exit(1)
+		}
+	}
+	defer ledStrips.Close()
+	ledStrips.Clear()
+
+	// beats := beats.New()
 
 	keyboard, err := keyboard.New(keyMaps)
 	if err != nil {
@@ -80,7 +105,7 @@ func main() {
 	// run
 
 	go keyboard.Run()
-	go beats.Run()
+	// go beats.Run()
 
 	// TODO:
 	// program interface {
@@ -89,34 +114,69 @@ func main() {
 	//  Render() <-LEDs
 	// }
 
-	programs := []programs.Program{beats}
+	programs := []program.ProgramFactory{
+		beats.NewProgram,
+		beats.NewProgram,
+		// other.NewProgram,
+		// …
+	}
+
+	// programs := []programs.Program{beats}
+	// index of the active program
 	cur := 0
+	// contexts and the running Program
+	progCtx, cancelProg := context.WithCancel(ctx)
+	program := programs[cur](progCtx)
 
 	for {
-		program := programs[cur]
+		// program := programs[cur]
 
 		select {
-		case press, more := <-presses:
-			if !more {
+		case press, ok := <-presses:
+			if !ok {
 				log.Info("keyboard channel closed, exiting...")
+
+				cancelProg()
+				program.Close()
 				return
 			}
+
 			log.Debugf("press: %q", press)
+
 			program.Press(press)
 
 		case leds := <-program.Render():
-			log.Debugf("leds:\n%s", leds)
+			log.Debugf("leds:\n%+v", leds)
+
+			err := ledStrips.Write(leds)
+			if err != nil {
+				log.Errorf("leds.Write failed: %v", err)
+			}
 
 		case play := <-program.Play():
 			log.Debugf("play: %s", play)
+
 			wavs.Play(play)
 
 		case <-program.Yield():
-			log.Debugf("yield")
+			log.Debugf("yield: program %d", cur)
+
+			// tear down old:
+			cancelProg()
+			program.Close()
+
+			// pick next
+			cur = (cur + 1) % len(programs)
+			progCtx, cancelProg = context.WithCancel(ctx)
+			program = programs[cur](progCtx)
+
 			cur = (cur + 1) % len(programs)
 
 		case <-ctx.Done():
 			log.Info("context done")
+
+			cancelProg()
+			program.Close()
 			return
 		}
 	}

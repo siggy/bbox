@@ -12,6 +12,10 @@ type (
 	State map[int]map[int]Color
 )
 
+var (
+	Red = Color{R: 255, G: 0, B: 0, W: 0}
+)
+
 func NewState() State {
 	return State{}
 }

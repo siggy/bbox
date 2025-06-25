@@ -1,31 +1,40 @@
 package beats
 
 import (
+	"context"
+	"sync"
+	"time"
+
 	"github.com/siggy/bbox/bbox2/leds"
-	"github.com/siggy/bbox/bbox2/programs"
+	"github.com/siggy/bbox/bbox2/program"
 )
 
 const (
-	sounds = 4
-	beats  = 16
+	sounds    = 4
+	beatCount = 16
 )
 
 type (
-	BeatState [sounds][beats]bool
+	beatState [sounds][beatCount]bool
 
-	Beats struct {
-		beats    BeatState
-		coordsCh chan programs.Coord
-		// beatsCh  chan BeatState
-		playCh chan string
-		ledsCh chan leds.State
+	beats struct {
+		ctx    context.Context
+		cancel context.CancelFunc
+		wg     sync.WaitGroup
+
+		in     chan program.Coord
+		play   chan string
+		render chan leds.State
+		yield  chan struct{}
+
+		state beatState
 	}
 )
 
-func (b BeatState) String() string {
+func (b beatState) String() string {
 	var str string
 	for row := range sounds {
-		for col := range beats {
+		for col := range beatCount {
 			if b[row][col] {
 				str += "X"
 			} else {
@@ -37,45 +46,104 @@ func (b BeatState) String() string {
 	return str
 }
 
-func New() *Beats {
-	return &Beats{
-		beats:    BeatState{},
-		coordsCh: make(chan programs.Coord, programs.ChannelBuffer),
-		// beatsCh:  make(chan BeatState, programs.ChannelBuffer),
-		playCh: make(chan string, programs.ChannelBuffer),
-		ledsCh: make(chan leds.State, programs.ChannelBuffer),
+func NewProgram(ctx context.Context) program.Program {
+	ctx, cancel := context.WithCancel(ctx)
+	b := &beats{
+		ctx:    ctx,
+		cancel: cancel,
+
+		state: beatState{},
+
+		in:     make(chan program.Coord, program.ChannelBuffer),
+		play:   make(chan string, program.ChannelBuffer),
+		render: make(chan leds.State, program.ChannelBuffer),
+		yield:  make(chan struct{}, program.ChannelBuffer),
 	}
+	b.wg.Add(1)
+	go b.run() // fan-in keyboard, timers, etc
+	return b
 }
 
-func (b *Beats) Press(press programs.Coord) {
-	b.coordsCh <- press
+func (b *beats) Close() {
+	b.cancel()
+	b.wg.Wait()
+	close(b.play)
+	close(b.render)
 }
 
-func (b *Beats) Play() <-chan string {
-	return b.playCh
-}
-func (b *Beats) Render() <-chan leds.State {
-	return b.ledsCh
+func (b *beats) Press(press program.Coord) {
+	select {
+	case <-b.ctx.Done():
+		return
+	default:
+	}
+	// enqueue input non-blockingly
+	select {
+	case b.in <- press:
+	default:
+	}
+	// if 'n' pressed, signal yield once
+	// if lower right is pressed 5 times, yield
+	// if press.Rune == 'n' {
+	// 	select {
+	// 	case b.yield <- struct{}{}:
+	// 	default:
+	// 	}
+	// }
 }
 
-// func (b *Beats) State() <-chan BeatState {
-// 	return b.beatsCh
-// }
+func (b *beats) Play() <-chan string {
+	return b.play
+}
+func (b *beats) Render() <-chan leds.State {
+	return b.render
+}
 
 // TODO: decay
 // TODO: tempo changes?
-func (b *Beats) Run() {
-	for coords := range b.coordsCh {
-		sound := coords.Row
-		beat := coords.Col
+func (b *beats) run() {
+	// for coords := range b.inCoords {
+	// 	sound := coords.Row
+	// 	beat := coords.Col
 
-		b.beats[sound][beat] = !b.beats[sound][beat]
+	// 	b.beats[sound][beat] = !b.beats[sound][beat]
 
-		// TODO: translate BeatState to LEDs
-		// b.beatsCh <- b.beats
+	// 	// TODO: translate beatState to LEDs
+	// 	// b.beatsCh <- b.beats
+	// }
+
+	defer b.wg.Done()
+
+	// 120 BPM → 500ms per step
+	ticker := time.NewTicker(time.Minute / 120)
+	defer ticker.Stop()
+
+	// pattern: kick, rest, snare, rest
+	sounds := []string{"kick.wav", "", "snare.wav", ""}
+
+	l := leds.State{}
+	l.Set(0, 0, leds.Red) // first pixel lit
+
+	step := 0
+	for {
+		select {
+		case <-b.ctx.Done():
+			return
+
+		case <-ticker.C:
+			if sounds[step] != "" {
+				b.play <- sounds[step]
+			}
+			b.render <- l
+			step = (step + 1) % len(sounds)
+
+		case <-b.in:
+			// ignore other presses here
+		}
 	}
+
 }
 
-func (b *Beats) Yield() <-chan struct{} {
-	return nil
+func (b *beats) Yield() <-chan struct{} {
+	return b.yield
 }

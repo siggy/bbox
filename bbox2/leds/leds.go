@@ -7,6 +7,19 @@ import (
 	"go.bug.st/serial"
 )
 
+type (
+	LEDs interface {
+		Close() error
+		Clear() error
+		Write(State) error
+	}
+
+	leds struct {
+		port         serial.Port
+		stripLengths []int
+	}
+)
+
 const (
 	devicePath = "/dev/tty.usbmodem103" // macbook
 	// devicePath = "/dev/ttyACM1" // pi
@@ -14,60 +27,44 @@ const (
 	baudRate = 115200
 )
 
-type Leds struct {
-	port         serial.Port
-	stripLengths []int
-}
-
-func New(stripLengths []int) (*Leds, error) {
+func New(stripLengths []int) (LEDs, error) {
 	port, err := serial.Open(devicePath, &serial.Mode{BaudRate: baudRate})
 	if err != nil {
 		return nil, err
 	}
 	log.Debugf("Connected to %s", devicePath)
-	return &Leds{
+	return &leds{
 		port:         port,
 		stripLengths: stripLengths,
 	}, nil
 }
 
-func (s *Leds) Close() error {
-	if s.port != nil {
-		return s.port.Close()
+func (l *leds) Close() error {
+	if l.port != nil {
+		return l.port.Close()
 	}
 	return nil
 }
 
-func (s *Leds) Clear() error {
-	return s.write(s.all())
+func (l *leds) Clear() error {
+	return l.write(all(l.stripLengths))
 }
 
-func (s *Leds) Write(state State) error {
+func (l *leds) Write(state State) error {
 	for strip, stripLEDs := range state {
-		if strip < 0 || strip >= len(s.stripLengths) {
+		if strip < 0 || strip >= len(l.stripLengths) {
 			return fmt.Errorf("invalid strip index: %d", strip)
 		}
 		for pixel := range stripLEDs {
-			if pixel < 0 || pixel >= s.stripLengths[strip] {
+			if pixel < 0 || pixel >= l.stripLengths[strip] {
 				return fmt.Errorf("invalid pixel index: %d for strip %d", pixel, strip)
 			}
 		}
 	}
-	return s.write(state)
+	return l.write(state)
 }
 
-func (s *Leds) all() State {
-	state := State{}
-	for strip, length := range s.stripLengths {
-		state[strip] = make(map[int]Color)
-		for pixel := 0; pixel < length; pixel++ {
-			state[strip][pixel] = Color{0, 0, 0, 0}
-		}
-	}
-	return state
-}
-
-func (s *Leds) write(state State) error {
+func (l *leds) write(state State) error {
 	var payload []byte
 
 	for strip, stripLEDs := range state {
@@ -77,7 +74,7 @@ func (s *Leds) write(state State) error {
 	}
 
 	packet := buildPacket(payload)
-	n, err := s.port.Write(packet)
+	n, err := l.port.Write(packet)
 	if err != nil {
 		return err
 	}
@@ -101,4 +98,15 @@ func buildPacket(payload []byte) []byte {
 	packet = append(packet, checksum)
 
 	return packet
+}
+
+func all(stripLengths []int) State {
+	state := State{}
+	for strip, length := range stripLengths {
+		state[strip] = make(map[int]Color)
+		for pixel := 0; pixel < length; pixel++ {
+			state[strip][pixel] = Color{0, 0, 0, 0}
+		}
+	}
+	return state
 }
