@@ -127,7 +127,7 @@ sudo apt-get install -y libasound2-dev
 ## Run
 
 ```bash
-go run cmd/bbox2/main.go
+go run cmd/bbox2/main.go --fake-leds
 ```
 
 
