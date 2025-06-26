@@ -29,7 +29,7 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
-	ledStrips, err := leds.New(stripLengths)
+	ledStrips, err := leds.New(stripLengths, false)
 	if err != nil {
 		log.Errorf("leds.New failed: %+v", err)
 		os.Exit(1)

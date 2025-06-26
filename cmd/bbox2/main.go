@@ -31,6 +31,7 @@ func main() {
 	logLevel := flag.String("log-level", "debug", "set log level (debug, info, warn, error, fatal, panic)")
 	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
 	fakeLEDs := flag.Bool("fake-leds", false, "enable fake LEDs")
+	macDevice := flag.Bool("mac-device", false, "connect to scorpio from a macbook (default is Raspberry Pi)")
 	flag.Parse()
 
 	lvl, err := log.ParseLevel(*logLevel)
@@ -44,9 +45,6 @@ func main() {
 	if *bboxKB {
 		keyMaps = keyboard.KeyMapsRPI
 	}
-
-	// usb.Run()
-	// os.Exit(0)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -66,7 +64,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		ledStrips, err = leds.New(stripLengths)
+		ledStrips, err = leds.New(stripLengths, *macDevice)
 		if err != nil {
 			log.Errorf("leds.New failed: %+v", err)
 			os.Exit(1)

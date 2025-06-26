@@ -21,13 +21,18 @@ type (
 )
 
 const (
-	devicePath = "/dev/tty.usbmodem103" // macbook
-	// devicePath = "/dev/ttyACM1" // pi
+	macDevicePath = "/dev/tty.usbmodem103" // macbook
+	piDevicePath  = "/dev/ttyACM1"         // pi
 
 	baudRate = 115200
 )
 
-func New(stripLengths []int) (LEDs, error) {
+func New(stripLengths []int, macDevice bool) (LEDs, error) {
+	devicePath := piDevicePath
+	if macDevice {
+		devicePath = macDevicePath
+	}
+
 	port, err := serial.Open(devicePath, &serial.Mode{BaudRate: baudRate})
 	if err != nil {
 		return nil, err
