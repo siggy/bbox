@@ -22,6 +22,21 @@ var (
 	Black = Color{R: 0, G: 0, B: 0, W: 0}
 	Red   = Color{R: 255, G: 0, B: 0, W: 0}
 	White = Color{R: 0, G: 0, B: 0, W: 255}
+
+	pink       = Color{159, 0, 159, 93}
+	trueBlue   = Color{0, 0, 255, 0}
+	TrueBlue   = trueBlue
+	red        = Color{210, 0, 50, 40}
+	lightGreen = Color{0, 181, 115, 43}
+	TrueRed    = Color{255, 0, 0, 0}
+	TrueWhite  = Color{0, 0, 0, 255}
+	purple     = Color{82, 0, 197, 52}
+	Mint       = Color{62, 180, 137, 0}
+	trueGreen  = Color{0, 255, 0, 0}
+	deepPurple = Color{200, 0, 100, 0}
+
+	// special color to tell beatboxer an active beat is occurring
+	ActiveBeatPurple = Color{127, 127, 0, 127}
 )
 
 func (c Color) String() string {

@@ -179,7 +179,7 @@ func (b *beats) run() {
 			for i := range 30 {
 				ledsState.Set(0, i, leds.Black)
 			}
-			ledsState.Set(0, tick%30, leds.White)
+			ledsState.Set(0, tick%30, leds.Mint)
 			for _, beat := range beatState {
 				for j, active := range beat {
 					if active {
