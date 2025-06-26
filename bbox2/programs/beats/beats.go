@@ -27,6 +27,39 @@ type (
 
 		log *log.Entry
 	}
+
+	interval struct {
+		ticksPerBeat int
+		ticks        int // TODO: what to do with this?
+	}
+)
+
+const (
+	defaultBPM          = 120
+	minBPM              = 30
+	maxBPM              = 480
+	soundCount          = program.Rows
+	beatCount           = program.Cols
+	defaultTicksPerBeat = 10
+	defaultTicks        = beatCount * defaultTicksPerBeat
+
+	// if 33% of beats are active, yield to the next program
+	beatLimit = soundCount * beatCount / 3
+
+	// test
+	// decay      = 2 * time.Second
+	// keepAlive  = 5 * time.Second
+	tempoDecay = 5 * time.Second
+
+	// prod
+	decay     = 3 * time.Minute
+	keepAlive = 14 * time.Minute
+	// tempoDecay = 3 * time.Minute
+)
+
+var (
+	tempoUp   = program.Coord{Row: 0, Col: program.Cols - 1}
+	tempoDown = program.Coord{Row: 1, Col: program.Cols - 1}
 )
 
 func NewProgram(ctx context.Context) program.Program {
@@ -231,6 +264,15 @@ func (b *beats) run() {
 			b.log.Debugf("BPM changed to %d", newBPM)
 
 			bpm = newBPM
+
+			// BPM: 30 -> 60 -> 120 -> 240 -> 480.0
+			// TPB: 40 -> 20 ->  10 ->   5 ->   2.5
+			iv.ticksPerBeat = 1200 / bpm
+			iv.ticks = beatCount * iv.ticksPerBeat
+
+			// for _, ch := range l.intervalCh {
+			// 	ch <- l.iv
+			// }
 
 			// set a decay timer
 			if b.tempoDecay != nil {
