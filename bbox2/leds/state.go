@@ -21,15 +21,16 @@ type (
 var (
 	Black = Color{R: 0, G: 0, B: 0, W: 0}
 	Red   = Color{R: 255, G: 0, B: 0, W: 0}
+	White = Color{R: 0, G: 0, B: 0, W: 255}
 )
 
 func (c Color) String() string {
 	return fmt.Sprintf("%d,%d,%d,%d", c.R, c.G, c.B, c.W)
 }
 
-func NewState() State {
-	return State{}
-}
+// func NewState() State {
+// 	return State{}
+// }
 
 func (s State) Set(strip int, pixel int, color Color) {
 	if _, ok := s[strip]; !ok {

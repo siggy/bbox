@@ -153,7 +153,7 @@ func (b *beats) run() {
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
 
-	ledsState := leds.State{}
+	// ledsState := leds.State{}
 
 	ticker := time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 	defer ticker.Stop()
@@ -174,6 +174,21 @@ func (b *beats) run() {
 		// beat loop
 		case <-ticker.C:
 			tick = (tick + 1) % iv.ticks
+
+			ledsState := leds.State{}
+			for i := range 30 {
+				ledsState.Set(0, i, leds.Black)
+			}
+			ledsState.Set(0, tick%30, leds.White)
+			for _, beat := range beatState {
+				for j, active := range beat {
+					if active {
+						// set the beat LED to red
+						ledsState.Set(0, j, leds.Red)
+					}
+				}
+			}
+			b.render <- ledsState
 
 			// for each beat type
 			if tick%iv.ticksPerBeat == 0 {
@@ -213,7 +228,6 @@ func (b *beats) run() {
 
 			if disabling {
 				// disabling a beat
-				ledsState.Set(press.Row, press.Col, leds.Black)
 
 				if beatState.allOff() {
 					b.keepAlive = time.AfterFunc(keepAlive, func() {
@@ -225,7 +239,6 @@ func (b *beats) run() {
 				}
 			} else {
 				// enabling a beat
-				ledsState.Set(press.Row, press.Col, leds.Red)
 
 				if beatState.activeButtons() >= beatLimit {
 					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", beatState.activeButtons())
@@ -260,6 +273,7 @@ func (b *beats) run() {
 				}
 			}
 			lastPress = press
+
 		case newBPM := <-bpmCh:
 			b.log.Debugf("BPM changed to %d", newBPM)
 
