@@ -28,11 +28,12 @@ type (
 )
 
 const (
-	defaultBPM = 120
-	minBPM     = 30
-	maxBPM     = 480
-	soundCount = program.Rows
-	beatCount  = program.Cols
+	ticksPerMinute = 1200
+	defaultBPM     = 120
+	minBPM         = 30
+	maxBPM         = 480
+	soundCount     = program.Rows
+	beatCount      = program.Cols
 
 	// if 33% of beats are active, yield to the next program
 	beatLimit = soundCount * beatCount / 3
@@ -40,12 +41,12 @@ const (
 	// test
 	// decay             = 2 * time.Second
 	// keepAliveInterval = 5 * time.Second
-	tempoDecay = 5 * time.Second
+	// tempoDecay = 5 * time.Second
 
 	// prod
 	decay             = 3 * time.Minute
 	keepAliveInterval = 14 * time.Minute
-	// tempoDecay = 3 * time.Minute
+	tempoDecay        = 3 * time.Minute
 )
 
 var (
@@ -122,8 +123,8 @@ func (b *beats) run() {
 
 	beatState := state{}
 
-	ticksPerBeat := 1200 / defaultBPM // default: 10
-	ticks := beatCount * ticksPerBeat // default: 160
+	ticksPerBeat := ticksPerMinute / defaultBPM // default: 10
+	ticks := beatCount * ticksPerBeat           // default: 160
 
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
@@ -295,13 +296,13 @@ func (b *beats) run() {
 			lastPress = press
 
 		case newBPM := <-bpmCh:
-			b.log.Debugf("BPM changed to %d", newBPM)
+			b.log.Debugf("BPM changed from %d to %d", bpm, newBPM)
 
 			bpm = newBPM
 
 			// BPM: 30 -> 60 -> 120 -> 240 -> 480.0
 			// TPB: 40 -> 20 ->  10 ->   5 ->   2.5
-			ticksPerBeat = 1200 / bpm
+			ticksPerBeat = ticksPerMinute / bpm
 			ticks = beatCount * ticksPerBeat
 
 			// for _, ch := range l.intervalCh {
@@ -315,7 +316,7 @@ func (b *beats) run() {
 				default:
 				}
 			}
-			if newBPM != defaultBPM {
+			if bpm != defaultBPM {
 				tempoReset.Reset(tempoDecay)
 			}
 
