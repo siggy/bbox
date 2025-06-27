@@ -132,7 +132,44 @@ sudo apt-get install -y libasound2-dev
 go run cmd/bbox2/main.go --fake-leds
 ```
 
+## Build
 
+```bash
+go build -o /home/sig/bin/bbox cmd/bbox2/main.go
+```
+
+## Auto boot
+
+```bash
+cat <<EOF > /home/sig/start-bbox.sh
+#!/bin/bash
+if ! tmux has-session -t bbox 2>/dev/null; then
+  tmux new-session -s bbox -d "bash -c '/home/sig/bin/bbox; exec bash'"
+fi
+EOF
+
+chmod +x /home/sig/start-bbox.sh
+
+sudo tee /etc/systemd/system/bbox.service > /dev/null <<EOF
+[Unit]
+Description=Start /home/sig/bin/bbox in tmux session at boot
+After=network.target
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+User=sig
+ExecStart=/home/sig/start-bbox.sh
+RemainAfterExit=true
+WorkingDirectory=$(dirname "/home/sig/bin/bbox")
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reexec
+sudo systemctl enable bbox.service
+```
 
 
 
