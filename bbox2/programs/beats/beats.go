@@ -199,6 +199,7 @@ func (b *beats) run() {
 			for beatAcc >= 1.0 {
 				beatAcc -= 1.0
 
+				// TODO: get smarter about updates?
 				// for each row, clear its full physical range:
 				for rowIdx, rowMap := range rows {
 					step := 1

@@ -10,17 +10,28 @@ type Row struct {
 
 var (
 	rows = [program.Rows]Row{
-		// rows 0 and 1 are LED strip 0
+		// test strip 0-29
 		{
-			start: 71,
-			end:   0,
+			start: 0,
+			end:   29,
 			buttons: [program.Cols]int{
-				68, 64, 60, 56,
-				41, 37, 33, 29,
-				27, 23, 19, 15,
-				13, 9, 5, 1,
+				1, 2, 3, 4,
+				5, 6, 7, 8,
+				10, 12, 14, 16,
+				19, 22, 25, 29,
 			},
 		},
+		// rows 0 and 1 are LED strip 0
+		// {
+		// 	start: 71,
+		// 	end:   0,
+		// 	buttons: [program.Cols]int{
+		// 		68, 64, 60, 56,
+		// 		41, 37, 33, 29,
+		// 		27, 23, 19, 15,
+		// 		13, 9, 5, 1,
+		// 	},
+		// },
 		{
 			start: 72,
 			end:   151,
