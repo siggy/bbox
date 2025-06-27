@@ -1,8 +1,6 @@
 package leds
 
 import (
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial"
 )
@@ -17,6 +15,7 @@ type (
 	leds struct {
 		port         serial.Port
 		stripLengths []int
+		log          *log.Entry
 	}
 )
 
@@ -33,14 +32,19 @@ func New(stripLengths []int, macDevice bool) (LEDs, error) {
 		devicePath = macDevicePath
 	}
 
+	log := log.WithField("leds", devicePath)
+
 	port, err := serial.Open(devicePath, &serial.Mode{BaudRate: baudRate})
 	if err != nil {
 		return nil, err
 	}
+
 	log.Infof("Connected to %s", devicePath)
+
 	return &leds{
 		port:         port,
 		stripLengths: stripLengths,
+		log:          log,
 	}, nil
 }
 
@@ -56,17 +60,25 @@ func (l *leds) Clear() error {
 }
 
 func (l *leds) Write(state State) error {
+	s := State{}
+
 	for strip, stripLEDs := range state {
 		if strip < 0 || strip >= len(l.stripLengths) {
-			return fmt.Errorf("invalid strip index: %d", strip)
+			l.log.Warnf("invalid strip index: %d", strip)
+			continue
 		}
-		for pixel := range stripLEDs {
+
+		for pixel, color := range stripLEDs {
 			if pixel < 0 || pixel >= l.stripLengths[strip] {
-				return fmt.Errorf("invalid pixel index: %d for strip %d", pixel, strip)
+				l.log.Warnf("invalid pixel index: %d for strip %d", pixel, strip)
+				continue
 			}
+
+			s.Set(strip, pixel, color)
 		}
 	}
-	return l.write(state)
+
+	return l.write(s)
 }
 
 func (l *leds) write(state State) error {
@@ -84,7 +96,7 @@ func (l *leds) write(state State) error {
 		return err
 	}
 
-	log.Tracef("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
+	l.log.Debugf("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
 	return nil
 }
 

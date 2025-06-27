@@ -41,7 +41,7 @@ const (
 	// test
 	// decay             = 2 * time.Second
 	// keepAliveInterval = 5 * time.Second
-	// tempoDecay = 5 * time.Second
+	// tempoDecay        = 5 * time.Second
 
 	// prod
 	decay             = 3 * time.Minute
@@ -251,8 +251,11 @@ func (b *beats) run() {
 
 			b.log.Debugf("Updated beat state:\n%s", beatState)
 
+			color := leds.Red
+
 			if disabling {
 				// disabling a beat
+				color = leds.Black
 
 				if beatState.allOff() {
 					if !keepAlive.Stop() {
@@ -287,7 +290,25 @@ func (b *beats) run() {
 					default:
 					}
 				}
+
+				// for i := range 30 {
+				// 	ledsState.Set(0, i, leds.Black)
+				// }
+				// ledsState.Set(0, tick%30, leds.Mint)
+				// for _, beat := range beatState {
+				// 	for j, active := range beat {
+				// 		if active {
+				// 			// set the beat LED to red
+				// 			ledsState.Set(0, j, leds.Red)
+				// 		}
+				// 	}
+				// }
+				// b.render <- ledsState
 			}
+
+			ledsState := leds.State{}
+			ledsState.Set(press.Row, press.Col, color)
+			b.render <- ledsState
 
 			// check for tempo changes
 			increasingTempo := lastPress == tempoUp && press == tempoUp && bpm < maxBPM
@@ -318,10 +339,6 @@ func (b *beats) run() {
 			if bpm != defaultBPM {
 				tempoReset.Reset(tempoDecay)
 			}
-
-			// old := ticker
-			// ticker = time.NewTicker(tickInterval)
-			// old.Stop()
 
 		case coord := <-decayCh:
 			b.log.Debugf("Decay timer expired for press: %+v", coord)

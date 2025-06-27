@@ -43,10 +43,6 @@ func (c Color) String() string {
 	return fmt.Sprintf("%d,%d,%d,%d", c.R, c.G, c.B, c.W)
 }
 
-// func NewState() State {
-// 	return State{}
-// }
-
 func (s State) Set(strip int, pixel int, color Color) {
 	if _, ok := s[strip]; !ok {
 		s[strip] = make(map[int]Color)
