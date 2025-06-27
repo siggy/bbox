@@ -199,48 +199,44 @@ func (b *beats) run() {
 			for beatAcc >= 1.0 {
 				beatAcc -= 1.0
 
-				// TODO: handle real strips
-				// for i := range soundCount {
-				for row := range 1 {
-					prevIndex := (beatIndex - 1 + beatCount) % beatCount
-
-					if !beatState[row][prevIndex] {
-						// do not perturb particular LEDs
-						ledsState.Set(row, prevIndex, leds.Black)
+				// for each row, clear its full physical range:
+				for rowIdx, rowMap := range rows {
+					step := 1
+					if rowMap.end < rowMap.start {
+						step = -1
 					}
-					if !beatState[row][beatIndex] {
-						// do not perturb particular LEDs
-						ledsState.Set(row, beatIndex, leds.Mint)
-					}
-				}
-
-				for i := range beatState {
-					if beatState[i][beatIndex] {
-						b.play <- sounds[i]
+					for i := rowMap.start; ; i += step {
+						ledsState.Set(rowIdx, i, leds.Black)
+						if i == rowMap.end {
+							break
+						}
 					}
 				}
 
+				// overlay the “tick” position in mint
+				for rowIdx, rowMap := range rows {
+					mintPos := rowMap.buttons[beatIndex]
+					ledsState.Set(rowIdx, mintPos, leds.Mint)
+				}
+
+				// set active beats to red, play active beats if index matches
+				for rowIdx, beats := range beatState {
+					for i, beat := range beats {
+						if beat {
+							redPos := rows[rowIdx].buttons[i]
+							ledsState.Set(rowIdx, redPos, leds.Red)
+
+							if i == beatIndex {
+								b.play <- sounds[rowIdx]
+							}
+						}
+					}
+				}
+
+				// advance to next beat column
 				beatIndex = (beatIndex + 1) % beatCount
 			}
-
 			b.render <- ledsState
-
-			// … do your LED rendering here …
-
-			// ledsState := leds.State{}
-			// for i := range 30 {
-			// 	ledsState.Set(0, i, leds.Black)
-			// }
-			// ledsState.Set(0, tick%30, leds.Mint)
-			// for _, beat := range beatState {
-			// 	for j, active := range beat {
-			// 		if active {
-			// 			// set the beat LED to red
-			// 			ledsState.Set(0, j, leds.Red)
-			// 		}
-			// 	}
-			// }
-			// b.render <- ledsState
 
 			t := time.Now()
 			b.log.Tracef("BPM:___________%+v_", bpm)
@@ -309,25 +305,11 @@ func (b *beats) run() {
 					default:
 					}
 				}
-
-				// for i := range 30 {
-				// 	ledsState.Set(0, i, leds.Black)
-				// }
-				// ledsState.Set(0, tick%30, leds.Mint)
-				// for _, beat := range beatState {
-				// 	for j, active := range beat {
-				// 		if active {
-				// 			// set the beat LED to red
-				// 			ledsState.Set(0, j, leds.Red)
-				// 		}
-				// 	}
-				// }
-				// b.render <- ledsState
 			}
 
-			// TODO: map to actual LED coordinates
 			ledsState := leds.State{}
-			ledsState.Set(press.Row, press.Col, color)
+			phys := rows[press.Row].buttons[press.Col]
+			ledsState.Set(press.Row, phys, color)
 			b.render <- ledsState
 
 			// check for tempo changes

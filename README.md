@@ -1,5 +1,6 @@
 # TODO
 
+- auto speed up to 480
 - pyramid song
 - consider diff'ing against last LED state in leds.go
 - consider secret codes to access nice, other songs, programs
