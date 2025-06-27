@@ -96,7 +96,7 @@ func (l *leds) write(state State) error {
 		return err
 	}
 
-	l.log.Debugf("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
+	l.log.Tracef("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
 	return nil
 }
 

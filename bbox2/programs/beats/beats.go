@@ -194,8 +194,25 @@ func (b *beats) run() {
 		case <-ticker.C:
 			beatAcc += beatsPerTick
 
+			ledsState := leds.State{}
+
 			for beatAcc >= 1.0 {
 				beatAcc -= 1.0
+
+				// TODO: handle real strips
+				// for i := range soundCount {
+				for row := range 1 {
+					prevIndex := (beatIndex - 1 + beatCount) % beatCount
+
+					if !beatState[row][prevIndex] {
+						// do not perturb particular LEDs
+						ledsState.Set(row, prevIndex, leds.Black)
+					}
+					if !beatState[row][beatIndex] {
+						// do not perturb particular LEDs
+						ledsState.Set(row, beatIndex, leds.Mint)
+					}
+				}
 
 				for i := range beatState {
 					if beatState[i][beatIndex] {
@@ -205,6 +222,8 @@ func (b *beats) run() {
 
 				beatIndex = (beatIndex + 1) % beatCount
 			}
+
+			b.render <- ledsState
 
 			// … do your LED rendering here …
 
@@ -306,6 +325,7 @@ func (b *beats) run() {
 				// b.render <- ledsState
 			}
 
+			// TODO: map to actual LED coordinates
 			ledsState := leds.State{}
 			ledsState.Set(press.Row, press.Col, color)
 			b.render <- ledsState
