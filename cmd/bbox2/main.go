@@ -12,8 +12,10 @@ import (
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
 	"github.com/siggy/bbox/bbox2/programs/beats"
+	"github.com/siggy/bbox/bbox2/programs/devil"
 	"github.com/siggy/bbox/bbox2/programs/ledtest"
 	"github.com/siggy/bbox/bbox2/programs/nice"
+	"github.com/siggy/bbox/bbox2/programs/pyramid"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
@@ -92,6 +94,8 @@ func main() {
 		{new: beats.New, code: nil, hidden: false},
 		{new: ledtest.New, code: nil, hidden: false},
 		{new: nice.New, code: []int{1, 2, 1, 0}, hidden: true},
+		{new: devil.New, code: []int{0, 9, 1, 7}, hidden: true},
+		{new: pyramid.New, code: []int{0, 6, 0, 4}, hidden: true},
 	}
 
 	cur := 0
