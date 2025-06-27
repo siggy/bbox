@@ -21,9 +21,6 @@ type (
 		render chan leds.State
 		yield  chan struct{}
 
-		// TODO: move to a local var
-		timers timers
-
 		log *log.Entry
 	}
 
@@ -31,6 +28,8 @@ type (
 		ticksPerBeat int
 		ticks        int // TODO: what to do with this?
 	}
+
+	timers [soundCount][beatCount]*time.Timer
 )
 
 const (
@@ -93,14 +92,6 @@ func (b *beats) Close() {
 	b.wg.Wait()
 	close(b.play)
 	close(b.render)
-
-	for _, arr := range b.timers {
-		for _, t := range arr {
-			if t != nil {
-				t.Stop()
-			}
-		}
-	}
 }
 
 func (b *beats) Press(press program.Coord) {
@@ -143,6 +134,24 @@ func (b *beats) run() {
 	}
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
+
+	decayCh := make(chan program.Coord, program.ChannelBuffer)
+
+	decayTimers := timers{}
+	defer func() {
+		for _, arr := range decayTimers {
+			for _, t := range arr {
+				if t != nil {
+					if !t.Stop() {
+						select {
+						case <-t.C:
+						default:
+						}
+					}
+				}
+			}
+		}
+	}()
 
 	keepAlive := time.NewTimer(keepAliveInterval)
 	if !keepAlive.Stop() {
@@ -231,8 +240,14 @@ func (b *beats) run() {
 			}
 
 			// disable decay timer
-			if b.timers[press.Row][press.Col] != nil {
-				b.timers[press.Row][press.Col].Stop()
+			if decayTimers[press.Row][press.Col] != nil {
+				t := decayTimers[press.Row][press.Col]
+				if !t.Stop() {
+					select {
+					case <-t.C:
+					default:
+					}
+				}
 			}
 
 			// toggle the beat state
@@ -263,11 +278,10 @@ func (b *beats) run() {
 				}
 
 				// set a decay timer
-				b.timers[press.Row][press.Col] = time.AfterFunc(decay, func() {
-					b.log.Debugf("Decay timer expired for press: %+v", press)
-					b.in <- program.Coord{
-						Row: press.Row,
-						Col: press.Col,
+				decayTimers[press.Row][press.Col] = time.AfterFunc(decay, func() {
+					select {
+					case decayCh <- press:
+					default:
 					}
 				})
 
@@ -321,6 +335,13 @@ func (b *beats) run() {
 			ticker.Stop()
 			ticker = time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 			defer ticker.Stop()
+
+		case coord := <-decayCh:
+			b.log.Debugf("Decay timer expired for press: %+v", coord)
+			select {
+			case b.in <- coord:
+			default:
+			}
 
 		case <-keepAlive.C:
 			select {

@@ -1,9 +1,6 @@
 package beats
 
-import "time"
-
 type state [soundCount][beatCount]bool
-type timers [soundCount][beatCount]*time.Timer
 
 func (s state) String() string {
 	var str string
