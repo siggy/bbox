@@ -2,6 +2,7 @@ package beats
 
 import (
 	"context"
+	"math"
 	"sync"
 	"time"
 
@@ -124,6 +125,40 @@ func (b *beats) run() {
 	beatIndex := 0
 	beatState := state{}
 
+	// build a circular segment and column→index map per row for wraparound pulses
+	segments := make([][]int, soundCount)
+	colIndex := make([][]int, soundCount)
+	for rowIdx, rowMap := range rows {
+		// step through start→end (wrap if start>end)
+		step := 1
+		if rowMap.end < rowMap.start {
+			step = -1
+		}
+		// assemble segment
+		seg := []int{}
+		for i := rowMap.start; ; i += step {
+			seg = append(seg, i)
+			if i == rowMap.end {
+				break
+			}
+		}
+		segments[rowIdx] = seg
+		// map each beat column to its index in seg
+		ci := make([]int, beatCount)
+		for col, led := range rowMap.buttons {
+			for idx, v := range seg {
+				if v == led {
+					ci[col] = idx
+					break
+				}
+			}
+		}
+		colIndex[rowIdx] = ci
+	}
+
+	log.Debugf("segments: %+v", segments)
+	log.Debugf("colIndex: %+v", colIndex)
+
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
 
@@ -218,6 +253,28 @@ func (b *beats) run() {
 				for rowIdx, rowMap := range rows {
 					mintPos := rowMap.buttons[beatIndex]
 					ledsState.Set(rowIdx, mintPos, leds.Mint)
+				}
+
+				// overlay a sine‐fade “pulse” of mint ±radius LEDs around beatIndex, with wrap
+				const radius = 5 // lights 5 LEDs total
+				for rowIdx := range soundCount {
+					seg := segments[rowIdx]
+					ci := colIndex[rowIdx]
+					centerIdx := ci[beatIndex]
+					segLen := len(seg)
+					for off := -radius; off <= radius; off++ {
+						idx := (centerIdx + off + segLen) % segLen
+
+						frac := 1 - math.Abs(float64(off))/float64(radius)
+						if frac <= 0 {
+							continue
+						}
+						// steeper falloff: raise to the 8th power for an even sharper dropoff
+						bness := math.Pow(frac, 8)
+
+						c := leds.Brightness(leds.Mint, bness)
+						ledsState.Set(rowIdx, seg[idx], c)
+					}
 				}
 
 				// set active beats to red, play active beats if index matches

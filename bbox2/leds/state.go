@@ -31,13 +31,26 @@ var (
 	TrueRed    = Color{255, 0, 0, 0}
 	TrueWhite  = Color{0, 0, 0, 255}
 	purple     = Color{82, 0, 197, 52}
-	Mint       = Color{62, 180, 137, 0}
+	Mint       = Color{R: 0, G: 170, B: 140, W: 0}
 	trueGreen  = Color{0, 255, 0, 0}
 	deepPurple = Color{200, 0, 100, 0}
 
 	// special color to tell beatboxer an active beat is occurring
 	ActiveBeatPurple = Color{127, 127, 0, 127}
 )
+
+func Brightness(c Color, brightness float64) Color {
+	if brightness < 0 || brightness > 1 {
+		return c
+	}
+
+	return Color{
+		R: uint8(float64(c.R) * brightness),
+		G: uint8(float64(c.G) * brightness),
+		B: uint8(float64(c.B) * brightness),
+		W: uint8(float64(c.W) * brightness),
+	}
+}
 
 func (c Color) String() string {
 	return fmt.Sprintf("%d,%d,%d,%d", c.R, c.G, c.B, c.W)
