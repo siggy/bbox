@@ -21,9 +21,9 @@ type (
 		render chan leds.State
 		yield  chan struct{}
 
-		timers     timers
-		keepAlive  *time.Timer // ensure at least one beat is sent periodically to keep speaker alive
-		tempoDecay *time.Timer // decay timer for tempo changes
+		timers    timers
+		keepAlive *time.Timer // ensure at least one beat is sent periodically to keep speaker alive
+		// tempoDecay *time.Timer // decay timer for tempo changes
 
 		log *log.Entry
 	}
@@ -99,9 +99,9 @@ func (b *beats) Close() {
 		b.keepAlive.Stop()
 	}
 
-	if b.tempoDecay != nil {
-		b.tempoDecay.Stop()
-	}
+	// if b.tempoDecay != nil {
+	// 	b.tempoDecay.Stop()
+	// }
 
 	for _, arr := range b.timers {
 		for _, t := range arr {
@@ -153,7 +153,10 @@ func (b *beats) run() {
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
 
-	// ledsState := leds.State{}
+	tempoReset := time.NewTimer(tempoDecay)
+	if !tempoReset.Stop() {
+		<-tempoReset.C
+	}
 
 	ticker := time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 	defer ticker.Stop()
@@ -288,17 +291,23 @@ func (b *beats) run() {
 			// 	ch <- l.iv
 			// }
 
-			// set a decay timer
-			if b.tempoDecay != nil {
-				b.tempoDecay.Stop()
+			// reset the tempo after a decay period
+			if !tempoReset.Stop() {
+				select {
+				case <-tempoReset.C:
+				default:
+				}
 			}
-			b.tempoDecay = time.AfterFunc(tempoDecay, func() {
-				bpmCh <- defaultBPM
-			})
+			if newBPM != defaultBPM {
+				tempoReset.Reset(tempoDecay)
+			}
 
 			ticker.Stop()
 			ticker = time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 			defer ticker.Stop()
+
+		case <-tempoReset.C:
+			bpmCh <- defaultBPM
 		}
 	}
 }
