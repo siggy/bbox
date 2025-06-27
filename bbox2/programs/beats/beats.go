@@ -28,12 +28,12 @@ type (
 )
 
 const (
-	ticksPerMinute = 1200
-	defaultBPM     = 120
-	minBPM         = 30
-	maxBPM         = 480
-	soundCount     = program.Rows
-	beatCount      = program.Cols
+	tickInterval = 50 * time.Millisecond
+	defaultBPM   = 120
+	minBPM       = 30
+	maxBPM       = 480
+	soundCount   = program.Rows
+	beatCount    = program.Cols
 
 	// if 33% of beats are active, yield to the next program
 	beatLimit = soundCount * beatCount / 3
@@ -121,13 +121,14 @@ func (b *beats) run() {
 		"tom-808.wav",
 	}
 
+	beatIndex := 0
 	beatState := state{}
-
-	ticksPerBeat := ticksPerMinute / defaultBPM // default: 10
-	ticks := beatCount * ticksPerBeat           // default: 160
 
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
+
+	beatsPerTick := getBeatsPerTick(bpm)
+	var beatAcc float64
 
 	decayCh := make(chan program.Coord, program.ChannelBuffer)
 
@@ -173,9 +174,9 @@ func (b *beats) run() {
 		}
 	}()
 
-	ticker := time.NewTicker(getInterval(bpm, ticksPerBeat))
+	ticker := time.NewTicker(tickInterval)
 	defer ticker.Stop()
-	tick := 0
+
 	tickTime := time.Now()
 
 	lastPress := program.Coord{Row: -1, Col: -1}
@@ -191,38 +192,44 @@ func (b *beats) run() {
 
 		// beat loop
 		case <-ticker.C:
-			tick = (tick + 1) % ticks
+			beatAcc += beatsPerTick
 
-			ledsState := leds.State{}
-			for i := range 30 {
-				ledsState.Set(0, i, leds.Black)
-			}
-			ledsState.Set(0, tick%30, leds.Mint)
-			for _, beat := range beatState {
-				for j, active := range beat {
-					if active {
-						// set the beat LED to red
-						ledsState.Set(0, j, leds.Red)
-					}
-				}
-			}
-			b.render <- ledsState
+			for beatAcc >= 1.0 {
+				beatAcc -= 1.0
 
-			// for each beat type
-			if tick%ticksPerBeat == 0 {
-				for i, beat := range beatState {
-					if beat[tick/ticksPerBeat] {
-						// initiate playback
+				for i := range beatState {
+					if beatState[i][beatIndex] {
 						b.play <- sounds[i]
 					}
 				}
+
+				beatIndex = (beatIndex + 1) % beatCount
 			}
 
+			// … do your LED rendering here …
+
+			// ledsState := leds.State{}
+			// for i := range 30 {
+			// 	ledsState.Set(0, i, leds.Black)
+			// }
+			// ledsState.Set(0, tick%30, leds.Mint)
+			// for _, beat := range beatState {
+			// 	for j, active := range beat {
+			// 		if active {
+			// 			// set the beat LED to red
+			// 			ledsState.Set(0, j, leds.Red)
+			// 		}
+			// 	}
+			// }
+			// b.render <- ledsState
+
 			t := time.Now()
-			b.log.Tracef("BPM:__%+v_", bpm)
-			b.log.Tracef("int:__%+v_", getInterval(bpm, ticksPerBeat))
-			b.log.Tracef("time:_%+v_", t.Sub(tickTime))
-			b.log.Tracef("tick:_%+v_", tick)
+			b.log.Tracef("BPM:___________%+v_", bpm)
+			b.log.Tracef("int:___________%+v_", tickInterval)
+			b.log.Tracef("time:__________%+v_", t.Sub(tickTime))
+			b.log.Tracef("beatIndex:_____%+v_", beatIndex)
+			b.log.Tracef("beatsPerTick:__%+v_", beatsPerTick)
+			b.log.Tracef("beatAcc:_______%+v_", beatAcc)
 			tickTime = t
 
 		case press := <-b.in:
@@ -299,15 +306,7 @@ func (b *beats) run() {
 			b.log.Debugf("BPM changed from %d to %d", bpm, newBPM)
 
 			bpm = newBPM
-
-			// BPM: 30 -> 60 -> 120 -> 240 -> 480.0
-			// TPB: 40 -> 20 ->  10 ->   5 ->   2.5
-			ticksPerBeat = ticksPerMinute / bpm
-			ticks = beatCount * ticksPerBeat
-
-			// for _, ch := range l.intervalCh {
-			// 	ch <- l.iv
-			// }
+			beatsPerTick = getBeatsPerTick(bpm)
 
 			// reset the tempo after a decay period
 			if !tempoReset.Stop() {
@@ -320,9 +319,9 @@ func (b *beats) run() {
 				tempoReset.Reset(tempoDecay)
 			}
 
-			old := ticker
-			ticker = time.NewTicker(getInterval(bpm, ticksPerBeat))
-			old.Stop()
+			// old := ticker
+			// ticker = time.NewTicker(tickInterval)
+			// old.Stop()
 
 		case coord := <-decayCh:
 			b.log.Debugf("Decay timer expired for press: %+v", coord)
@@ -347,6 +346,6 @@ func (b *beats) Yield() <-chan struct{} {
 	return b.yield
 }
 
-func getInterval(bpm int, ticksPerBeat int) time.Duration {
-	return 60 * time.Second / time.Duration(bpm) / (beatCount / 4) / time.Duration(ticksPerBeat) // 4 beats per interval
+func getBeatsPerTick(bpm int) float64 {
+	return beatCount / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
 }
