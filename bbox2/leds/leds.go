@@ -37,7 +37,7 @@ func New(stripLengths []int, macDevice bool) (LEDs, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Connected to %s", devicePath)
+	log.Infof("Connected to %s", devicePath)
 	return &leds{
 		port:         port,
 		stripLengths: stripLengths,
@@ -84,7 +84,7 @@ func (l *leds) write(state State) error {
 		return err
 	}
 
-	log.Debugf("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
+	log.Tracef("Sent %d bytes: %d pixels updated\n", n, len(payload)/6)
 	return nil
 }
 

@@ -56,10 +56,10 @@ func (k *Keyboard) Run() {
 
 		switch event.Key {
 		case keyboard.KeyEsc:
-			k.log.Debug("Detected Escape, exiting...")
+			k.log.Info("Detected Escape, exiting...")
 			return
 		case keyboard.KeyCtrlC:
-			k.log.Debug("Detected Ctrl+C, exiting...")
+			k.log.Info("Detected Ctrl+C, exiting...")
 			return
 		}
 

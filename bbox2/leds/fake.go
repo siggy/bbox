@@ -12,7 +12,7 @@ type fake struct {
 func NewFake(stripLengths []int) (LEDs, error) {
 	log := log.WithField("leds", "fake")
 
-	log.Debugf("NewFake: %+v", stripLengths)
+	log.Infof("NewFake: %+v", stripLengths)
 
 	return &fake{
 		stripLengths: stripLengths,
@@ -29,6 +29,6 @@ func (f *fake) Clear() error {
 }
 
 func (f *fake) Write(state State) error {
-	f.log.Debugf("Write: %+v", state)
+	f.log.Tracef("Write: %+v", state)
 	return nil
 }

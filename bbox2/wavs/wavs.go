@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -24,7 +25,7 @@ type Wavs struct {
 	log *log.Entry
 }
 
-func New() (*Wavs, error) {
+func New(dir string) (*Wavs, error) {
 	ctx, ready, err := oto.NewContext(&oto.NewContextOptions{
 		SampleRate:   44100,
 		ChannelCount: 1,
@@ -36,7 +37,7 @@ func New() (*Wavs, error) {
 	<-ready
 
 	filenames := []string{}
-	dirs, _ := os.ReadDir("./wavs")
+	dirs, _ := os.ReadDir(dir)
 	for _, d := range dirs {
 		if d.IsDir() || !d.Type().IsRegular() || !strings.HasSuffix(d.Name(), ".wav") {
 			continue
@@ -47,7 +48,8 @@ func New() (*Wavs, error) {
 
 	buffers := map[string][]byte{}
 	for _, filename := range filenames {
-		buf, err := fileToAudioBytes("./wavs/" + filename)
+		filepath := filepath.Join(dir, filename)
+		buf, err := fileToAudioBytes(filepath)
 		if err != nil {
 			return nil, fmt.Errorf("fileToAudioBytes failed: %s", err)
 		}

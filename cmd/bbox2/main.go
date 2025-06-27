@@ -50,7 +50,7 @@ func main() {
 	defer stop()
 
 	// init
-	wavs, err := wavs.New()
+	wavs, err := wavs.New("/home/sig/code/bbox/wavs")
 	if err != nil {
 		log.Fatalf("wavs.New failed: %v", err)
 	}
@@ -135,7 +135,7 @@ func main() {
 			curProgram.Press(press)
 
 		case leds := <-curProgram.Render():
-			log.Debugf("leds: %s", leds)
+			log.Tracef("leds: %s", leds)
 
 			err := ledStrips.Write(leds)
 			if err != nil {
