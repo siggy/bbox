@@ -24,22 +24,15 @@ type (
 		log *log.Entry
 	}
 
-	interval struct {
-		ticksPerBeat int
-		ticks        int // TODO: what to do with this?
-	}
-
 	timers [soundCount][beatCount]*time.Timer
 )
 
 const (
-	defaultBPM          = 120
-	minBPM              = 30
-	maxBPM              = 480
-	soundCount          = program.Rows
-	beatCount           = program.Cols
-	defaultTicksPerBeat = 10
-	defaultTicks        = beatCount * defaultTicksPerBeat
+	defaultBPM = 120
+	minBPM     = 30
+	maxBPM     = 480
+	soundCount = program.Rows
+	beatCount  = program.Cols
 
 	// if 33% of beats are active, yield to the next program
 	beatLimit = soundCount * beatCount / 3
@@ -128,10 +121,10 @@ func (b *beats) run() {
 	}
 
 	beatState := state{}
-	iv := interval{
-		ticksPerBeat: defaultTicksPerBeat,
-		ticks:        defaultTicks,
-	}
+
+	ticksPerBeat := 1200 / defaultBPM // default: 10
+	ticks := beatCount * ticksPerBeat // default: 160
+
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
 
@@ -179,7 +172,7 @@ func (b *beats) run() {
 		}
 	}()
 
-	ticker := time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
+	ticker := time.NewTicker(getInterval(bpm, ticksPerBeat))
 	defer ticker.Stop()
 	tick := 0
 	tickTime := time.Now()
@@ -197,7 +190,7 @@ func (b *beats) run() {
 
 		// beat loop
 		case <-ticker.C:
-			tick = (tick + 1) % iv.ticks
+			tick = (tick + 1) % ticks
 
 			ledsState := leds.State{}
 			for i := range 30 {
@@ -215,9 +208,9 @@ func (b *beats) run() {
 			b.render <- ledsState
 
 			// for each beat type
-			if tick%iv.ticksPerBeat == 0 {
+			if tick%ticksPerBeat == 0 {
 				for i, beat := range beatState {
-					if beat[tick/iv.ticksPerBeat] {
+					if beat[tick/ticksPerBeat] {
 						// initiate playback
 						b.play <- sounds[i]
 					}
@@ -226,7 +219,7 @@ func (b *beats) run() {
 
 			t := time.Now()
 			b.log.Tracef("BPM:__%+v_", bpm)
-			b.log.Tracef("int:__%+v_", getInterval(bpm, iv.ticksPerBeat))
+			b.log.Tracef("int:__%+v_", getInterval(bpm, ticksPerBeat))
 			b.log.Tracef("time:_%+v_", t.Sub(tickTime))
 			b.log.Tracef("tick:_%+v_", tick)
 			tickTime = t
@@ -308,8 +301,8 @@ func (b *beats) run() {
 
 			// BPM: 30 -> 60 -> 120 -> 240 -> 480.0
 			// TPB: 40 -> 20 ->  10 ->   5 ->   2.5
-			iv.ticksPerBeat = 1200 / bpm
-			iv.ticks = beatCount * iv.ticksPerBeat
+			ticksPerBeat = 1200 / bpm
+			ticks = beatCount * ticksPerBeat
 
 			// for _, ch := range l.intervalCh {
 			// 	ch <- l.iv
@@ -327,7 +320,7 @@ func (b *beats) run() {
 			}
 
 			old := ticker
-			ticker = time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
+			ticker = time.NewTicker(getInterval(bpm, ticksPerBeat))
 			old.Stop()
 
 		case coord := <-decayCh:
