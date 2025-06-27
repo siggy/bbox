@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"context"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
 
 	"github.com/siggy/bbox/bbox2/leds"
 	log "github.com/sirupsen/logrus"
@@ -26,8 +32,8 @@ func main() {
 	}
 	log.SetLevel(lvl)
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, os.Kill)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	ledStrips, err := leds.New(stripLengths, false)
 	if err != nil {
@@ -43,27 +49,27 @@ func main() {
 	cur := 0
 	for {
 		select {
-		case <-sig:
+		case <-ctx.Done():
+			log.Info("context done")
 			return
 		default:
-			// reader := bufio.NewReader(os.Stdin)
-			// fmt.Print("Enter LED: ")
-			// text, _ := reader.ReadString('\n')
-			// text = strings.Replace(text, "\n", "", -1)
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter LED: ")
+			text, _ := reader.ReadString('\n')
+			text = strings.ReplaceAll(text, "\n", "")
 
-			// if text == ";" {
-			// 	cur = int(math.Abs(float64(cur - 1)))
-			// } else if text == "'" {
-			// 	cur = cur + 1
-			// } else {
-			// 	cur, err = strconv.Atoi(text)
-			// 	if err != nil {
-			// 		fmt.Printf("strconv.Atoi failed: %+v\n", err)
-			// 		continue
-			// 	}
-			// }
-
-			cur = (cur + 1) % stripLengths[0]
+			switch text {
+			case ";":
+				cur = int(math.Abs(float64(cur - 1)))
+			case "'":
+				cur = cur + 1
+			default:
+				cur, err = strconv.Atoi(text)
+				if err != nil {
+					fmt.Printf("strconv.Atoi failed: %+v\n", err)
+					continue
+				}
+			}
 
 			fmt.Printf("LED: %+v\n", cur)
 			state := leds.State{}

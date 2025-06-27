@@ -68,14 +68,6 @@ func (l *ledTest) Press(press program.Coord) {
 	case l.in <- press:
 	default:
 	}
-	// if 'n' pressed, signal yield once
-	// if lower right is pressed 5 times, yield
-	// if press.Rune == 'n' {
-	// 	select {
-	// 	case l.yield <- struct{}{}:
-	// 	default:
-	// 	}
-	// }
 }
 
 func (l *ledTest) Play() <-chan string {
