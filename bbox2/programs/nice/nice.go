@@ -27,7 +27,7 @@ type (
 
 func NewProgram(ctx context.Context) program.Program {
 	log := log.WithField("program", "nice")
-	log.Debug("NewProgram ")
+	log.Debug("NewProgram")
 
 	ctx, cancel := context.WithCancel(ctx)
 	l := &ledTest{

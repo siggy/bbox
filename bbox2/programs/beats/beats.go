@@ -21,9 +21,8 @@ type (
 		render chan leds.State
 		yield  chan struct{}
 
-		timers    timers
-		keepAlive *time.Timer // ensure at least one beat is sent periodically to keep speaker alive
-		// tempoDecay *time.Timer // decay timer for tempo changes
+		// TODO: move to a local var
+		timers timers
 
 		log *log.Entry
 	}
@@ -47,13 +46,13 @@ const (
 	beatLimit = soundCount * beatCount / 3
 
 	// test
-	// decay      = 2 * time.Second
-	// keepAlive  = 5 * time.Second
+	// decay             = 2 * time.Second
+	// keepAliveInterval = 5 * time.Second
 	tempoDecay = 5 * time.Second
 
 	// prod
-	decay     = 3 * time.Minute
-	keepAlive = 14 * time.Minute
+	decay             = 3 * time.Minute
+	keepAliveInterval = 14 * time.Minute
 	// tempoDecay = 3 * time.Minute
 )
 
@@ -64,7 +63,7 @@ var (
 
 func NewProgram(ctx context.Context) program.Program {
 	log := log.WithField("program", "beats")
-	log.Debug("NewProgram ")
+	log.Debug("NewProgram")
 
 	ctx, cancel := context.WithCancel(ctx)
 	b := &beats{
@@ -94,14 +93,6 @@ func (b *beats) Close() {
 	b.wg.Wait()
 	close(b.play)
 	close(b.render)
-
-	if b.keepAlive != nil {
-		b.keepAlive.Stop()
-	}
-
-	// if b.tempoDecay != nil {
-	// 	b.tempoDecay.Stop()
-	// }
 
 	for _, arr := range b.timers {
 		for _, t := range arr {
@@ -153,10 +144,31 @@ func (b *beats) run() {
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
 
+	keepAlive := time.NewTimer(keepAliveInterval)
+	if !keepAlive.Stop() {
+		<-keepAlive.C
+	}
+	defer func() {
+		if !keepAlive.Stop() {
+			select {
+			case <-keepAlive.C:
+			default:
+			}
+		}
+	}()
+
 	tempoReset := time.NewTimer(tempoDecay)
 	if !tempoReset.Stop() {
 		<-tempoReset.C
 	}
+	defer func() {
+		if !tempoReset.Stop() {
+			select {
+			case <-tempoReset.C:
+			default:
+			}
+		}
+	}()
 
 	ticker := time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 	defer ticker.Stop()
@@ -233,12 +245,13 @@ func (b *beats) run() {
 				// disabling a beat
 
 				if beatState.allOff() {
-					b.keepAlive = time.AfterFunc(keepAlive, func() {
-						// enable a beat to keep the speaker alive
-						b.log.Debug("Keep alive timer expired")
-
-						b.in <- program.Coord{Row: 1, Col: 0}
-					})
+					if !keepAlive.Stop() {
+						select {
+						case <-keepAlive.C:
+						default:
+						}
+					}
+					keepAlive.Reset(keepAliveInterval)
 				}
 			} else {
 				// enabling a beat
@@ -259,8 +272,11 @@ func (b *beats) run() {
 				})
 
 				// we've enabled a beat, kill keepAlive
-				if b.keepAlive != nil {
-					b.keepAlive.Stop()
+				if !keepAlive.Stop() {
+					select {
+					case <-keepAlive.C:
+					default:
+					}
 				}
 			}
 
@@ -305,6 +321,12 @@ func (b *beats) run() {
 			ticker.Stop()
 			ticker = time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
 			defer ticker.Stop()
+
+		case <-keepAlive.C:
+			select {
+			case b.in <- program.Coord{Row: 1, Col: 0}:
+			default:
+			}
 
 		case <-tempoReset.C:
 			bpmCh <- defaultBPM
