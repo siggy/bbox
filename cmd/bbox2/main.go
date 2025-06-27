@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 
 	"github.com/siggy/bbox/bbox2/keyboard"
@@ -16,6 +17,12 @@ import (
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
+
+type programScheduler struct {
+	new    program.ProgramFactory
+	code   []int
+	hidden bool
+}
 
 const (
 	yieldLimit = 5 // number of yields repetition keys before switching programs
@@ -81,27 +88,44 @@ func main() {
 
 	go keyboard.Run()
 
-	programs := []program.ProgramFactory{
-		beats.NewProgram,
-		ledtest.NewProgram,
-		nice.NewProgram,
+	programs := []programScheduler{
+		{new: beats.New, code: nil, hidden: false},
+		{new: ledtest.New, code: nil, hidden: false},
+		{new: nice.New, code: []int{1, 2, 1, 0}, hidden: true},
 	}
 
 	cur := 0
 	progCtx, cancelProg := context.WithCancel(ctx)
-	curProgram := programs[cur](progCtx)
+	curProgram := programs[cur].new(progCtx)
 
 	yieldCount := 0
 
+	rollingCode := []int{0, 0, 0, 0}
+
 	for {
-		yield := func() {
+		yield := func(next program.ProgramFactory) {
 			log.Debugf("yield prev program: %s", curProgram.Name())
 
 			cancelProg()
 			curProgram.Close()
-			cur = (cur + 1) % len(programs)
+
+			if next == nil {
+				for {
+					cur = (cur + 1) % len(programs)
+					if !programs[cur].hidden {
+						break
+					}
+				}
+
+				next = programs[cur].new
+			} else {
+				// back next up one so we yield back to the same place
+				cur = (cur - 1 + len(programs)) % len(programs)
+			}
+
 			progCtx, cancelProg = context.WithCancel(ctx)
-			curProgram = programs[cur](progCtx)
+			curProgram = next(progCtx)
+
 			ledStrips.Clear()
 			wavs.StopAll()
 			yieldCount = 0
@@ -121,15 +145,36 @@ func main() {
 
 			log.Debugf("press: %q", press)
 
+			// TODO: combine these two code patterns?
 			if press.Col == program.Cols-1 && press.Row == program.Rows-1 {
 				yieldCount++
 				log.Debugf("yieldCount: %d", yieldCount)
 				if yieldCount >= yieldLimit {
-					yield()
+					yield(nil)
 					continue
 				}
 			} else {
 				yieldCount = 0
+			}
+
+			if press.Row == 0 {
+				rollingCode = append(rollingCode[1:], press.Col)
+
+				var found program.ProgramFactory
+
+				for _, p := range programs {
+					if slices.Equal(p.code, rollingCode) {
+						log.Debugf("rolling code matched: %v", rollingCode)
+						found = p.new
+						break
+					}
+				}
+
+				if found != nil {
+					yield(found)
+				}
+			} else {
+				rollingCode = []int{0, 0, 0, 0}
 			}
 
 			curProgram.Press(press)
@@ -148,7 +193,7 @@ func main() {
 			wavs.Play(play)
 
 		case <-curProgram.Yield():
-			yield()
+			yield(nil)
 
 		case <-ctx.Done():
 			log.Info("context done")

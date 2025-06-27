@@ -23,9 +23,9 @@ type (
 	}
 )
 
-func NewProgram(ctx context.Context) program.Program {
+func New(ctx context.Context) program.Program {
 	log := log.WithField("program", "ledTest")
-	log.Debug("NewProgram")
+	log.Debug("New")
 
 	ctx, cancel := context.WithCancel(ctx)
 	l := &ledTest{

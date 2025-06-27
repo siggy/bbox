@@ -54,9 +54,9 @@ var (
 	tempoDown = program.Coord{Row: 1, Col: program.Cols - 1}
 )
 
-func NewProgram(ctx context.Context) program.Program {
+func New(ctx context.Context) program.Program {
 	log := log.WithField("program", "beats")
-	log.Debug("NewProgram")
+	log.Debug("New")
 
 	ctx, cancel := context.WithCancel(ctx)
 	b := &beats{

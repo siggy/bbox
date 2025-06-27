@@ -1,5 +1,6 @@
 # TODO
 
+- pyramid song
 - consider diff'ing against last LED state in leds.go
 - consider secret codes to access nice, other songs, programs
 - pre-programmed beats, like queen songs
