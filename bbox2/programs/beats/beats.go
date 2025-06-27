@@ -241,13 +241,7 @@ func (b *beats) run() {
 
 			// disable decay timer
 			if decayTimers[press.Row][press.Col] != nil {
-				t := decayTimers[press.Row][press.Col]
-				if !t.Stop() {
-					select {
-					case <-t.C:
-					default:
-					}
-				}
+				decayTimers[press.Row][press.Col].Stop()
 			}
 
 			// toggle the beat state
@@ -332,9 +326,9 @@ func (b *beats) run() {
 				tempoReset.Reset(tempoDecay)
 			}
 
-			ticker.Stop()
+			old := ticker
 			ticker = time.NewTicker(getInterval(bpm, iv.ticksPerBeat))
-			defer ticker.Stop()
+			old.Stop()
 
 		case coord := <-decayCh:
 			b.log.Debugf("Decay timer expired for press: %+v", coord)
