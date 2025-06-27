@@ -2,11 +2,8 @@
 
 - consider secret code to access nice
 - need amplitude input into the programs
-- autorun at boot time, systemd?
-- update .local.bash to auto-boot pi 5, maybe systemd, or tmux?
 - generic interface for LED lighting
 - validation program for testing individual LEDs
-- scorpio comms
 
 # BBox
 
@@ -138,38 +135,35 @@ go run cmd/bbox2/main.go --fake-leds
 go build -o /home/sig/bin/bbox cmd/bbox2/main.go
 ```
 
-## Auto boot
+## Auto boot with keyboard attach
 
 ```bash
-cat <<EOF > /home/sig/start-bbox.sh
-#!/bin/bash
-if ! tmux has-session -t bbox 2>/dev/null; then
-  tmux new-session -s bbox -d "bash -c '/home/sig/bin/bbox; exec bash'"
+cat <<'EOF' >> ~/.profile
+
+if [ "$(tty)" = "/dev/tty1" ]; then
+  tmux attach -t bbox || tmux new-session -s bbox "bash -c '/home/sig/bin/bbox; exec bash'"
 fi
 EOF
+```
 
-chmod +x /home/sig/start-bbox.sh
-
-sudo tee /etc/systemd/system/bbox.service > /dev/null <<EOF
-[Unit]
-Description=Start /home/sig/bin/bbox in tmux session at boot
-After=network.target
-Wants=multi-user.target
-
+```bash
+sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat <<EOF | sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf
 [Service]
-Type=oneshot
-User=sig
-ExecStart=/home/sig/start-bbox.sh
-RemainAfterExit=true
-WorkingDirectory=$(dirname "/home/sig/bin/bbox")
-
-[Install]
-WantedBy=multi-user.target
+ExecStart=
+ExecStart=-/sbin/agetty --autologin sig --noclear %I \$TERM
 EOF
 
-sudo systemctl daemon-reexec
-sudo systemctl enable bbox.service
+sudo systemctl daemon-reload
+sudo reboot
 ```
+
+
+
+
+
+
+
 
 
 
