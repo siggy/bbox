@@ -52,15 +52,24 @@ echo "[[ -s ${HOME}/.local.bash ]] && source ${HOME}/.local.bash" >> ~/.profile
 ### Faster boot
 
 ```bash
-sudo systemctl disable NetworkManager-wait-online.service
 sudo systemctl disable ModemManager.service
+sudo systemctl disable NetworkManager-wait-online.service
 sudo systemctl disable bluetooth.service
 sudo systemctl disable dphys-swapfile.service
+sudo systemctl disable fake-hwclock.service
+sudo systemctl disable systemd-binfmt.service
+sudo systemctl mask NetworkManager.service
+sudo systemctl mask sys-kernel-debug.mount sys-kernel-tracing.mount
 sudo dphys-swapfile swapoff
 sudo systemctl mask rpi-eeprom-update
 sudo systemctl disable e2scrub_reap.service
 sudo apt purge modemmanager bluez triggerhappy
 sudo apt autoremove --purge
+
+sudo grep -q 'rootdelay=' /boot/firmware/cmdline.txt \
+  || sudo sed -i 's/$/ rootdelay=2/' /boot/firmware/cmdline.txt
+
+echo "PollIntervalMinSec=600" | sudo tee -a /etc/systemd/timesyncd.conf
 ```
 
 ### Configure to connect over ethernet
