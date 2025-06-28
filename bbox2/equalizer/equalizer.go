@@ -65,6 +65,12 @@ func (eq *Equalizer) loop() {
 			eq.buf = nil
 			eq.mu.Unlock()
 
+			// Skip if we don't have enough samples for a decent FFT
+			const minFFTsize = 512
+			if len(buf) < minFFTsize {
+				continue
+			}
+
 			// FFT
 			spec := fft.FFTReal(buf)
 			half := len(spec) / 2
@@ -86,11 +92,16 @@ func (eq *Equalizer) loop() {
 				if b == eq.bands-1 {
 					end = half
 				}
+				width := end - start
+				if width <= 0 {
+					bandData[b] = 0
+					continue
+				}
 				sum := 0.0
 				for i := start; i < end; i++ {
 					sum += mags[i]
 				}
-				bandData[b] = sum / float64(end-start)
+				bandData[b] = sum / float64(width)
 			}
 
 			// emit (non-blocking if consumer is slow)

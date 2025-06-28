@@ -74,8 +74,12 @@ func (l *ledTest) Press(press program.Coord) {
 	}
 }
 
+var t = time.Now()
+
 func (l *ledTest) EQ(bands []float64) {
-	l.log.Debugf("Received EQ bands: %+v", bands)
+	last := time.Since(t)
+	t = time.Now()
+	l.log.Debugf("Received EQ bands [t: %s]: %+v", last, bands)
 }
 
 func (l *ledTest) Play() <-chan string {
