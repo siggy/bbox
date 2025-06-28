@@ -20,6 +20,9 @@ type Equalizer struct {
 	quit   chan struct{}
 }
 
+// assume 44.1 kHz PCM
+const sampleRate = 44100
+
 // New creates an Equalizer that divides the spectrum into `bands`
 // and emits one slice of band‐amplitudes every `interval`.
 func New(bands int, interval time.Duration) *Equalizer {
@@ -95,13 +98,26 @@ func (eq *Equalizer) loop() {
 				mags[i] = math.Hypot(re, im)
 			}
 
-			// bucket into bands
+			// bucket into eq.bands linear-frequency bands, convert to dB, then normalize
+			// define evenly spaced frequency edges from 0 up to Nyquist (sampleRate/2)
+			fmax := float64(sampleRate) / 2
+			edgesHz := make([]float64, eq.bands+1)
+			for i := 0; i <= eq.bands; i++ {
+				edgesHz[i] = fmax * float64(i) / float64(eq.bands)
+			}
+			// map to FFT bin indices
+			binFreq := float64(sampleRate) / float64(fftSize)
+			edges := make([]int, len(edgesHz))
+			for i, hz := range edgesHz {
+				edges[i] = int(hz/binFreq + 0.5)
+			}
 			bandData := make([]float64, eq.bands)
-			step := half / eq.bands
 			for b := 0; b < eq.bands; b++ {
-				start := b * step
-				end := start + step
-				if b == eq.bands-1 {
+				start, end := edges[b], edges[b+1]
+				if start < 0 {
+					start = 0
+				}
+				if end > half {
 					end = half
 				}
 				width := end - start
@@ -109,15 +125,31 @@ func (eq *Equalizer) loop() {
 					bandData[b] = 0
 					continue
 				}
-				if end <= start {
-					bandData[b] = 0
-					continue
-				}
 				sum := 0.0
 				for i := start; i < end; i++ {
 					sum += mags[i]
 				}
-				bandData[b] = sum / float64(width)
+				// average magnitude
+				avg := sum / float64(width)
+				// convert to decibels
+				bandData[b] = 20 * math.Log10(avg+1e-8)
+			}
+			// normalize 0..1
+			minDB, maxDB := bandData[0], bandData[0]
+			for _, v := range bandData {
+				if v < minDB {
+					minDB = v
+				}
+				if v > maxDB {
+					maxDB = v
+				}
+			}
+			rangeDB := maxDB - minDB
+			if rangeDB <= 0 {
+				rangeDB = 1
+			}
+			for i, v := range bandData {
+				bandData[i] = (v - minDB) / rangeDB
 			}
 
 			// emit (non-blocking if consumer is slow)

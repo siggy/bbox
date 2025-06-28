@@ -81,7 +81,7 @@ func (l *ledTest) EQ(bands []float64) {
 	t = time.Now()
 	for i, b := range bands {
 		s := ""
-		for range int(b * 10) {
+		for range int(b * 30) {
 			s += "█"
 		}
 		l.log.Debugf("%d: %s", i, s)
