@@ -57,23 +57,35 @@ func (eq *Equalizer) Close() {
 }
 
 func (eq *Equalizer) loop() {
+	const fftSize = 1024
 	for {
 		select {
 		case <-eq.ticker.C:
+			// grab a snapshot, **then** remove only the slice we process
 			eq.mu.Lock()
 			buf := eq.buf
-			eq.buf = nil
+			if len(buf) > fftSize {
+				// drop only the first fftSize samples
+				eq.buf = buf[fftSize:]
+				buf = buf[:fftSize]
+			} else {
+				// not enough for a full window next time
+				eq.buf = nil
+			}
 			eq.mu.Unlock()
 
-			// Skip if we don't have enough samples for a decent FFT
-			const minFFTsize = 512
-			if len(buf) < minFFTsize {
+			// We only FFT on a fixed, power-of-two window (say 1024 samples).
+			const fftSize = 1024
+			if len(buf) < fftSize {
+				// not enough data yet
 				continue
 			}
+			// take the most recent fftSize samples
+			window := buf[len(buf)-fftSize:]
 
-			// FFT
-			spec := fft.FFTReal(buf)
-			half := len(spec) / 2
+			// FFTReal on a power-of-two length is much faster
+			spec := fft.FFTReal(window)
+			half := fftSize / 2
 
 			// compute magnitudes
 			mags := make([]float64, half)
@@ -94,6 +106,10 @@ func (eq *Equalizer) loop() {
 				}
 				width := end - start
 				if width <= 0 {
+					bandData[b] = 0
+					continue
+				}
+				if end <= start {
 					bandData[b] = 0
 					continue
 				}

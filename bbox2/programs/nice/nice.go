@@ -79,6 +79,13 @@ var t = time.Now()
 func (l *ledTest) EQ(bands []float64) {
 	last := time.Since(t)
 	t = time.Now()
+	for i, b := range bands {
+		s := ""
+		for range int(b * 10) {
+			s += "█"
+		}
+		l.log.Debugf("%d: %s", i, s)
+	}
 	l.log.Debugf("Received EQ bands [t: %s]: %+v", last, bands)
 }
 

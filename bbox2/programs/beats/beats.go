@@ -105,7 +105,18 @@ func (b *beats) Press(press program.Coord) {
 	}
 }
 
-func (b *beats) EQ([]float64) {}
+func (b *beats) EQ(bands []float64) {
+	// last := time.Since(t)
+	// t = time.Now()
+	for i, band := range bands {
+		s := ""
+		for range int(band * 10) {
+			s += "█"
+		}
+		b.log.Debugf("%d: %s", i, s)
+	}
+	// l.log.Debugf("Received EQ bands [t: %s]: %+v", last, bands)
+}
 
 func (b *beats) Play() <-chan string {
 	return b.play
