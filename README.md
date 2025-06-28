@@ -32,7 +32,10 @@ ssh sig@raspberrypi.local
 
 # install packages
 sudo apt-get update
-sudo apt-get install -y git tmux vim
+sudo apt-get install -y git tmux vim locales
+sudo dpkg-reconfigure locales
+sudo sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+sudo locale-gen
 
 git clone https://github.com/siggy/dotfiles.git ~/code/dotfiles
 cp ~/code/dotfiles/.local.bash.pi ~/.local.bash
@@ -58,7 +61,6 @@ sudo systemctl disable bluetooth.service
 sudo systemctl disable dphys-swapfile.service
 sudo systemctl disable fake-hwclock.service
 sudo systemctl disable systemd-binfmt.service
-sudo systemctl mask NetworkManager.service
 sudo systemctl mask sys-kernel-debug.mount sys-kernel-tracing.mount
 sudo dphys-swapfile swapoff
 sudo systemctl mask rpi-eeprom-update
@@ -105,8 +107,8 @@ sudo nmcli connection down Hotspot
 ### Code
 
 ```bash
-curl -L -o /tmp/go1.24.3.linux-arm64.tar.gz https://go.dev/dl/go1.24.3.linux-arm64.tar.gz
-sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go1.24.3.linux-arm64.tar.gz
+curl -L -o /tmp/go1.24.4.linux-arm64.tar.gz https://go.dev/dl/go1.24.4.linux-arm64.tar.gz
+sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go1.24.4.linux-arm64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 
 mkdir -p ~/code/
