@@ -74,6 +74,8 @@ func (l *ledTest) Press(press program.Coord) {
 	}
 }
 
+func (l *ledTest) EQ([]float64) {}
+
 func (l *ledTest) Play() <-chan string {
 	return l.play
 }

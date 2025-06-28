@@ -18,6 +18,7 @@ type (
 
 		// input
 		Press(press Coord)
+		EQ([]float64)
 
 		// output
 		Play() <-chan string

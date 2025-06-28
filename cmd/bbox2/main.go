@@ -183,6 +183,16 @@ func main() {
 
 			curProgram.Press(press)
 
+		case eq, ok := <-wavs.EQ():
+			if !ok {
+				continue
+				return
+			}
+
+			log.Tracef("eq: %q", eq)
+
+			curProgram.EQ(eq)
+
 		case leds := <-curProgram.Render():
 			log.Tracef("leds: %s", leds)
 

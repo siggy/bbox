@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	ledTest struct {
+	devil struct {
 		ctx    context.Context
 		cancel context.CancelFunc
 		wg     sync.WaitGroup
@@ -30,7 +30,7 @@ func New(ctx context.Context) program.Program {
 	log.Debug("New")
 
 	ctx, cancel := context.WithCancel(ctx)
-	l := &ledTest{
+	d := &devil{
 		ctx:    ctx,
 		cancel: cancel,
 
@@ -42,71 +42,73 @@ func New(ctx context.Context) program.Program {
 		log: log,
 	}
 
-	l.wg.Add(1)
-	go l.run()
+	d.wg.Add(1)
+	go d.run()
 
-	return l
+	return d
 }
 
-func (l *ledTest) Name() string {
+func (d *devil) Name() string {
 	return "devil"
 }
 
-func (l *ledTest) Close() {
-	l.cancel()
-	l.wg.Wait()
-	close(l.play)
-	close(l.render)
+func (d *devil) Close() {
+	d.cancel()
+	d.wg.Wait()
+	close(d.play)
+	close(d.render)
 }
 
-func (l *ledTest) Press(press program.Coord) {
-	l.log.Debugf("Press: %+v", press)
+func (d *devil) Press(press program.Coord) {
+	d.log.Debugf("Press: %+v", press)
 
 	select {
-	case <-l.ctx.Done():
+	case <-d.ctx.Done():
 		return
 	default:
 	}
 	// enqueue input non-blockingly
 	select {
-	case l.in <- press:
+	case d.in <- press:
 	default:
 	}
 }
 
-func (l *ledTest) Play() <-chan string {
-	return l.play
+func (d *devil) EQ([]float64) {}
+
+func (d *devil) Play() <-chan string {
+	return d.play
 }
-func (l *ledTest) Render() <-chan leds.State {
-	return l.render
+func (d *devil) Render() <-chan leds.State {
+	return d.render
 }
-func (l *ledTest) Yield() <-chan struct{} {
-	return l.yield
+func (d *devil) Yield() <-chan struct{} {
+	return d.yield
 }
 
-func (l *ledTest) run() {
-	defer l.wg.Done()
+func (d *devil) run() {
+	defer d.wg.Done()
 
 	lState := leds.State{}
 	lState.Set(0, 0, leds.Red) // first pixel lit
 
-	l.play <- "runnin_with_the_devil.wav"
+	d.play <- "runnin_with_the_devid.wav"
 
 	// song duration
 	timer := time.NewTimer(time.Second * 215)
 
 	for {
 		select {
-		case <-l.ctx.Done():
+		case <-d.ctx.Done():
 			return
 
 		case <-timer.C:
-			l.log.Debug("Timer expired, stopping program")
-			l.yield <- struct{}{}
+			d.log.Debug("Timer expired, stopping program")
+			d.yield <- struct{}{}
 			return
 
-		case press := <-l.in:
-			l.log.Debugf("Processing press: %+v", press)
+		case press := <-d.in:
+			d.log.Debugf("Processing press: %+v", press)
 		}
 	}
 }

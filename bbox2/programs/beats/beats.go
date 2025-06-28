@@ -29,7 +29,7 @@ type (
 )
 
 const (
-	tickInterval = 50 * time.Millisecond
+	tickInterval = 50 * time.Millisecond // should match equalizer
 	defaultBPM   = 120
 	minBPM       = 30
 	maxBPM       = 480
@@ -104,6 +104,8 @@ func (b *beats) Press(press program.Coord) {
 	default:
 	}
 }
+
+func (b *beats) EQ([]float64) {}
 
 func (b *beats) Play() <-chan string {
 	return b.play

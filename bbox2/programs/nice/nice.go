@@ -74,6 +74,10 @@ func (l *ledTest) Press(press program.Coord) {
 	}
 }
 
+func (l *ledTest) EQ(bands []float64) {
+	l.log.Debugf("Received EQ bands: %+v", bands)
+}
+
 func (l *ledTest) Play() <-chan string {
 	return l.play
 }
