@@ -87,6 +87,12 @@ func (l *leds) Clear() {
 }
 
 func (l *leds) Set(state State) {
+	select {
+	case <-l.ctx.Done():
+		return // driver is shutting down, ignore
+	default:
+	}
+
 	s := State{}
 
 	for strip, stripLEDs := range state {
@@ -105,7 +111,11 @@ func (l *leds) Set(state State) {
 		}
 	}
 
-	l.set <- s
+	select {
+	case l.set <- s:
+	default:
+		// drop the update if we’re backed up
+	}
 }
 
 func (l *leds) run() {
