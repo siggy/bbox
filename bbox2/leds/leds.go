@@ -1,6 +1,10 @@
 package leds
 
 import (
+	"context"
+	"sync"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial"
 )
@@ -8,11 +12,16 @@ import (
 type (
 	LEDs interface {
 		Close() error
-		Clear() error
-		Write(State) error
+		Clear()
+		Set(State)
 	}
 
 	leds struct {
+		ctx    context.Context
+		cancel context.CancelFunc
+		wg     sync.WaitGroup
+
+		set          chan State
 		port         serial.Port
 		stripLengths []int
 		log          *log.Entry
@@ -24,9 +33,13 @@ const (
 	piDevicePath  = "/dev/ttyACM1"         // pi
 
 	baudRate = 115200
+
+	setBuffer         = 1000
+	tickInterval      = 20 * time.Millisecond
+	reconcileInterval = 10 * time.Second
 )
 
-func New(stripLengths []int, macDevice bool) (LEDs, error) {
+func New(ctx context.Context, stripLengths []int, macDevice bool) (LEDs, error) {
 	devicePath := piDevicePath
 	if macDevice {
 		devicePath = macDevicePath
@@ -41,25 +54,39 @@ func New(stripLengths []int, macDevice bool) (LEDs, error) {
 
 	log.Infof("Connected to %s", devicePath)
 
-	return &leds{
+	ctx, cancel := context.WithCancel(ctx)
+	l := &leds{
+		ctx:    ctx,
+		cancel: cancel,
+
+		set:          make(chan State, setBuffer),
 		port:         port,
 		stripLengths: stripLengths,
 		log:          log,
-	}, nil
+	}
+
+	l.wg.Add(1)
+	go l.run()
+
+	return l, nil
 }
 
 func (l *leds) Close() error {
+	l.cancel()
+	l.wg.Wait()
+	close(l.set)
+
 	if l.port != nil {
 		return l.port.Close()
 	}
 	return nil
 }
 
-func (l *leds) Clear() error {
-	return l.write(all(l.stripLengths))
+func (l *leds) Clear() {
+	l.Set(l.all())
 }
 
-func (l *leds) Write(state State) error {
+func (l *leds) Set(state State) {
 	s := State{}
 
 	for strip, stripLEDs := range state {
@@ -78,7 +105,50 @@ func (l *leds) Write(state State) error {
 		}
 	}
 
-	return l.write(s)
+	l.set <- s
+}
+
+func (l *leds) run() {
+	defer l.wg.Done()
+
+	ticker := time.NewTicker(tickInterval)
+	defer ticker.Stop()
+
+	reconcile := time.NewTicker(reconcileInterval)
+	defer reconcile.Stop()
+
+	currentState := l.all()
+	lastTick := l.all()
+
+	// clear all at startup
+	l.write(currentState)
+
+	for {
+		select {
+		case <-ticker.C:
+			// send a diff of the LEDs
+			if err := l.write(lastTick.diff(currentState)); err != nil {
+				l.log.Errorf("Failed to reconcile full state: %v", err)
+				continue
+			}
+
+			lastTick = currentState.copy()
+
+		case <-reconcile.C:
+			// send the full state to the LEDs
+			if err := l.write(currentState); err != nil {
+				l.log.Errorf("Failed to reconcile full state: %v", err)
+				continue
+			}
+
+			lastTick = currentState.copy()
+
+		case s := <-l.set:
+			currentState.ApplyState(s)
+		case <-l.ctx.Done():
+			return
+		}
+	}
 }
 
 func (l *leds) write(state State) error {
@@ -117,11 +187,22 @@ func buildPacket(payload []byte) []byte {
 	return packet
 }
 
+func (l *leds) all() State {
+	state := State{}
+	for strip, length := range l.stripLengths {
+		state[strip] = make(map[int]Color)
+		for pixel := range length {
+			state[strip][pixel] = Color{0, 0, 0, 0}
+		}
+	}
+	return state
+}
+
 func all(stripLengths []int) State {
 	state := State{}
 	for strip, length := range stripLengths {
 		state[strip] = make(map[int]Color)
-		for pixel := 0; pixel < length; pixel++ {
+		for pixel := range length {
 			state[strip][pixel] = Color{0, 0, 0, 0}
 		}
 	}

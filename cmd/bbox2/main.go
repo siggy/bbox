@@ -73,7 +73,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		ledStrips, err = leds.New(stripLengths, *macDevice)
+		ledStrips, err = leds.New(ctx, stripLengths, *macDevice)
 		if err != nil {
 			log.Errorf("leds.New failed: %+v", err)
 			os.Exit(1)
@@ -186,10 +186,7 @@ func main() {
 		case leds := <-curProgram.Render():
 			log.Tracef("leds: %s", leds)
 
-			err := ledStrips.Write(leds)
-			if err != nil {
-				log.Errorf("leds.Write failed: %v", err)
-			}
+			ledStrips.Set(leds)
 
 		case play := <-curProgram.Play():
 			log.Tracef("play: %s", play)

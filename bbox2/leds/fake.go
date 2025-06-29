@@ -24,11 +24,10 @@ func (f *fake) Close() error {
 	return nil
 }
 
-func (f *fake) Clear() error {
-	return f.Write(all(f.stripLengths))
+func (f *fake) Clear() {
+	f.Set(all(f.stripLengths))
 }
 
-func (f *fake) Write(state State) error {
-	f.log.Tracef("Write: %+v", state)
-	return nil
+func (f *fake) Set(state State) {
+	f.log.Tracef("Set: %+v", state)
 }

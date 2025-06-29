@@ -29,7 +29,7 @@ type (
 )
 
 const (
-	tickInterval = 50 * time.Millisecond
+	tickInterval = 20 * time.Millisecond
 	defaultBPM   = 120
 	minBPM       = 30
 	maxBPM       = 480
@@ -255,8 +255,8 @@ func (b *beats) run() {
 					ledsState.Set(rowIdx, mintPos, leds.Mint)
 				}
 
-				// overlay a sine‐fade “pulse” of mint ±radius LEDs around beatIndex, with wrap
-				const radius = 10 // lights 5 LEDs total
+				// overlay a “pulse” of mint ±radius LEDs around beatIndex, with wrap
+				const radius = 10 // lights 20 LEDs total
 				for rowIdx := range soundCount {
 					seg := segments[rowIdx]
 					ci := colIndex[rowIdx]
@@ -368,7 +368,7 @@ func (b *beats) run() {
 			ledsState := leds.State{}
 			phys := rows[press.Row].buttons[press.Col]
 			ledsState.Set(press.Row, phys, color)
-			b.render <- ledsState
+			b.render <- ledsState // TODO: this can hit the LEDs with too many updates
 
 			// check for tempo changes
 			increasingTempo := lastPress == tempoUp && press == tempoUp && bpm < maxBPM
