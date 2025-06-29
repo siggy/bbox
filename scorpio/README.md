@@ -37,3 +37,12 @@ sudo cp ~/code/bbox/scorpio/code.py /mnt/circuitpy/code.py
 # disconnect
 sudo umount /mnt/circuitpy
 ```
+
+### Debug from Pi
+
+```bash
+sudo fuser -v /dev/ttyACM0
+
+sudo apt install picocom
+picocom --baud 115200 /dev/ttyACM0
+```
