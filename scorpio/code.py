@@ -13,7 +13,7 @@ status_led = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=0.5, auto_write=Tru
 status_led[0] = (0, 255, 0)  # Green = healthy
 
 # Number of pixels on each strip
-strip_lengths = [30, 30, 10, 10, 10, 10, 10, 10]
+strip_lengths = [144, 30, 10, 10, 10, 10, 10, 10]
 TOTAL_STRIPS = len(strip_lengths)
 
 # Map each output pin

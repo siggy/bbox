@@ -10,15 +10,15 @@ type Row struct {
 
 var (
 	rows = [program.Rows]Row{
-		// test strip 0-29
+		// test strip 0-143
 		{
 			start: 0,
-			end:   29,
+			end:   143,
 			buttons: [program.Cols]int{
-				1, 2, 3, 4,
-				5, 6, 7, 8,
-				10, 12, 14, 16,
-				19, 22, 25, 29,
+				1, 10, 15, 20,
+				25, 30, 35, 40,
+				50, 60, 70, 80,
+				95, 110, 125, 143,
 			},
 		},
 		// rows 0 and 1 are LED strip 0

@@ -1,5 +1,6 @@
 # TODO
 
+- solve issue where if beat key is held down, it causes LEDs to fall behind?
 - auto speed up to 480
 - pyramid song
 - consider diff'ing against last LED state in leds.go

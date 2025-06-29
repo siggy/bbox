@@ -23,3 +23,17 @@ pip install urllib3==1.26.15
 pip install setuptools
 pip install circup
 ```
+
+### Mount on Pi
+
+```bash
+sudo mkdir -p /mnt/circuitpy
+sudo mount /dev/sda1 /mnt/circuitpy
+ls /mnt/circuitpy
+
+# update code
+sudo cp ~/code/bbox/scorpio/code.py /mnt/circuitpy/code.py
+
+# disconnect
+sudo umount /mnt/circuitpy
+```

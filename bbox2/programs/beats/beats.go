@@ -256,7 +256,7 @@ func (b *beats) run() {
 				}
 
 				// overlay a sine‐fade “pulse” of mint ±radius LEDs around beatIndex, with wrap
-				const radius = 5 // lights 5 LEDs total
+				const radius = 10 // lights 5 LEDs total
 				for rowIdx := range soundCount {
 					seg := segments[rowIdx]
 					ci := colIndex[rowIdx]
