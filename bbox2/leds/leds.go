@@ -133,6 +133,9 @@ func (l *leds) run() {
 	// clear all at startup
 	l.write(currentState)
 
+	ticks := 0
+	writes := 0
+
 	for {
 		select {
 		case <-ticker.C:
@@ -140,6 +143,17 @@ func (l *leds) run() {
 			if err := l.write(lastTick.diff(currentState)); err != nil {
 				l.log.Errorf("Failed to reconcile full state: %v", err)
 				continue
+			}
+
+			diffs := 0
+			d := lastTick.diff(currentState)
+			for _, strip := range d {
+				diffs += len(strip)
+			}
+
+			ticks++
+			if diffs > 0 {
+				writes++
 			}
 
 			lastTick = currentState.copy()
@@ -152,6 +166,8 @@ func (l *leds) run() {
 			}
 
 			lastTick = currentState.copy()
+
+			l.log.Errorf("Reconciled full state after %d writes, %d ticks", writes, ticks)
 
 		case s := <-l.set:
 			currentState.ApplyState(s)

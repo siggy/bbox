@@ -125,39 +125,39 @@ func (b *beats) run() {
 	beatIndex := 0
 	beatState := state{}
 
-	// build a circular segment and column→index map per row for wraparound pulses
-	segments := make([][]int, soundCount)
-	colIndex := make([][]int, soundCount)
-	for rowIdx, rowMap := range rows {
-		// step through start→end (wrap if start>end)
-		step := 1
-		if rowMap.end < rowMap.start {
-			step = -1
-		}
-		// assemble segment
-		seg := []int{}
-		for i := rowMap.start; ; i += step {
-			seg = append(seg, i)
-			if i == rowMap.end {
-				break
-			}
-		}
-		segments[rowIdx] = seg
-		// map each beat column to its index in seg
-		ci := make([]int, beatCount)
-		for col, led := range rowMap.buttons {
-			for idx, v := range seg {
-				if v == led {
-					ci[col] = idx
-					break
-				}
-			}
-		}
-		colIndex[rowIdx] = ci
-	}
+	// // build a circular segment and column→index map per row for wraparound pulses
+	// segments := make([][]int, soundCount)
+	// colIndex := make([][]int, soundCount)
+	// for rowIdx, rowMap := range rows {
+	// 	// step through start→end (wrap if start>end)
+	// 	step := 1
+	// 	if rowMap.end < rowMap.start {
+	// 		step = -1
+	// 	}
+	// 	// assemble segment
+	// 	seg := []int{}
+	// 	for i := rowMap.start; ; i += step {
+	// 		seg = append(seg, i)
+	// 		if i == rowMap.end {
+	// 			break
+	// 		}
+	// 	}
+	// 	segments[rowIdx] = seg
+	// 	// map each beat column to its index in seg
+	// 	ci := make([]int, beatCount)
+	// 	for col, led := range rowMap.buttons {
+	// 		for idx, v := range seg {
+	// 			if v == led {
+	// 				ci[col] = idx
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+	// 	colIndex[rowIdx] = ci
+	// }
 
-	log.Debugf("segments: %+v", segments)
-	log.Debugf("colIndex: %+v", colIndex)
+	// log.Debugf("segments: %+v", segments)
+	// log.Debugf("colIndex: %+v", colIndex)
 
 	bpm := defaultBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
@@ -220,6 +220,9 @@ func (b *beats) run() {
 	b.in <- program.Coord{Row: 1, Col: 0}
 	b.in <- program.Coord{Row: 1, Col: 8}
 
+	ticks := 0
+	writes := 0
+
 	for {
 		select {
 		case <-b.ctx.Done():
@@ -227,74 +230,84 @@ func (b *beats) run() {
 
 		// beat loop
 		case <-ticker.C:
-			beatAcc += beatsPerTick
+			ticks++
 
 			ledsState := leds.State{}
 
-			for beatAcc >= 1.0 {
-				beatAcc -= 1.0
-
-				// TODO: get smarter about updates?
-				// for each row, clear its full physical range:
-				for rowIdx, rowMap := range rows {
+			// TODO: get smarter about updates?
+			// for each row, clear its full physical range:
+			for _, row := range rows {
+				for _, seg := range row.segments {
 					step := 1
-					if rowMap.end < rowMap.start {
+					if seg.end < seg.start {
 						step = -1
 					}
-					for i := rowMap.start; ; i += step {
-						ledsState.Set(rowIdx, i, leds.Black)
-						if i == rowMap.end {
-							break
+					for i := seg.start; i <= seg.end; i += step {
+						ledsState.Set(seg.strip, i, leds.Black)
+					}
+				}
+			}
+
+			// use beatAcc to determine peak location
+			for _, row := range rows {
+				pulse := getPulse(row, float64(beatIndex)+beatAcc)
+
+				for coord, brightness := range pulse {
+					c := leds.Brightness(leds.Mint, brightness)
+					ledsState.Set(coord.strip, coord.pixel, c)
+				}
+			}
+
+			// // overlay the “tick” position in mint
+			// for rowIdx, rowMap := range rows {
+			// 	mintPos := rowMap.buttons[beatIndex]
+			// 	ledsState.Set(rowIdx, mintPos, leds.Mint)
+			// }
+
+			// // overlay a “pulse” of mint ±radius LEDs around beatIndex, with wrap
+			// const radius = 10 // lights 20 LEDs total
+			// for rowIdx := range soundCount {
+			// 	seg := segments[rowIdx]
+			// 	ci := colIndex[rowIdx]
+			// 	centerIdx := ci[beatIndex]
+			// 	segLen := len(seg)
+			// 	for off := -radius; off <= radius; off++ {
+			// 		idx := (centerIdx + off + segLen) % segLen
+
+			// 		frac := 1 - math.Abs(float64(off))/float64(radius)
+			// 		if frac <= 0 {
+			// 			continue
+			// 		}
+			// 		// steeper falloff: raise to the 8th power for an even sharper dropoff
+			// 		bness := math.Pow(frac, 8)
+
+			// 		c := leds.Brightness(leds.Mint, bness)
+			// 		ledsState.Set(rowIdx, seg[idx], c)
+			// 	}
+			// }
+
+			// set active beats to red, play active beats if index matches
+			for rowIdx, beats := range beatState {
+				for i, beat := range beats {
+					if beat {
+						redPos := rows[rowIdx].buttons[i]
+						ledsState.Set(redPos.strip, redPos.pixel, leds.Red)
+
+						if i == beatIndex {
+							b.play <- sounds[rowIdx]
 						}
 					}
 				}
+			}
+			b.render <- ledsState
 
-				// overlay the “tick” position in mint
-				for rowIdx, rowMap := range rows {
-					mintPos := rowMap.buttons[beatIndex]
-					ledsState.Set(rowIdx, mintPos, leds.Mint)
-				}
-
-				// overlay a “pulse” of mint ±radius LEDs around beatIndex, with wrap
-				const radius = 10 // lights 20 LEDs total
-				for rowIdx := range soundCount {
-					seg := segments[rowIdx]
-					ci := colIndex[rowIdx]
-					centerIdx := ci[beatIndex]
-					segLen := len(seg)
-					for off := -radius; off <= radius; off++ {
-						idx := (centerIdx + off + segLen) % segLen
-
-						frac := 1 - math.Abs(float64(off))/float64(radius)
-						if frac <= 0 {
-							continue
-						}
-						// steeper falloff: raise to the 8th power for an even sharper dropoff
-						bness := math.Pow(frac, 8)
-
-						c := leds.Brightness(leds.Mint, bness)
-						ledsState.Set(rowIdx, seg[idx], c)
-					}
-				}
-
-				// set active beats to red, play active beats if index matches
-				for rowIdx, beats := range beatState {
-					for i, beat := range beats {
-						if beat {
-							redPos := rows[rowIdx].buttons[i]
-							ledsState.Set(rowIdx, redPos, leds.Red)
-
-							if i == beatIndex {
-								b.play <- sounds[rowIdx]
-							}
-						}
-					}
-				}
-
+			beatAcc += beatsPerTick
+			for beatAcc >= 1.0 {
+				writes++
+				beatAcc -= 1.0
 				// advance to next beat column
 				beatIndex = (beatIndex + 1) % beatCount
 			}
-			b.render <- ledsState
 
 			t := time.Now()
 			b.log.Tracef("BPM:___________%+v_", bpm)
@@ -306,6 +319,8 @@ func (b *beats) run() {
 			tickTime = t
 
 		case press := <-b.in:
+			b.log.Errorf("%d writes, %d ticks", writes, ticks)
+
 			b.log.Debugf("Processing press: %+v", press)
 
 			if press.Row < 0 || press.Row >= soundCount || press.Col < 0 || press.Col >= beatCount {
@@ -367,7 +382,7 @@ func (b *beats) run() {
 
 			ledsState := leds.State{}
 			phys := rows[press.Row].buttons[press.Col]
-			ledsState.Set(press.Row, phys, color)
+			ledsState.Set(phys.strip, phys.pixel, color)
 			b.render <- ledsState // TODO: this can hit the LEDs with too many updates
 
 			// check for tempo changes
@@ -426,3 +441,192 @@ func (b *beats) Yield() <-chan struct{} {
 func getBeatsPerTick(bpm int) float64 {
 	return beatCount / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
 }
+
+// getPulse returns map of coord -> brightness
+func getPulse(r Row, peak float64) map[coord]float64 {
+	floatPixel := peakToFloatPixel(r, peak)
+	radius := 10.0
+
+	start := floatPixel - radius
+	if start > float64(r.start) && start > float64(r.end) {
+		// if the start is outside the range of the row, wrap it around
+		start = float64(beatCount)
+	}
+
+	if start < 0 {
+		start += float64(beatCount)
+	}
+	end := floatPixel + radius
+	if end > float64(beatCount) {
+		end -= float64(beatCount)
+	}
+
+	for i := (peakIndex - radius + beatCount) % beatCount; i <= (peakIndex+radius+beatCount)%beatCount; i++ {
+	}
+
+	// get range of pulse in terms of beats
+
+	start := peak - radius
+	if start < 0 {
+		start += float64(beatCount)
+	}
+	end := peak + radius
+	if end > float64(beatCount) {
+		end -= float64(beatCount)
+	}
+
+	// map start and end to physical LEDs
+
+	f := math.Floor(peak) // 12
+	c := math.Ceil(peak)  // 13
+
+	var floor int
+	var ceil int
+
+	if f == 0 {
+		// between start and first beat
+		floor = r.start
+		ceil = r.buttons[0]
+	} else if c == beatCount {
+		// between last beat and end
+		floor = r.buttons[beatCount-1]
+		ceil = r.end
+	} else {
+		// between first and last beat
+		floor = r.buttons[int(f)]
+		ceil = r.buttons[int(c)]
+	}
+
+	percentAhead := peak - f // 12.7 - 12 => 0.7
+	diff := percentAhead * (float64(ceil) - float64(floor))
+
+	// peak := float64(floor) + diff
+
+	pulse := make(map[int]float64)
+
+	peakIndex := int(math.Round(peak)) // round to nearest int
+
+	const radius = 1 // lights all LEDs up to one beat on each side
+
+	log.Errorf("peakIndex: %d, peak: %f, radius: %d", peakIndex, peak, radius)
+	log.Errorf("peakIndex - radius + beatCount) %% beatCount: %d", (peakIndex-radius+beatCount)%beatCount)
+	log.Errorf("peakIndex + radius + beatCount) %% beatCount: %d", (peakIndex+radius+beatCount)%beatCount)
+
+	for pixel := range r.buttons[(peakIndex-radius)%beatCount] {
+	}
+
+	for i := (peakIndex - radius + beatCount) % beatCount; i <= (peakIndex+radius+beatCount)%beatCount; i++ {
+		// calculate distance from peak
+		distance := float64(i) - peak
+		// distance == radius => 0 brightness
+		// distance == 0 => 1 brightness
+		frac := 1 - math.Abs(float64(distance))/float64(radius)
+		if frac <= 0 {
+			continue
+		}
+		// steeper falloff: raise to the 8th power for an even sharper dropoff
+		bness := math.Pow(frac, 8)
+		// map to physical LED index
+		pulse[r.buttons[i]] = bness
+
+		// // off := int(math.Round(distance))
+
+		// // offPeak := peak + float64(off)
+
+		// // idx := (centerIdx + off + segLen) % segLen
+
+		// frac := 1 - math.Abs(float64(off))/float64(radius)
+		// if frac <= 0 {
+		// 	continue
+		// }
+		// // steeper falloff: raise to the 8th power for an even sharper dropoff
+		// bness := math.Pow(frac, 8)
+
+		// c := leds.Brightness(leds.Mint, bness)
+		// ledsState.Set(rowIdx, seg[idx], c)
+
+	}
+
+	log.Errorf("getPulse(%+v, %f) => %+v", r, peak, pulse)
+
+	return pulse
+}
+
+func peakToFloatPixel(r Row, peak float64) float64 {
+	f := math.Floor(peak) // 12
+	c := math.Ceil(peak)  // 13
+
+	var floor int
+	var ceil int
+
+	if f == 0 {
+		// between start and first beat
+		floor = r.start
+		ceil = r.buttons[0]
+	} else if c == beatCount {
+		// between last beat and end
+		floor = r.buttons[beatCount-1]
+		ceil = r.end
+	} else {
+		// between first and last beat
+		floor = r.buttons[int(f)]
+		ceil = r.buttons[int(c)]
+	}
+
+	percentAhead := peak - f // 12.7 - 12 => 0.7
+	diff := percentAhead * (float64(ceil) - float64(floor))
+
+	return float64(floor) + diff
+}
+
+// 	// overlay a “pulse” of mint ±radius LEDs around beatIndex, with wrap
+// 	for rowIdx := range soundCount {
+// 		seg := segments[rowIdx]
+// 		ci := colIndex[rowIdx]
+// 		centerIdx := ci[beatIndex]
+// 		segLen := len(seg)
+// 		for off := -radius; off <= radius; off++ {
+// 			idx := (centerIdx + off + segLen) % segLen
+
+// 			frac := 1 - math.Abs(float64(off))/float64(radius)
+// 			if frac <= 0 {
+// 				continue
+// 			}
+// 			// steeper falloff: raise to the 8th power for an even sharper dropoff
+// 			bness := math.Pow(frac, 8)
+
+// 			c := leds.Brightness(leds.Mint, bness)
+// 			ledsState.Set(rowIdx, seg[idx], c)
+// 		}
+// 	}
+
+// 	return pulse
+// }
+
+// func getBrightness(r Row, floatBeat float64) map[int]int {
+// 	halfPeriod := float64(period) / 2.0
+
+// 	first := int(math.Ceil(floatBeat - halfPeriod)) // 12.7 - 1.5 => 11.2 => 12
+// 	last := int(math.Floor(floatBeat + halfPeriod)) // 12.7 + 1.5 => 14.2 => 14
+
+// 	sineFunc := func(x int) int {
+// 		// y = a * sin((x-h)/b) + k
+// 		h := floatBeat - float64(period)/4.0
+// 		b := float64(period) / (2 * math.Pi)
+// 		return int(
+// 			SINE_AMPLITUDE*math.Sin((float64(x)-h)/b) +
+// 				SINE_SHIFT,
+// 		)
+// 	}
+
+// 	sineVals = make(map[int]int)
+
+// 	for i := first; i <= last; i++ {
+// 		y := sineFunc(i)
+// 		if y != 0 {
+// 			sineVals[(i+ledCount)%ledCount] = int(scale(uint32(sineFunc(i))))
+// 		}
+// 	}
+
+// 	return
+// }

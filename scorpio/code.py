@@ -59,23 +59,35 @@ def read_exact(count):
     return data
 
 def read_packet():
-    while True:
-        if serial.read(1) != bytes([START_BYTE]):
-            continue
-        length_bytes = read_exact(2)
-        length = (length_bytes[0] << 8) | length_bytes[1]
-        payload = read_exact(length)
-        checksum = serial.read(1)
-        if not checksum:
+    # try to grab a start byte; if no data, bail immediately
+    first = serial.read(1)
+    if not first:
+        return None
+    # if it isn’t our marker, keep scanning
+    while first != bytes([START_BYTE]):
+        first = serial.read(1)
+        if not first:
             return None
-        calc = 0
-        for b in payload:
-            calc ^= b
-        if checksum[0] == calc:
-            return payload
-        else:
-            print("Bad checksum")
-            return None
+    # now read the 2-byte length
+    hdr = serial.read(2)
+    if not hdr or len(hdr) < 2:
+        return None
+    length = (hdr[0] << 8) | hdr[1]
+    # read payload & checksum (non-blocking)
+    payload = serial.read(length)
+    if not payload or len(payload) < length:
+        return None
+    chk = serial.read(1)
+    if not chk:
+        return None
+    # verify
+    calc = 0
+    for bb in payload:
+        calc ^= bb
+    if chk[0] != calc:
+        print("Bad checksum")
+        return None
+    return payload
 
 def update_heartbeat():
     t = time.monotonic()  # seconds since power-on
@@ -89,17 +101,17 @@ def update_heartbeat():
 try:
     while True:
         update_heartbeat()
-        packet = read_packet()
-        if packet and len(packet) % 6 == 0:
-            for i in range(0, len(packet), 6):
-                strip_index = packet[i]
-                pixel_index = packet[i+1]
-                r, g, b, w = packet[i+2:i+6]
-                if strip_index < TOTAL_STRIPS:
-                    if pixel_index < strip_lengths[strip_index]:
-                        strips[strip_index][pixel_index] = (r, g, b, w)
-            for strip in strips:
-                strip.show()
+        pkt = read_packet()
+        if pkt and len(pkt) % 6 == 0:
+            for i in range(0, len(pkt), 6):
+                si = pkt[i]
+                pi = pkt[i+1]
+                r, g, b, w = pkt[i+2:i+6]
+                if si < TOTAL_STRIPS and pi < strip_lengths[si]:
+                    strips[si][pi] = (r, g, b, w)
+        # always refresh LEDs immediately
+        for strip in strips:
+            strip.show()
 except Exception as e:
-    status_led[0] = (255, 0, 0)  # Red = error
+    status_led[0] = (255, 0, 0)
     print("CRASHED:", e)

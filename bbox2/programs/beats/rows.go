@@ -2,23 +2,41 @@ package beats
 
 import "github.com/siggy/bbox/bbox2/program"
 
+// define a set of pixels on a given strip, inclusive
+type segment struct {
+	strip int
+	start int
+	end   int
+}
+
+type coord struct {
+	strip int
+	pixel int
+}
+
+// TODO: make private?
+// assume segments are in contiguous order w.r.t. buttons
 type Row struct {
-	start   int
-	end     int
-	buttons [program.Cols]int
+	segments []segment
+	buttons  [program.Cols]coord
 }
 
 var (
 	rows = [program.Rows]Row{
 		// test strip 0-143
 		{
-			start: 0,
-			end:   143,
-			buttons: [program.Cols]int{
-				1, 10, 15, 20,
-				25, 30, 35, 40,
-				50, 60, 70, 80,
-				95, 110, 125, 143,
+			segments: []segment{
+				{
+					strip: 0,
+					start: 0,
+					end:   143,
+				},
+			},
+			buttons: [program.Cols]coord{
+				{0, 1}, {0, 10}, {0, 15}, {0, 20},
+				{0, 25}, {0, 30}, {0, 35}, {0, 40},
+				{0, 50}, {0, 60}, {0, 70}, {0, 80},
+				{0, 95}, {0, 110}, {0, 125}, {0, 143},
 			},
 		},
 		// rows 0 and 1 are LED strip 0
@@ -33,35 +51,50 @@ var (
 		// 	},
 		// },
 		{
-			start: 72,
-			end:   151,
-			buttons: [program.Cols]int{
-				75, 79, 83, 88,
-				103, 108, 112, 117,
-				119, 124, 128, 133,
-				136, 140, 145, 150,
+			segments: []segment{
+				{
+					strip: 0,
+					start: 72,
+					end:   151,
+				},
+			},
+			buttons: [program.Cols]coord{
+				{0, 75}, {0, 79}, {0, 83}, {0, 88},
+				{0, 103}, {0, 108}, {0, 112}, {0, 117},
+				{0, 119}, {0, 124}, {0, 128}, {0, 133},
+				{0, 136}, {0, 140}, {0, 145}, {0, 150},
 			},
 		},
 
 		// rows 2 and 3 are LED strip 1
 		{
-			start: 83,
-			end:   0,
-			buttons: [program.Cols]int{
-				79, 74, 69, 64,
-				53, 47, 42, 37,
-				34, 29, 24, 18,
-				16, 10, 5, 0,
+			segments: []segment{
+				{
+					strip: 1,
+					start: 83,
+					end:   0,
+				},
+			},
+			buttons: [program.Cols]coord{
+				{0, 79}, {0, 74}, {0, 69}, {0, 64},
+				{0, 53}, {0, 47}, {0, 42}, {0, 37},
+				{0, 34}, {0, 29}, {0, 24}, {0, 18},
+				{0, 16}, {0, 10}, {0, 5}, {0, 0},
 			},
 		},
 		{
-			start: 84,
-			end:   176,
-			buttons: [program.Cols]int{
-				88, 93, 99, 105,
-				115, 121, 127, 133,
-				136, 142, 148, 154,
-				157, 163, 169, 174,
+			segments: []segment{
+				{
+					strip: 1,
+					start: 84,
+					end:   176,
+				},
+			},
+			buttons: [program.Cols]coord{
+				{0, 88}, {0, 93}, {0, 99}, {0, 105},
+				{0, 115}, {0, 121}, {0, 127}, {0, 133},
+				{0, 136}, {0, 142}, {0, 148}, {0, 154},
+				{0, 157}, {0, 163}, {0, 169}, {0, 174},
 			},
 		},
 	}

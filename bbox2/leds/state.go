@@ -39,6 +39,7 @@ var (
 	ActiveBeatPurple = Color{127, 127, 0, 127}
 )
 
+// TODO: cache?
 func Brightness(c Color, brightness float64) Color {
 	if brightness < 0 || brightness > 1 {
 		return c
