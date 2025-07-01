@@ -25,7 +25,7 @@ type (
 		log *log.Entry
 	}
 
-	timers [soundCount][beatCount]*time.Timer
+	timers [program.Rows][program.Cols]*time.Timer
 )
 
 const (
@@ -33,11 +33,10 @@ const (
 	defaultBPM   = 120
 	minBPM       = 30
 	maxBPM       = 480
-	soundCount   = program.Rows
-	beatCount    = program.Cols
+	pulseDelay   = -1.6
 
 	// if 33% of beats are active, yield to the next program
-	beatLimit = soundCount * beatCount / 3
+	beatLimit = program.Rows * program.Cols / 3
 
 	// test
 	// decay             = 2 * time.Second
@@ -195,7 +194,6 @@ func (b *beats) run() {
 		case <-ticker.C:
 			ledsState := leds.State{}
 
-			// TODO: get smarter about updates?
 			// for each row, clear its full physical range:
 			for _, row := range flatRows {
 				for _, pixel := range row.pixels {
@@ -205,7 +203,11 @@ func (b *beats) run() {
 
 			// use beatAcc to determine peak location
 			for _, row := range flatRows {
-				pulse := getPulse(row, float64(beatIndex)+beatAcc)
+				peak := float64(beatIndex) + beatAcc + pulseDelay
+				if peak < 0 {
+					peak += float64(program.Cols)
+				}
+				pulse := getPulse(row, peak)
 
 				for coord, brightness := range pulse {
 					c := leds.Brightness(leds.Mint, brightness)
@@ -241,7 +243,7 @@ func (b *beats) run() {
 				}
 
 				// advance to next beat column
-				beatIndex = (beatIndex + 1) % beatCount
+				beatIndex = (beatIndex + 1) % program.Cols
 			}
 
 			t := time.Now()
@@ -256,7 +258,7 @@ func (b *beats) run() {
 		case press := <-b.in:
 			b.log.Debugf("Processing press: %+v", press)
 
-			if press.Row < 0 || press.Row >= soundCount || press.Col < 0 || press.Col >= beatCount {
+			if press.Row < 0 || press.Row >= program.Rows || press.Col < 0 || press.Col >= program.Cols {
 				b.log.Warnf("Invalid press coordinates: %+v", press)
 				continue
 			}
@@ -316,7 +318,7 @@ func (b *beats) run() {
 			ledsState := leds.State{}
 			phys := rows[press.Row].buttons[press.Col]
 			ledsState.Set(phys.strip, phys.pixel, color)
-			b.render <- ledsState // TODO: this can hit the LEDs with too many updates
+			b.render <- ledsState
 
 			// check for tempo changes
 			increasingTempo := lastPress == tempoUp && press == tempoUp && bpm < maxBPM
@@ -372,11 +374,12 @@ func (b *beats) Yield() <-chan struct{} {
 }
 
 func getBeatsPerTick(bpm int) float64 {
-	return beatCount / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
+	return program.Cols / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
 }
 
 // getPulse returns map of coord -> brightness
 // 0 <= peak < 16
+// TODO: cache results?
 func getPulse(r flatRow, peak float64) map[coord]float64 {
 	pulse := make(map[coord]float64)
 

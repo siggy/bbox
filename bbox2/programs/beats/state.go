@@ -1,10 +1,12 @@
 package beats
 
-type state [soundCount][beatCount]bool
+import "github.com/siggy/bbox/bbox2/program"
+
+type state [program.Rows][program.Cols]bool
 
 func (s state) String() string {
 	var str string
-	for row := range soundCount {
+	for row := range program.Rows {
 		for col := range s[row] {
 			if s[row][col] {
 				str += "X"

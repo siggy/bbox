@@ -141,8 +141,6 @@ func initRows(rows [program.Rows]Row) [program.Rows]flatRow {
 				step = -1
 			}
 
-			fmt.Printf("Row %d segment: %+v, start: %d, end: %d\n", i, segment, start, end)
-
 			for j := start; ; j += step {
 				if (step > 0 && j > end) || (step < 0 && j < end) {
 					break
