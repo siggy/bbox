@@ -13,12 +13,12 @@ require (
 	github.com/stianeikeland/go-rpio v4.2.0+incompatible
 	github.com/youpy/go-wav v0.3.2
 	go.bug.st/serial v1.6.4
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 )
 
 require (
 	github.com/creack/goselect v0.1.2 // indirect
 	github.com/ebitengine/purego v0.8.0 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/youpy/go-riff v0.1.0 // indirect
 	github.com/zaf/g711 v0.0.0-20190814101024-76a4a538f52b // indirect

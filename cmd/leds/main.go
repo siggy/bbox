@@ -35,7 +35,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	ledStrips, err := leds.New(stripLengths, false)
+	ledStrips, err := leds.New(ctx, stripLengths, false)
 	if err != nil {
 		log.Errorf("leds.New failed: %+v", err)
 		os.Exit(1)
@@ -78,7 +78,7 @@ func main() {
 				state.Set(strip, cur, leds.Color{R: 255, G: 0, B: 0, W: 0})
 			}
 
-			err := ledStrips.Write(state)
+			ledStrips.Set(state)
 			if err != nil {
 				log.Errorf("ledStrips.Write failed: %+v\n", err)
 			}

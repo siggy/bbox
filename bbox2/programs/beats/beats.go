@@ -30,7 +30,7 @@ type (
 
 const (
 	tickInterval = 20 * time.Millisecond
-	defaultBPM   = 120
+	defaultBPM   = 30
 	minBPM       = 30
 	maxBPM       = 480
 	soundCount   = program.Rows
@@ -236,20 +236,14 @@ func (b *beats) run() {
 
 			// TODO: get smarter about updates?
 			// for each row, clear its full physical range:
-			for _, row := range rows {
-				for _, seg := range row.segments {
-					step := 1
-					if seg.end < seg.start {
-						step = -1
-					}
-					for i := seg.start; i <= seg.end; i += step {
-						ledsState.Set(seg.strip, i, leds.Black)
-					}
+			for _, row := range flatRows {
+				for _, pixel := range row.pixels {
+					ledsState.Set(pixel.strip, pixel.pixel, leds.Black)
 				}
 			}
 
 			// use beatAcc to determine peak location
-			for _, row := range rows {
+			for _, row := range flatRows {
 				pulse := getPulse(row, float64(beatIndex)+beatAcc)
 
 				for coord, brightness := range pulse {
@@ -443,140 +437,170 @@ func getBeatsPerTick(bpm int) float64 {
 }
 
 // getPulse returns map of coord -> brightness
-func getPulse(r Row, peak float64) map[coord]float64 {
-	floatPixel := peakToFloatPixel(r, peak)
+// 0 <= peak < 16
+func getPulse(r flatRow, peak float64) map[coord]float64 {
+	pulse := make(map[coord]float64)
+
+	floatPeakPixel := peakToFloatPixel(r, peak)
 	radius := 10.0
 
-	start := floatPixel - radius
-	if start > float64(r.start) && start > float64(r.end) {
-		// if the start is outside the range of the row, wrap it around
-		start = float64(beatCount)
-	}
-
-	if start < 0 {
-		start += float64(beatCount)
-	}
-	end := floatPixel + radius
-	if end > float64(beatCount) {
-		end -= float64(beatCount)
-	}
-
-	for i := (peakIndex - radius + beatCount) % beatCount; i <= (peakIndex+radius+beatCount)%beatCount; i++ {
-	}
-
-	// get range of pulse in terms of beats
-
-	start := peak - radius
-	if start < 0 {
-		start += float64(beatCount)
-	}
-	end := peak + radius
-	if end > float64(beatCount) {
-		end -= float64(beatCount)
-	}
-
-	// map start and end to physical LEDs
-
-	f := math.Floor(peak) // 12
-	c := math.Ceil(peak)  // 13
-
-	var floor int
-	var ceil int
-
-	if f == 0 {
-		// between start and first beat
-		floor = r.start
-		ceil = r.buttons[0]
-	} else if c == beatCount {
-		// between last beat and end
-		floor = r.buttons[beatCount-1]
-		ceil = r.end
-	} else {
-		// between first and last beat
-		floor = r.buttons[int(f)]
-		ceil = r.buttons[int(c)]
-	}
-
-	percentAhead := peak - f // 12.7 - 12 => 0.7
-	diff := percentAhead * (float64(ceil) - float64(floor))
-
-	// peak := float64(floor) + diff
-
-	pulse := make(map[int]float64)
-
-	peakIndex := int(math.Round(peak)) // round to nearest int
-
-	const radius = 1 // lights all LEDs up to one beat on each side
-
-	log.Errorf("peakIndex: %d, peak: %f, radius: %d", peakIndex, peak, radius)
-	log.Errorf("peakIndex - radius + beatCount) %% beatCount: %d", (peakIndex-radius+beatCount)%beatCount)
-	log.Errorf("peakIndex + radius + beatCount) %% beatCount: %d", (peakIndex+radius+beatCount)%beatCount)
-
-	for pixel := range r.buttons[(peakIndex-radius)%beatCount] {
-	}
-
-	for i := (peakIndex - radius + beatCount) % beatCount; i <= (peakIndex+radius+beatCount)%beatCount; i++ {
+	startIndex := int(math.Ceil(floatPeakPixel - radius))
+	endIndex := int(math.Floor(floatPeakPixel + radius))
+	for i := startIndex; i <= endIndex; i++ {
 		// calculate distance from peak
-		distance := float64(i) - peak
+		distance := math.Abs(float64(i) - floatPeakPixel)
 		// distance == radius => 0 brightness
 		// distance == 0 => 1 brightness
-		frac := 1 - math.Abs(float64(distance))/float64(radius)
-		if frac <= 0 {
+		frac := 1 - distance/radius
+		if frac < 0 {
+			log.Errorf("FRAC <= 0 frac: %+v, distance %+v, radius %+v, getPulse(%+v, %f)", frac, distance, radius, r, peak)
 			continue
 		}
 		// steeper falloff: raise to the 8th power for an even sharper dropoff
 		bness := math.Pow(frac, 8)
 		// map to physical LED index
-		pulse[r.buttons[i]] = bness
 
-		// // off := int(math.Round(distance))
+		pixelIndex := (i + len(r.pixels)) % len(r.pixels)
 
-		// // offPeak := peak + float64(off)
+		coord := coord{
+			strip: r.pixels[pixelIndex].strip,
+			pixel: r.pixels[pixelIndex].pixel,
+		}
 
-		// // idx := (centerIdx + off + segLen) % segLen
-
-		// frac := 1 - math.Abs(float64(off))/float64(radius)
-		// if frac <= 0 {
-		// 	continue
-		// }
-		// // steeper falloff: raise to the 8th power for an even sharper dropoff
-		// bness := math.Pow(frac, 8)
-
-		// c := leds.Brightness(leds.Mint, bness)
-		// ledsState.Set(rowIdx, seg[idx], c)
-
+		pulse[coord] = bness
 	}
 
-	log.Errorf("getPulse(%+v, %f) => %+v", r, peak, pulse)
+	// log.Errorf("getPulse\n  peak: %+f\n  row: %+v\n  pulse: %+v\n  floatPeakPixel: %+v\n  startIndex: %d\n  endIndex: %d",
+	// 	peak, r, pulse, floatPeakPixel, startIndex, endIndex)
 
 	return pulse
+
+	// if start > float64(r.start) && start > float64(r.end) {
+	// 	// if the start is outside the range of the row, wrap it around
+	// 	start = float64(beatCount)
+	// }
+
+	// if start < 0 {
+	// 	start += float64(beatCount)
+	// }
+	// end := floatPixel + radius
+	// if end > float64(beatCount) {
+	// 	end -= float64(beatCount)
+	// }
+
+	// for i := (peakIndex - radius + beatCount) % beatCount; i <= (peakIndex+radius+beatCount)%beatCount; i++ {
+	// }
+
+	// // get range of pulse in terms of beats
+
+	// start := peak - radius
+	// if start < 0 {
+	// 	start += float64(beatCount)
+	// }
+	// end := peak + radius
+	// if end > float64(beatCount) {
+	// 	end -= float64(beatCount)
+	// }
+
+	// // map start and end to physical LEDs
+
+	// f := math.Floor(peak) // 12
+	// c := math.Ceil(peak)  // 13
+
+	// var floor int
+	// var ceil int
+
+	// if f == 0 {
+	// 	// between start and first beat
+	// 	floor = r.start
+	// 	ceil = r.buttons[0]
+	// } else if c == beatCount {
+	// 	// between last beat and end
+	// 	floor = r.buttons[beatCount-1]
+	// 	ceil = r.end
+	// } else {
+	// 	// between first and last beat
+	// 	floor = r.buttons[int(f)]
+	// 	ceil = r.buttons[int(c)]
+	// }
+
+	// percentAhead := peak - f // 12.7 - 12 => 0.7
+	// diff := percentAhead * (float64(ceil) - float64(floor))
+
+	// // peak := float64(floor) + diff
+
+	// pulse := make(map[int]float64)
+
+	// peakIndex := int(math.Round(peak)) // round to nearest int
+
+	// const radius = 1 // lights all LEDs up to one beat on each side
+
+	// log.Errorf("peakIndex: %d, peak: %f, radius: %d", peakIndex, peak, radius)
+	// log.Errorf("peakIndex - radius + beatCount) %% beatCount: %d", (peakIndex-radius+beatCount)%beatCount)
+	// log.Errorf("peakIndex + radius + beatCount) %% beatCount: %d", (peakIndex+radius+beatCount)%beatCount)
+
+	// for pixel := range r.buttons[(peakIndex-radius)%beatCount] {
+	// }
+
+	// for i := (peakIndex - radius + beatCount) % beatCount; i <= (peakIndex+radius+beatCount)%beatCount; i++ {
+	// 	// calculate distance from peak
+	// 	distance := float64(i) - peak
+	// 	// distance == radius => 0 brightness
+	// 	// distance == 0 => 1 brightness
+	// 	frac := 1 - math.Abs(float64(distance))/float64(radius)
+	// 	if frac <= 0 {
+	// 		continue
+	// 	}
+	// 	// steeper falloff: raise to the 8th power for an even sharper dropoff
+	// 	bness := math.Pow(frac, 8)
+	// 	// map to physical LED index
+	// 	pulse[r.buttons[i]] = bness
+
+	// 	// // off := int(math.Round(distance))
+
+	// 	// // offPeak := peak + float64(off)
+
+	// 	// // idx := (centerIdx + off + segLen) % segLen
+
+	// 	// frac := 1 - math.Abs(float64(off))/float64(radius)
+	// 	// if frac <= 0 {
+	// 	// 	continue
+	// 	// }
+	// 	// // steeper falloff: raise to the 8th power for an even sharper dropoff
+	// 	// bness := math.Pow(frac, 8)
+
+	// 	// c := leds.Brightness(leds.Mint, bness)
+	// 	// ledsState.Set(rowIdx, seg[idx], c)
+
+	// }
+
+	// log.Errorf("getPulse(%+v, %f) => %+v", r, peak, pulse)
+
+	// return pulse
 }
 
-func peakToFloatPixel(r Row, peak float64) float64 {
-	f := math.Floor(peak) // 12
-	c := math.Ceil(peak)  // 13
-
-	var floor int
-	var ceil int
-
-	if f == 0 {
-		// between start and first beat
-		floor = r.start
-		ceil = r.buttons[0]
-	} else if c == beatCount {
-		// between last beat and end
-		floor = r.buttons[beatCount-1]
-		ceil = r.end
-	} else {
-		// between first and last beat
-		floor = r.buttons[int(f)]
-		ceil = r.buttons[int(c)]
+// peakToFloatPixel converts a peak (0-16) to a float pixel value (0~143).
+// 0 <= peak < 16
+func peakToFloatPixel(r flatRow, peak float64) float64 {
+	// assume peak == 12.7
+	// assume peak 15.8
+	beat1 := math.Floor(peak) // 12 // 15
+	beat2 := math.Ceil(peak)  // 13 // 16
+	if beat2 == program.Cols {
+		beat2 = 0.0
 	}
 
-	percentAhead := peak - f // 12.7 - 12 => 0.7
-	diff := percentAhead * (float64(ceil) - float64(floor))
+	pixelIndex1 := r.buttons[int(beat1)] // 12 => 134
+	pixelIndex2 := r.buttons[int(beat2)] // 13 => 142
 
-	return float64(floor) + diff
+	percentAhead := peak - beat1 // 12.7 - 12 => 0.7 // 15.8 - 15 => 0.8
+	distance := pixelIndex2 - pixelIndex1
+	if distance < 0 {
+		distance = (len(r.pixels) - pixelIndex1) + pixelIndex2
+	}
+	diff := percentAhead * float64(distance) // 0.7 * (142 - 134) => 0.7 * 8 => 5.6 // 0.8 * (142 - 134) => 0.8 * 8 => 6.4
+
+	return float64(pixelIndex1) + diff // 134 + 5.6 => 139.6
 }
 
 // 	// overlay a “pulse” of mint ±radius LEDs around beatIndex, with wrap

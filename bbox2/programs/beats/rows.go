@@ -1,6 +1,10 @@
 package beats
 
-import "github.com/siggy/bbox/bbox2/program"
+import (
+	"fmt"
+
+	"github.com/siggy/bbox/bbox2/program"
+)
 
 // define a set of pixels on a given strip, inclusive
 type segment struct {
@@ -29,6 +33,11 @@ var (
 				{
 					strip: 0,
 					start: 0,
+					end:   10,
+				},
+				{
+					strip: 0,
+					start: 11,
 					end:   143,
 				},
 			},
@@ -53,7 +62,7 @@ var (
 		{
 			segments: []segment{
 				{
-					strip: 0,
+					strip: 1,
 					start: 72,
 					end:   151,
 				},
@@ -76,10 +85,10 @@ var (
 				},
 			},
 			buttons: [program.Cols]coord{
-				{0, 79}, {0, 74}, {0, 69}, {0, 64},
-				{0, 53}, {0, 47}, {0, 42}, {0, 37},
-				{0, 34}, {0, 29}, {0, 24}, {0, 18},
-				{0, 16}, {0, 10}, {0, 5}, {0, 0},
+				{1, 79}, {1, 74}, {1, 69}, {1, 64},
+				{1, 53}, {1, 47}, {1, 42}, {1, 37},
+				{1, 34}, {1, 29}, {1, 24}, {1, 18},
+				{1, 16}, {1, 10}, {1, 5}, {1, 0},
 			},
 		},
 		{
@@ -91,11 +100,69 @@ var (
 				},
 			},
 			buttons: [program.Cols]coord{
-				{0, 88}, {0, 93}, {0, 99}, {0, 105},
-				{0, 115}, {0, 121}, {0, 127}, {0, 133},
-				{0, 136}, {0, 142}, {0, 148}, {0, 154},
-				{0, 157}, {0, 163}, {0, 169}, {0, 174},
+				{1, 88}, {1, 93}, {1, 99}, {1, 105},
+				{1, 115}, {1, 121}, {1, 127}, {1, 133},
+				{1, 136}, {1, 142}, {1, 148}, {1, 154},
+				{1, 157}, {1, 163}, {1, 169}, {1, 174},
 			},
 		},
 	}
+
+	flatRows = initRows(rows)
 )
+
+func initRows(rows [program.Rows]Row) [program.Rows]flatRow {
+	flatRows := [program.Rows]flatRow{}
+
+	for i, row := range rows {
+		buttonIndex := 0
+
+		for _, segment := range row.segments {
+			start := segment.start
+			end := segment.end
+			if segment.start > segment.end {
+				start = segment.end
+				end = segment.start
+			}
+
+			for j := start; j <= end; j++ {
+				button := false
+				if buttonIndex < program.Cols &&
+					row.buttons[buttonIndex].strip == segment.strip &&
+					row.buttons[buttonIndex].pixel == j {
+
+					flatRows[i].buttons[buttonIndex] = len(flatRows[i].pixels)
+
+					button = true
+					buttonIndex++
+				}
+
+				flatRows[i].pixels = append(flatRows[i].pixels, pixel{
+					strip:  segment.strip,
+					pixel:  j,
+					button: button,
+				})
+			}
+		}
+	}
+	fmt.Printf("initRows() ROWS:     %+v\n", rows)
+	fmt.Printf("initRows() FLATROWS: %+v\n", flatRows)
+
+	return flatRows
+
+}
+
+type pixel struct {
+	strip  int
+	pixel  int
+	button bool // TODO: needed?
+}
+
+// TODO: need a map from button to pixel index?
+
+type flatRow struct {
+	// pixels is a flat slice of pixels for an entire row
+	pixels []pixel
+	// buttons maps button => index in pixels slice
+	buttons [program.Cols]int
+}

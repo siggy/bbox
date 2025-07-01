@@ -2,6 +2,7 @@ package leds
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -29,14 +30,14 @@ type (
 )
 
 const (
-	macDevicePath = "/dev/tty.usbmodem103" // macbook
-	piDevicePath  = "/dev/ttyACM1"         // pi
+	macDevicePath = "/dev/tty.usbmodem1103" // macbook
+	piDevicePath  = "/dev/ttyACM1"          // pi
 
 	baudRate = 115200
 
 	setBuffer         = 1000
-	tickInterval      = 20 * time.Millisecond
-	reconcileInterval = 10 * time.Second
+	tickInterval      = 50 * time.Millisecond
+	reconcileInterval = 60 * time.Second
 )
 
 func New(ctx context.Context, stripLengths []int, macDevice bool) (LEDs, error) {
@@ -49,7 +50,7 @@ func New(ctx context.Context, stripLengths []int, macDevice bool) (LEDs, error) 
 
 	port, err := serial.Open(devicePath, &serial.Mode{BaudRate: baudRate})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open serial port %s: %w", devicePath, err)
 	}
 
 	log.Infof("Connected to %s", devicePath)
