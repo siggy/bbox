@@ -18,15 +18,14 @@ type coord struct {
 	pixel int
 }
 
-// TODO: make private?
-// assume segments are in contiguous order w.r.t. buttons
-type Row struct {
+// row assumes segments are in contiguous order w.r.t. buttons
+type row struct {
 	segments []segment
 	buttons  [program.Cols]coord
 }
 
 var (
-	rows = [program.Rows]Row{
+	rows = [program.Rows]row{
 		// // test strip 0-143
 		// {
 		// 	segments: []segment{
@@ -127,7 +126,7 @@ var (
 	flatRows = initRows(rows)
 )
 
-func initRows(rows [program.Rows]Row) [program.Rows]flatRow {
+func initRows(rows [program.Rows]row) [program.Rows]flatRow {
 	flatRows := [program.Rows]flatRow{}
 
 	for i, row := range rows {
@@ -153,7 +152,7 @@ func initRows(rows [program.Rows]Row) [program.Rows]flatRow {
 					buttonIndex++
 				}
 
-				flatRows[i].pixels = append(flatRows[i].pixels, pixel{
+				flatRows[i].pixels = append(flatRows[i].pixels, coord{
 					strip: segment.strip,
 					pixel: j,
 				})
@@ -167,14 +166,9 @@ func initRows(rows [program.Rows]Row) [program.Rows]flatRow {
 	return flatRows
 }
 
-type pixel struct {
-	strip int
-	pixel int
-}
-
 type flatRow struct {
 	// pixels is a flat slice of pixels for an entire row
-	pixels []pixel
+	pixels []coord
 	// buttons maps button => index in pixels slice
 	buttons [program.Cols]int
 }

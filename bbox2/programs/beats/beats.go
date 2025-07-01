@@ -415,7 +415,7 @@ func getPulse(r flatRow, peak float64) map[coord]float64 {
 	return pulse
 }
 
-// peakToFloatPixel converts a peak (0-16) to a float pixel value (0~143).
+// peakToFloatPixel converts a peak [0-16) to a float pixel value [0-143].
 // 0 <= peak < 16
 func peakToFloatPixel(r flatRow, peak float64) float64 {
 	// assume peak == 12.7
