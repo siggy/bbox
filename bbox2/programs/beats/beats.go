@@ -186,9 +186,6 @@ func (b *beats) run() {
 	b.in <- program.Coord{Row: 1, Col: 0}
 	b.in <- program.Coord{Row: 1, Col: 8}
 
-	ticks := 0
-	writes := 0
-
 	for {
 		select {
 		case <-b.ctx.Done():
@@ -196,8 +193,6 @@ func (b *beats) run() {
 
 		// beat loop
 		case <-ticker.C:
-			ticks++
-
 			ledsState := leds.State{}
 
 			// TODO: get smarter about updates?
@@ -218,17 +213,13 @@ func (b *beats) run() {
 				}
 			}
 
-			// set active beats to red, play active beats if index matches
+			// set active beats to red
 			for rowIdx, beats := range beatState {
 				for i, beat := range beats {
 					if beat {
 						redPos := flatRows[rowIdx].buttons[i]
 						redIndex := flatRows[rowIdx].pixels[redPos]
 						ledsState.Set(redIndex.strip, redIndex.pixel, leds.Red)
-
-						if i == beatIndex {
-							b.play <- sounds[rowIdx]
-						}
 					}
 				}
 			}
@@ -236,8 +227,19 @@ func (b *beats) run() {
 
 			beatAcc += beatsPerTick
 			for beatAcc >= 1.0 {
-				writes++
 				beatAcc -= 1.0
+
+				// play active beats if index matches
+				for rowIdx, beats := range beatState {
+					for i, beat := range beats {
+						if beat {
+							if i == beatIndex {
+								b.play <- sounds[rowIdx]
+							}
+						}
+					}
+				}
+
 				// advance to next beat column
 				beatIndex = (beatIndex + 1) % beatCount
 			}
