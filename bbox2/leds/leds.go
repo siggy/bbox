@@ -36,7 +36,7 @@ const (
 	baudRate = 115200
 
 	setBuffer         = 1000
-	tickInterval      = 50 * time.Millisecond
+	tickInterval      = 30 * time.Millisecond
 	reconcileInterval = 60 * time.Second
 )
 
