@@ -168,8 +168,6 @@ func (l *leds) run() {
 
 			lastTick = currentState.copy()
 
-			l.log.Errorf("Reconciled full state after %d writes, %d ticks", writes, ticks)
-
 		case s := <-l.set:
 			currentState.ApplyState(s)
 		case <-l.ctx.Done():

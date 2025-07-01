@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"slices"
 	"syscall"
 
@@ -59,7 +60,8 @@ func main() {
 	defer stop()
 
 	// init
-	wavs, err := wavs.New("/home/sig/code/bbox/wavs")
+	wavPath := filepath.Join(os.Getenv("HOME"), "code", "bbox", "wavs")
+	wavs, err := wavs.New(wavPath)
 	if err != nil {
 		log.Fatalf("wavs.New failed: %v", err)
 	}
