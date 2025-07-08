@@ -1,7 +1,6 @@
 package wavs
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -9,8 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ebitengine/oto/v3"
+	"github.com/siggy/bbox/bbox2/equalizer"
 	log "github.com/sirupsen/logrus"
 	"github.com/youpy/go-wav"
 )
@@ -21,6 +22,8 @@ type Wavs struct {
 
 	playersLock sync.Mutex
 	players     []*oto.Player
+
+	eq *equalizer.Equalizer
 
 	log *log.Entry
 }
@@ -59,10 +62,13 @@ func New(dir string) (*Wavs, error) {
 	return &Wavs{
 		ctx:     ctx,
 		buffers: buffers,
+		eq:      equalizer.New(16, 50*time.Millisecond), // should match tickInterval
 		log:     log.WithField("bbox2", "wavs"),
 	}, nil
 }
 
+// Play streams filename through Oto AND into eq.
+// Any slow consumer on eq.Data() will not block audio.
 func (w *Wavs) Play(filename string) {
 	w.log.Tracef("play: %s", filename)
 	buf, ok := w.buffers[filename]
@@ -70,14 +76,17 @@ func (w *Wavs) Play(filename string) {
 		w.log.Warnf("Unknown: %s", filename)
 		return
 	}
-
-	player := getPlayer(w.ctx, buf)
+	// wrap the PCM so we can tee off samples to the EQ
+	reader := newPCMTeeReader(buf, w.eq)
+	player := w.ctx.NewPlayer(reader)
 	player.Play()
-
 	w.playersLock.Lock()
-	defer w.playersLock.Unlock()
-
 	w.players = append(w.players, player)
+	w.playersLock.Unlock()
+}
+
+func (w *Wavs) EQ() <-chan []float64 {
+	return w.eq.Data()
 }
 
 func (w *Wavs) StopAll() {
@@ -92,12 +101,7 @@ func (w *Wavs) StopAll() {
 func (w *Wavs) Close() {
 	w.StopAll()
 	w.ctx.Suspend()
-}
-
-func getPlayer(ctx *oto.Context, pcm []byte) *oto.Player {
-	return ctx.NewPlayer(
-		bytes.NewReader(pcm),
-	)
+	w.eq.Close()
 }
 
 func fileToAudioBytes(filename string) ([]byte, error) {
