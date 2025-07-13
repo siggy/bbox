@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math" 
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -16,13 +17,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// this now uses a small denoiser neural net to get a speech only signal
-// uses onnx runtime (python)
-// todo: need a flag to enable/disable the denoiser in case we don't want to (or can't) do it
-
 func main() {
 	logLevel := flag.String("log-level", "info", "set log level")
-	// barWidth := flag.Int("L", 16, "width of the metric display bars and number of spectrum bands")
 	flag.Parse()
 
 	lvl, err := log.ParseLevel(*logLevel)
@@ -41,7 +37,7 @@ func main() {
 	}
 	wavPath := filepath.Join(wd, "wavs")
 
-	// The number of bands is now hardcoded in the equalizer, so we don't need to pass barWidth.
+	// The number of bands is hardcoded in the equalizer.
 	wavs, err := wavs.New(wavPath)
 	if err != nil {
 		log.Fatalf("wavs.New failed: %v", err)
@@ -55,10 +51,10 @@ func main() {
 	presses := keyboard.Presses()
 	go keyboard.Run()
 
-	// fmt.Println("Press keys to play sounds and view audio metrics...")
-	// fmt.Print("\033[H\033[2J")
+	
 
 	fmt.Println("Press 1,2,3,4 for beats, press 'r' for pyramid...")
+	// fmt.Print("\033[H\033[2J") // Clear screen on start
 
 	for {
 		select {
@@ -93,81 +89,69 @@ func main() {
 	}
 }
 
-// Renders a single bar with a solid color, filling from the center outwards.
-func buildBar(sb *strings.Builder, value float64, width int, color, label string) {
-	const resetColor = "\033[0m"
-	const offBlock = "░"
-	const onBlock = "█"
+// colorizer is a function type that maps a value from 0.0-1.0 to an ANSI color string.
+type colorizer func(float64) string
 
-	// Scale the 0.0-1.0 value to the number of lit blocks for one half of the bar.
-	halfWidth := float64(width) / 2.0
-	halfLights := int(value * halfWidth)
-
-	// Determine the start and end bounds of the lit section.
-	center := width / 2
-	start := center - halfLights
-	end := center + halfLights
-
-	// For odd widths, the center block is shared, so adjust the end boundary.
-	if width%2 != 0 {
-		end--
-	}
-
-	// sb.WriteString(fmt.Sprintf("%-22s", label))
-	sb.WriteString(color)
-	for i := 0; i < width; i++ {
-		// Light up the block if it's within the calculated range.
-		if i >= start && i < end {
-			sb.WriteString(onBlock)
-		} else {
-			sb.WriteString(offBlock)
-		}
-	}
-	sb.WriteString(resetColor)
-	sb.WriteString("\n")
-}
-
-// Renders the 16-segment spectrum bar with per-segment coloring.
-func buildSpectrumBar(sb *strings.Builder, spectrum []float64, label string) {
+// Renders the 16-segment spectrum bar with a dynamic, per-segment color scheme.
+func buildSpectrumBar(sb *strings.Builder, spectrum []float64, styler colorizer) {
 	const resetColor = "\033[0m"
 	const onBlock = "█"
 
-	// sb.WriteString(fmt.Sprintf("%-22s", label))
+	if len(spectrum) == 0 {
+		// Draw an empty bar if there's no data
+		sb.WriteString(strings.Repeat(" ", 16))
+		sb.WriteString("\n")
+		return
+	}
 
-	// The spectrum data is now pre-normalized from 0.0 to 1.0.
 	for _, norm := range spectrum {
-		// Map normalized value to a Black -> Red color spectrum.
-		red := int(norm * 255)
-		color := fmt.Sprintf("\033[38;2;%d;0;0m", red)
-
-		sb.WriteString(color)
+		sb.WriteString(styler(norm))
 		sb.WriteString(onBlock)
 	}
 	sb.WriteString(resetColor)
 	sb.WriteString("\n")
 }
 
-// buildDisplay constructs the new 4-bar metrics dashboard.
+// buildDisplay constructs the new 4-bar spectrum history dashboard.
 func buildDisplay(data wavs.DisplayData) string {
 	var sb strings.Builder
-	const colorKurtosis = "\033[38;2;255;255;0m"
-	const colorLowEnergy = "\033[38;2;0;255;0m"
-	const colorDenoised = "\033[38;2;255;0;255m"
-	width := len(data.Spectrum)
 
-	sb.WriteString("\033[H\033[2J") // Clear screen
-	// sb.WriteString("--- Audio Signal Metrics ---\n\n")
+	// This exponent will be used to create a curve, making low values even lower.
+	const exponent = 2.5
 
-	// Bar 1 (Top)
-	buildBar(&sb, data.Kurtosis, width, colorKurtosis, "Peakiness (Kurtosis):")
-	// Bar 2 (Second)
-	buildSpectrumBar(&sb, data.Spectrum, "Log Spectrum (L->H):")
-	// Bar 3 (Third)
-	buildBar(&sb, data.LowFreqEnergy, width, colorLowEnergy, "Lows (<200Hz) Energy:")
+	colorizers := []colorizer{
+		// 1. Electric Blue (Oldest)
+		func(val float64) string {
+			scaledVal := math.Pow(val, exponent)
+			r, g, b := int(0*scaledVal), int(200*scaledVal), int(255*scaledVal)
+			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+		},
+		// 2. Toxic Green
+		func(val float64) string {
+			scaledVal := math.Pow(val, exponent)
+			r, g, b := int(100*scaledVal), int(255*scaledVal), int(100*scaledVal)
+			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+		},
+		// 3. Sunset Orange
+		func(val float64) string {
+			scaledVal := math.Pow(val, exponent)
+			r, g, b := int(255*scaledVal), int(150*scaledVal), int(20*scaledVal)
+			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+		},
+		// 4. Cyberpunk Pink (Newest)
+		func(val float64) string {
+			scaledVal := math.Pow(val, exponent)
+			r, g, b := int(255*scaledVal), int(50*scaledVal), int(200*scaledVal)
+			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+		},
+	}
 
-	// sb.WriteString("\n--- Denoised Signal ---\n\n")
-	// Bar 4 (Fourth)
-	buildBar(&sb, data.DenoisedLevel, width, colorDenoised, "Speech Level:")
+	sb.WriteString("\033[H") // Move cursor to home position
+
+	// Render the 4 historical spectrum bars, from oldest to newest.
+	for i := 0; i < 4; i++ {
+		buildSpectrumBar(&sb, data.History[i], colorizers[i])
+	}
 
 	return sb.String()
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"bytes"
 
 	"github.com/ebitengine/oto/v3"
 	"github.com/siggy/bbox/bbox2/equalizer"
@@ -30,16 +31,10 @@ type Wavs struct {
 	log *log.Entry
 }
 
-// EQ now correctly returns a channel of DisplayData.
+// EQ now correctly returns a channel of the new DisplayData struct.
 func (w *Wavs) EQ() <-chan DisplayData {
 	return w.eq.Data()
 }
-
-// Aliases for the types defined in the equalizer package.
-// type DisplayData = equalizer.DisplayData
-// type GridData = equalizer.GridData
-
-
 
 func New(dir string) (*Wavs, error) {
 	ctx, ready, err := oto.NewContext(&oto.NewContextOptions{
@@ -86,15 +81,16 @@ func (w *Wavs) Play(filename string) {
 		w.log.Warnf("Unknown: %s", filename)
 		return
 	}
-	// newPCMTeeReader is defined in your pcmtree.go file
-	reader := newPCMTeeReader(buf, w.eq)
+
+	// The equalizer now implements io.Writer, so it can be passed directly.
+	reader := io.TeeReader(bytes.NewReader(buf), w.eq)
 	player := w.ctx.NewPlayer(reader)
 	player.Play()
+
 	w.playersLock.Lock()
 	w.players = append(w.players, player)
 	w.playersLock.Unlock()
 }
-
 
 func (w *Wavs) StopAll() {
 	w.playersLock.Lock()
