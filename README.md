@@ -170,10 +170,17 @@ pip3 install numpy onnxruntime torch librosa
 
 ### Pi:
 ```bash
+sudo apt install python3 python3-pip
 pip3 install numpy onnxruntime torch librosa
 ```
 
 If the standard pip3 install torch command is slow or fails, you may be able to find pre-compiled versions (wheels) specifically for the  Pi's architecture.
+
+How to check python and packages are correctly installed:
+
+```bash
+python3 -c "import numpy, onnxruntime, torch, librosa; print(f'NumPy:\t\t{numpy.__version__}\nONNX Runtime:\t{onnxruntime.__version__}\nPyTorch:\t{torch.__version__}\nLibrosa:\t{librosa.__version__}')"
+```
 
 ## Build
 
