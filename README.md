@@ -157,6 +157,24 @@ sudo apt-get install -y libasound2-dev
 go run cmd/bbox2/main.go --fake-leds
 ```
 
+
+
+Python Environment Setup for Speech Enhancement
+
+### Mac:
+```bash
+brew install python
+pip3 install numpy onnxruntime torch librosa
+```
+
+
+### Pi:
+```bash
+pip3 install numpy onnxruntime torch librosa
+```
+
+If the standard pip3 install torch command is slow or fails, you may be able to find pre-compiled versions (wheels) specifically for the  Pi's architecture.
+
 ## Build
 
 ```bash

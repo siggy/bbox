@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -17,24 +16,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type programScheduler struct {
-	new    program.ProgramFactory
-	code   []int
-	hidden bool
-}
-
-const (
-	yieldLimit = 5 // number of yields repetition keys before switching programs
-)
-
-var (
-	stripLengths = []int{144}
-)
+// this now uses a small denoiser neural net to get a speech only signal
+// uses onnx runtime (python)
+// todo: need a flag to enable/disable the denoiser in case we don't want to (or can't) do it
 
 func main() {
-	logLevel := flag.String("log-level", "info", "set log level (debug, info, warn, error, fatal, panic)")
-	eqBands := flag.Int("L", 16, "number of frequency bands (lights) for the EQ display")
-
+	logLevel := flag.String("log-level", "info", "set log level")
+	// barWidth := flag.Int("L", 16, "width of the metric display bars and number of spectrum bands")
 	flag.Parse()
 
 	lvl, err := log.ParseLevel(*logLevel)
@@ -51,8 +39,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("os.Getwd failed: %v", err)
 	}
-
 	wavPath := filepath.Join(wd, "wavs")
+
+	// The number of bands is now hardcoded in the equalizer, so we don't need to pass barWidth.
 	wavs, err := wavs.New(wavPath)
 	if err != nil {
 		log.Fatalf("wavs.New failed: %v", err)
@@ -64,8 +53,10 @@ func main() {
 		log.Fatalf("keyboard.New failed: %v", err)
 	}
 	presses := keyboard.Presses()
-
 	go keyboard.Run()
+
+	// fmt.Println("Press keys to play sounds and view audio metrics...")
+	// fmt.Print("\033[H\033[2J")
 
 	fmt.Println("Press 1,2,3,4 for beats, press 'r' for pyramid...")
 
@@ -76,8 +67,6 @@ func main() {
 				log.Info("keyboard channel closed, exiting...")
 				return
 			}
-			log.Debugf("key pressed: %v", press)
-
 			switch press {
 			case program.Coord{Row: 0, Col: 0}:
 				wavs.Play("hihat-808.wav")
@@ -91,18 +80,11 @@ func main() {
 				wavs.Play("pyramid.wav")
 			}
 
-		case eq, ok := <-wavs.EQ():
+		case data, ok := <-wavs.EQ():
 			if !ok {
 				continue
 			}
-
-			log.Debugf("eq: %v", eq)
-
-			// show log-scaled, dB-mapped color bar without DC bin:
-			if len(eq) == *eqBands {
-				eqLine := buildEqLine(eq, *eqBands)
-				fmt.Println(eqLine)
-			}
+			fmt.Print(buildDisplay(data))
 
 		case <-ctx.Done():
 			log.Info("context done")
@@ -111,45 +93,81 @@ func main() {
 	}
 }
 
-// magnitudeToColor maps linear amplitude to a dB scale, then colors blue→red across a defined dB range
-func magnitudeToColor(amplitude float64) string {
-	if amplitude < 1e-6 {
-		amplitude = 1e-6
+// Renders a single bar with a solid color, filling from the center outwards.
+func buildBar(sb *strings.Builder, value float64, width int, color, label string) {
+	const resetColor = "\033[0m"
+	const offBlock = "░"
+	const onBlock = "█"
+
+	// Scale the 0.0-1.0 value to the number of lit blocks for one half of the bar.
+	halfWidth := float64(width) / 2.0
+	halfLights := int(value * halfWidth)
+
+	// Determine the start and end bounds of the lit section.
+	center := width / 2
+	start := center - halfLights
+	end := center + halfLights
+
+	// For odd widths, the center block is shared, so adjust the end boundary.
+	if width%2 != 0 {
+		end--
 	}
-	dB := 20 * math.Log10(amplitude)
-	const minDB = -60.0
-	if dB < minDB {
-		dB = minDB
+
+	// sb.WriteString(fmt.Sprintf("%-22s", label))
+	sb.WriteString(color)
+	for i := 0; i < width; i++ {
+		// Light up the block if it's within the calculated range.
+		if i >= start && i < end {
+			sb.WriteString(onBlock)
+		} else {
+			sb.WriteString(offBlock)
+		}
 	}
-	ratio := (dB - minDB) / -minDB
-	r := byte(ratio * 255)
-	b := byte((1 - ratio) * 255)
-	return fmt.Sprintf("\033[38;2;%d;0;%dm", r, b)
+	sb.WriteString(resetColor)
+	sb.WriteString("\n")
 }
 
-// buildEqLine constructs a log-frequency index color bar using magnitudes mapped via magnitudeToColor,
-// skipping the DC bin (bin 0).
-func buildEqLine(eqData []float64, eqBands int) string {
-	var sb strings.Builder
+// Renders the 16-segment spectrum bar with per-segment coloring.
+func buildSpectrumBar(sb *strings.Builder, spectrum []float64, label string) {
 	const resetColor = "\033[0m"
-	m := len(eqData)
+	const onBlock = "█"
 
-	sb.WriteString("EQ: [")
-	for i := 0; i < eqBands; i++ {
-		ratio := float64(i) / float64(eqBands-1)
-		logIndex := math.Log10(1+9*ratio) / math.Log10(10)
-		idx := int(logIndex*float64(m-1) + 0.5)
-		// skip DC bin
-		if idx < 1 {
-			idx = 1
-		} else if idx >= m {
-			idx = m - 1
-		}
-		intensity := eqData[idx]
-		sb.WriteString(magnitudeToColor(intensity))
-		sb.WriteString("█")
-		sb.WriteString(resetColor)
+	// sb.WriteString(fmt.Sprintf("%-22s", label))
+
+	// The spectrum data is now pre-normalized from 0.0 to 1.0.
+	for _, norm := range spectrum {
+		// Map normalized value to a Black -> Red color spectrum.
+		red := int(norm * 255)
+		color := fmt.Sprintf("\033[38;2;%d;0;0m", red)
+
+		sb.WriteString(color)
+		sb.WriteString(onBlock)
 	}
-	sb.WriteString("]")
+	sb.WriteString(resetColor)
+	sb.WriteString("\n")
+}
+
+// buildDisplay constructs the new 4-bar metrics dashboard.
+func buildDisplay(data wavs.DisplayData) string {
+	var sb strings.Builder
+	const colorKurtosis = "\033[38;2;255;255;0m"
+	const colorLowEnergy = "\033[38;2;0;255;0m"
+	const colorDenoised = "\033[38;2;255;0;255m"
+	width := len(data.Spectrum)
+
+	sb.WriteString("\033[H\033[2J") // Clear screen
+	// sb.WriteString("--- Audio Signal Metrics ---\n\n")
+
+	// Bar 1 (Top)
+	buildBar(&sb, data.Kurtosis, width, colorKurtosis, "Peakiness (Kurtosis):")
+	// Bar 2 (Second)
+	buildSpectrumBar(&sb, data.Spectrum, "Log Spectrum (L->H):")
+	// Bar 3 (Third)
+	buildBar(&sb, data.LowFreqEnergy, width, colorLowEnergy, "Lows (<200Hz) Energy:")
+
+	// sb.WriteString("\n--- Denoised Signal ---\n\n")
+	// Bar 4 (Fourth)
+	buildBar(&sb, data.DenoisedLevel, width, colorDenoised, "Speech Level:")
+
 	return sb.String()
 }
