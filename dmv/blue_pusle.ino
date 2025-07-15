@@ -3,14 +3,14 @@
 
 #define LED_COUNT        353
 #define LED_PIN          6
-#define DELAY_MS         20
+#define DELAY_MS         10
 #define SEGMENT_COUNT    40
 #define MIN_SEG_LEN      5
 #define MAX_SEG_LEN      50
-#define FLICKER_CYCLE_MS 100
+#define FLICKER_CYCLE_MS 50
 #define SHAPE_EXP        2.0f
 #define LUT_SIZE         50
-#define FLICKER_STEPS    (FLICKER_CYCLE_MS / DELAY_MS)  // e.g. 100/20 = 5
+#define FLICKER_STEPS    (FLICKER_CYCLE_MS / DELAY_MS)  // e.g. 50/10 = 5
 #define PI_F             3.14159265f
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB | NEO_KHZ800);
