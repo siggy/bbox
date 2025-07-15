@@ -4,66 +4,95 @@
 #define LED_COUNT        353
 #define LED_PIN          6
 #define DELAY_MS         20
-#define SEGMENT_COUNT    40      // how many simultaneous flicker segments
-#define MIN_SEG_LEN      5       // smallest segment length
-#define MAX_SEG_LEN      50      // largest segment length
-#define FLICKER_CYCLE_MS 100    // full dim→bright→dim cycle
-#define SHAPE_EXP        2.0     // power curve exponent for segment profile
+#define SEGMENT_COUNT    40
+#define MIN_SEG_LEN      5
+#define MAX_SEG_LEN      50
+#define FLICKER_CYCLE_MS 100
+#define SHAPE_EXP        2.0f
+#define LUT_SIZE         50
+#define FLICKER_STEPS    (FLICKER_CYCLE_MS / DELAY_MS)  // e.g. 100/20 = 5
+#define PI_F             3.14159265f
 
-// strip uses GRB ordering on WS2812B
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB | NEO_KHZ800);
 
-// describes one flicker segment
 struct Segment {
-  uint16_t center;  // center pixel index
-  uint8_t  length;  // total length in pixels
+  uint16_t center;
+  uint8_t  length;
+  uint8_t  half;      // (length-1)/2
+  uint8_t  lenMinus1; // length-1
 };
-Segment segments[SEGMENT_COUNT];
+static Segment segments[SEGMENT_COUNT];
 
-// current phase [0..1) of the flicker cycle
-float flickerPhase = 0;
+// Precomputed tables
+static float    shapeLUT[LUT_SIZE + 1];                   // powf(1 - x, exp)
+static uint8_t  brightnessLUT[FLICKER_STEPS][LUT_SIZE + 1]; // final brightness per phase & shape index
+
+static uint8_t flickerIdx = 0;
 
 void randomizeSegments() {
   for(int i = 0; i < SEGMENT_COUNT; i++) {
-    segments[i].center = random(LED_COUNT);
-    segments[i].length = random(MIN_SEG_LEN, MAX_SEG_LEN + 1);
+    uint8_t L = random(MIN_SEG_LEN, MAX_SEG_LEN + 1);
+    segments[i].center    = random(LED_COUNT);
+    segments[i].length    = L;
+    segments[i].lenMinus1 = L - 1;
+    segments[i].half      = (L - 1) >> 1;
   }
 }
 
 void setup() {
   strip.begin();
-  strip.setBrightness(255);   // full‐bright background
-  strip.show();               // clear
+  strip.setBrightness(255);
+  strip.show();
   randomSeed(micros());
+
+  // 1) Shape lookup: shapeLUT[i] = powf(1 - i/LUT_SIZE, SHAPE_EXP)
+  for(int i = 0; i <= LUT_SIZE; i++) {
+    float r = (float)i / LUT_SIZE;          // 0.0 → 1.0
+    shapeLUT[i] = powf(1.0f - r, SHAPE_EXP);
+  }
+
+  // 2) Brightness lookup: for each flicker step and shape index
+  for(int f = 0; f < FLICKER_STEPS; f++) {
+    float phase = sinf(((float)f / FLICKER_STEPS) * PI_F);  // 0→1→0
+    for(int s = 0; s <= LUT_SIZE; s++) {
+      float b = 255.0f * (1.0f - shapeLUT[s] * phase);
+      brightnessLUT[f][s] = (uint8_t)(b + 0.5f);
+    }
+  }
+
   randomizeSegments();
 }
 
 void loop() {
-  // 1) Fill entire strip with pure blue
+  // Advance flicker index and wrap
+  if(++flickerIdx >= FLICKER_STEPS) {
+    flickerIdx = 0;
+    randomizeSegments();
+  }
+
+  // 1) Paint background bright blue
   for(uint16_t i = 0; i < LED_COUNT; i++) {
     strip.setPixelColor(i, 0, 0, 255);
   }
 
-  // 2) Compute current flicker intensity [0..1]
-  flickerPhase += (float)DELAY_MS / FLICKER_CYCLE_MS;
-  if(flickerPhase >= 1.0) {
-    flickerPhase -= 1.0;
-    randomizeSegments();  // new random segments each cycle
-  }
-  // sine‐based cycle gives smooth dim→bright→dim
-  float phaseVal = sinf(flickerPhase * M_PI);
-
-  // 3) Overlay each segment with a power‐curved dimming profile
+  // 2) Overlay segments using only integer math and table lookups
   for(int s = 0; s < SEGMENT_COUNT; s++) {
-    float half = (segments[s].length - 1) * 0.5;
-    for(int j = 0; j < segments[s].length; j++) {
-      float dist     = fabsf(j - half);
-      float norm     = dist / half;             // 0 @ center → 1 @ ends
-      float shape    = powf(1.0 - norm, SHAPE_EXP);
-      float dimFrac  = shape * phaseVal;        // combine segment & flicker
-      uint8_t b      = (uint8_t)(255 * (1.0 - dimFrac) + 0.5);
-      int idx        = (segments[s].center + j - (int)half + LED_COUNT) % LED_COUNT;
-      strip.setPixelColor(idx, 0, 0, b);
+    uint8_t  len1 = segments[s].lenMinus1;
+    uint8_t  half = segments[s].half;
+    uint16_t cen  = segments[s].center;
+    for(uint8_t j = 0; j <= len1; j++) {
+      // compute |2*j - (length-1)|
+      uint8_t diff = (j << 1) > len1 ? (j << 1) - len1 : len1 - (j << 1);
+      // map diff to shape index
+      uint8_t idx = (diff * LUT_SIZE + half) / len1;
+      // lookup final brightness
+      uint8_t b   = brightnessLUT[flickerIdx][idx];
+
+      int pix = cen + j - half;
+      if(pix < 0)          pix += LED_COUNT;
+      else if(pix >= LED_COUNT) pix -= LED_COUNT;
+
+      strip.setPixelColor(pix, 0, 0, b);
     }
   }
 
