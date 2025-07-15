@@ -6,7 +6,7 @@
 #define DELAY_MS         20
 #define SEGMENT_COUNT    40      // how many simultaneous flicker segments
 #define MIN_SEG_LEN      5       // smallest segment length
-#define MAX_SEG_LEN      30      // largest segment length
+#define MAX_SEG_LEN      50      // largest segment length
 #define FLICKER_CYCLE_MS 100    // full dim→bright→dim cycle
 #define SHAPE_EXP        2.0     // power curve exponent for segment profile
 
