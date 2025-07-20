@@ -19,11 +19,12 @@ import (
 var (
 	// should match scorpio/code.py
 	// StripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
-	stripLengths = []int{30}
+	stripLengths = []int{144}
 )
 
 func main() {
 	logLevel := flag.String("log-level", "debug", "set log level (debug, info, warn, error, fatal, panic)")
+	macDevice := flag.Bool("mac-device", false, "connect to scorpio from a macbook (default is Raspberry Pi)")
 	flag.Parse()
 
 	lvl, err := log.ParseLevel(*logLevel)
@@ -35,7 +36,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	ledStrips, err := leds.New(ctx, stripLengths, false)
+	ledStrips, err := leds.New(ctx, stripLengths, *macDevice)
 	if err != nil {
 		log.Errorf("leds.New failed: %+v", err)
 		os.Exit(1)
