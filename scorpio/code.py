@@ -1,117 +1,94 @@
-# SPDX-FileCopyrightText: 2021 Kattni Rembor for Adafruit Industries
-#
-# SPDX-License-Identifier: MIT
-
 import board
 import math
-import neopixel
 import time
 import usb_cdc
+import digitalio
+from neopixel import NeoPixel, neopixel_write
 
-# Onboard status LED
-status_led = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=0.5, auto_write=True)
-status_led[0] = (0, 255, 0)  # Green = healthy
+# ——— USB CDC Setup ———
+ser = usb_cdc.data
 
-# Number of pixels on each strip
-strip_lengths = [144, 1, 1, 1, 1, 1, 1, 1]
-TOTAL_STRIPS = len(strip_lengths)
+# ——— Heartbeat LED ———
+hb = NeoPixel(board.NEOPIXEL, 1, brightness=0.5, auto_write=True)
+hb[0] = (0, 255, 0)
 
-# Map each output pin
+# ——— LED Strips Setup ———
+strip_lengths = [144] * 8
+TOTAL_STRIPS  = len(strip_lengths)
+
 output_pins = [
-    board.NEOPIXEL0,
-    board.NEOPIXEL1,
-    board.NEOPIXEL2,
-    board.NEOPIXEL3,
-    board.NEOPIXEL4,
-    board.NEOPIXEL5,
-    board.NEOPIXEL6,
-    board.NEOPIXEL7,
+    board.NEOPIXEL0, board.NEOPIXEL1, board.NEOPIXEL2, board.NEOPIXEL3,
+    board.NEOPIXEL4, board.NEOPIXEL5, board.NEOPIXEL6, board.NEOPIXEL7,
 ]
 
-# Create one NeoPixel object per output strip
-strips = [
-    neopixel.NeoPixel(
-        pin,
-        strip_lengths[i],
-        bpp=4,
-        pixel_order=neopixel.GRBW,
-        auto_write=False
-    )
-    for i, pin in enumerate(output_pins)
-]
+# Prepare raw buffers and digital IO pins
+buffers = [bytearray(4 * L) for L in strip_lengths]
+dirty   = [True] * TOTAL_STRIPS  # mark all for initial write
+ios     = []
+for pin in output_pins:
+    dio = digitalio.DigitalInOut(pin)
+    dio.direction = digitalio.Direction.OUTPUT
+    ios.append(dio)
 
-# Clear all strips
-for strip in strips:
-    strip.fill((0, 0, 0, 0))
-    strip.show()
+# Clear at startup
+for i, dio in enumerate(ios):
+    neopixel_write(dio, buffers[i])
+    dirty[i] = False
 
-serial = usb_cdc.data
-serial.timeout = 0.1
-
-START_BYTE = 0xAA
-
-def read_exact(count):
-    data = bytearray()
-    while len(data) < count:
-        chunk = serial.read(count - len(data))
-        if chunk:
-            data.extend(chunk)
-    return data
-
-def read_packet():
-    # try to grab a start byte; if no data, bail immediately
-    first = serial.read(1)
-    if not first:
-        return None
-    # if it isn’t our marker, keep scanning
-    while first != bytes([START_BYTE]):
-        first = serial.read(1)
-        if not first:
-            return None
-    # now read the 2-byte length
-    hdr = serial.read(2)
-    if not hdr or len(hdr) < 2:
-        return None
-    length = (hdr[0] << 8) | hdr[1]
-    # read payload & checksum (non-blocking)
-    payload = serial.read(length)
-    if not payload or len(payload) < length:
-        return None
-    chk = serial.read(1)
-    if not chk:
-        return None
-    # verify
-    calc = 0
-    for bb in payload:
-        calc ^= bb
-    if chk[0] != calc:
-        print("Bad checksum")
-        return None
-    return payload
+# ——— Rolling serial buffer ———
+buf = bytearray()
+START = 0xAA
 
 def update_heartbeat():
-    t = time.monotonic()  # seconds since power-on
-    # Create a pulsing brightness using sine wave (0 to 1)
-    pulse = (math.sin(t * 2 * math.pi) + 1) / 2  # range 0–1
-    # Modulate green and blue channels
-    g = int(pulse * 64)       # 0–64
-    b = int((1 - pulse) * 64) # 64–0
-    status_led[0] = (0, g, b)
+    t = time.monotonic()
+    pulse = (math.sin(t * 2 * math.pi) + 1) / 2
+    hb[0] = (0, int(pulse * 64), int((1 - pulse) * 64))
 
-try:
+# ——— Main Loop ———
+while True:
+    update_heartbeat()
+
+    # read any incoming bytes
+    if ser and ser.in_waiting:
+        buf.extend(ser.read(ser.in_waiting))
+
+    # parse complete frames
     while True:
-        update_heartbeat()
-        pkt = read_packet()
-        if pkt and len(pkt) % 6 == 0:
-            for i in range(0, len(pkt), 6):
-                si = pkt[i]
-                pi = pkt[i+1]
-                r, g, b, w = pkt[i+2:i+6]
+        if len(buf) < 4:
+            break
+        if buf[0] != START:
+            # drop until next 0xAA
+            buf[:] = buf[1:]
+            continue
+
+        length = (buf[1] << 8) | buf[2]
+        total  = 3 + length + 1
+        if len(buf) < total:
+            break
+
+        payload = buf[3 : 3 + length]
+        chk     = buf[3 + length]
+
+        # verify checksum
+        x = 0
+        for b in payload:
+            x ^= b
+
+        if x == chk and (length % 6) == 0:
+            # apply pixel updates
+            for i in range(0, length, 6):
+                si, pi, r, g, b_, w = payload[i : i + 6]
                 if si < TOTAL_STRIPS and pi < strip_lengths[si]:
-                    strips[si][pi] = (r, g, b, w)
-        # always refresh LEDs immediately
-        for strip in strips:
-            strip.show()
-except Exception as e:
-    status_led[0] = (255, 0, 0)
-    print("CRASHED:", e)
+                    off = pi * 4
+                    # for GRBW strips, data must be in G,R,B,W order:
+                    buffers[si][off : off + 4] = bytes((g, r, b_, w))
+                    dirty[si] = True
+
+        # drop processed bytes
+        buf[:] = buf[total:]
+
+    # push only changed strips
+    for i, dio in enumerate(ios):
+        if dirty[i]:
+            neopixel_write(dio, buffers[i])
+            dirty[i] = False
