@@ -34,7 +34,7 @@ const (
 var (
 	// should match scorpio/code.py
 	// StripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
-	stripLengths = []int{144, 144}
+	stripLengths = []int{144, 144, 144, 144, 144, 144, 144, 144}
 )
 
 func main() {
