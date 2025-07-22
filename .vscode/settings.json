@@ -1,5 +1,6 @@
 {
-  "python.pythonPath": "/usr/bin/python3",
+  "python.pythonPath": "./scorpio/.venv/bin/python",
+  "python.defaultInterpreterPath": "./scorpio/.venv/bin/python",
   "files.exclude": {
     "**/__pycache__": true,
     "**/*.pyc": true
@@ -12,5 +13,7 @@
   "python.autoComplete.extraPaths": [
     "./scorpio/lib",
     "./scorpio/.venv/lib/python3.9/site-packages"
-  ]
+  ],
+  "circuitpython.board.vid": "0x239A",
+  "circuitpython.board.pid": "0x80F4"
 }

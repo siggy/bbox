@@ -14,6 +14,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --upgrade pip
 pip install circuitpython-stubs
+pip install adafruit-circuitpython-neopixel
 ```
 
 ### Circup
