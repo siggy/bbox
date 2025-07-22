@@ -6,6 +6,7 @@
 - pre-programmed beats, like queen songs
 - need amplitude input into the programs
 - generic interface for LED lighting
+- change pulse colors as buttons are pressed
 
 # BBox
 

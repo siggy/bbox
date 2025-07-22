@@ -421,6 +421,9 @@ func peakToFloatPixel(r flatRow, peak float64) float64 {
 	// assume peak == 12.7
 	beat1 := math.Floor(peak) // 12 // 15
 	beat2 := math.Ceil(peak)  // 13 // 16
+	if beat1 == program.Cols {
+		beat1 = 0.0
+	}
 	if beat2 == program.Cols {
 		beat2 = 0.0
 	}
