@@ -30,7 +30,7 @@ type (
 )
 
 const (
-	macDevicePath = "/dev/tty.usbmodem2103" // macbook
+	macDevicePath = "/dev/tty.usbmodem1103" // macbook
 	piDevicePath  = "/dev/ttyACM1"          // pi
 
 	baudRate = 115200
