@@ -94,7 +94,8 @@ func (l *leds) Set(state State) {
 	default:
 	}
 
-	s := State{}
+	// s := State{}
+	s := l.all()
 
 	for strip, stripLEDs := range state {
 		if strip < 0 || strip >= len(l.stripLengths) {
@@ -132,11 +133,22 @@ func (l *leds) run() {
 	lastTick := l.all()
 
 	// clear all at startup
-	l.write(currentState)
+	l.write(currentState.ToMap())
+
+	start := time.Now()
+	ticks := 0
 
 	for {
 		select {
 		case <-ticker.C:
+			ticks++
+			if ticks%100 == 0 {
+				// every 100 ticks (3s), log the time since startup
+				t := time.Since(start)
+
+				l.log.Errorf("LEDs running for %s, %d ticks, %f ticks/s", time.Since(start), ticks, float64(ticks)/t.Seconds())
+			}
+
 			// send a diff of the LEDs
 			if err := l.write(lastTick.diff(currentState)); err != nil {
 				l.log.Errorf("Failed to reconcile full state: %v", err)
@@ -147,7 +159,7 @@ func (l *leds) run() {
 
 		case <-reconcile.C:
 			// send the full state to the LEDs
-			if err := l.write(currentState); err != nil {
+			if err := l.write(currentState.ToMap()); err != nil {
 				l.log.Errorf("Failed to reconcile full state: %v", err)
 				continue
 			}
@@ -162,7 +174,7 @@ func (l *leds) run() {
 	}
 }
 
-func (l *leds) write(state State) error {
+func (l *leds) write(state stateMap) error {
 	var payload []byte
 
 	for strip, stripLEDs := range state {
@@ -199,23 +211,9 @@ func buildPacket(payload []byte) []byte {
 }
 
 func (l *leds) all() State {
-	state := State{}
-	for strip, length := range l.stripLengths {
-		state[strip] = make(map[int]Color)
-		for pixel := range length {
-			state[strip][pixel] = Color{0, 0, 0, 0}
-		}
-	}
-	return state
+	return NewState(l.stripLengths)
 }
 
 func all(stripLengths []int) State {
-	state := State{}
-	for strip, length := range stripLengths {
-		state[strip] = make(map[int]Color)
-		for pixel := range length {
-			state[strip][pixel] = Color{0, 0, 0, 0}
-		}
-	}
-	return state
+	return NewState(stripLengths)
 }

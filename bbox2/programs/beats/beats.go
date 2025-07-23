@@ -192,7 +192,9 @@ func (b *beats) run() {
 
 		// beat loop
 		case <-ticker.C:
-			ledsState := leds.State{}
+			// ledsState := leds.State{}
+			// TODO: fix
+			ledsState := leds.NewState([]int{144, 144, 144, 144, 144, 144, 144, 144})
 
 			// for each row, clear its full physical range:
 			for _, row := range flatRows {
@@ -315,7 +317,9 @@ func (b *beats) run() {
 				}
 			}
 
-			ledsState := leds.State{}
+			// ledsState := leds.State{}
+			// TODO: fix
+			ledsState := leds.NewState([]int{144, 144, 144, 144, 144, 144, 144, 144})
 			phys := rows[press.Row].buttons[press.Col]
 			ledsState.Set(phys.strip, phys.pixel, color)
 			b.render <- ledsState

@@ -14,8 +14,10 @@ type (
 		W uint8 // 0-255, white channel for RGBW LEDs
 	}
 
-	// map[strip][pixel]Color
-	State map[int]map[int]Color
+	// State strip => pixel => Color
+	State [][]Color
+	// stateMap map[strip][pixel]Color
+	stateMap map[int]map[int]Color
 )
 
 var (
@@ -57,6 +59,17 @@ func (c Color) String() string {
 	return fmt.Sprintf("%d,%d,%d,%d", c.R, c.G, c.B, c.W)
 }
 
+func NewState(stripLengths []int) State {
+	state := make(State, len(stripLengths))
+	for strip, length := range stripLengths {
+		state[strip] = make([]Color, length)
+		// for pixel := range state[strip] {
+		// 	state[strip][pixel] = Color{0, 0, 0, 0} // initialize to black
+		// }
+	}
+	return state
+}
+
 func (s State) ApplyState(incoming State) {
 	for strip, stripLEDs := range incoming {
 		for pixel, color := range stripLEDs {
@@ -66,42 +79,51 @@ func (s State) ApplyState(incoming State) {
 }
 
 func (s State) Set(strip int, pixel int, color Color) {
-	if _, ok := s[strip]; !ok {
-		s[strip] = make(map[int]Color)
-	}
 	s[strip][pixel] = color
 }
 
 func (s State) copy() State {
-	copy := make(State, len(s))
+	s2 := make(State, len(s))
 	for strip, pixels := range s {
-		copy[strip] = make(map[int]Color, len(pixels))
-		for pixel, color := range pixels {
-			copy[strip][pixel] = color
-		}
+		s2[strip] = make([]Color, len(pixels))
+		copy(s2[strip], pixels)
 	}
 
-	return copy
+	return s2
 }
 
-func (s State) diff(newState State) State {
-	diff := s.copy()
+// TODO: this should return a map for diff'ing?
+func (s State) diff(newState State) stateMap {
+	stateMap := make(stateMap)
 
 	for strip, pixels := range newState {
-		if _, ok := diff[strip]; !ok {
-			diff[strip] = make(map[int]Color)
-		}
 		for pixel, color := range pixels {
-			if oldColor, ok := diff[strip][pixel]; !ok || oldColor != color {
-				diff[strip][pixel] = color
-			} else {
-				// if the color is the same, we can remove it from the diff
-				delete(diff[strip], pixel)
+			if s[strip][pixel] != color {
+				if _, ok := stateMap[strip]; !ok {
+					stateMap[strip] = make(map[int]Color)
+				}
+				stateMap[strip][pixel] = color
 			}
 		}
 	}
 
-	return diff
+	return stateMap
+}
+
+// TODO: this should return a map for diff'ing?
+func (s State) ToMap() stateMap {
+	stateMap := make(stateMap, len(s))
+	for strip := range s {
+		stateMap[strip] = make(map[int]Color, len(s[strip]))
+	}
+
+	for strip, pixels := range s {
+		for pixel, color := range pixels {
+			stateMap[strip][pixel] = color
+		}
+	}
+
+	return stateMap
 }
 
 type flatState struct {
