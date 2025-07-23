@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"flag"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -38,6 +40,10 @@ var (
 )
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	logLevel := flag.String("log-level", "debug", "set log level (debug, info, warn, error, fatal, panic)")
 	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
 	fakeLEDs := flag.Bool("fake-leds", false, "enable fake LEDs")

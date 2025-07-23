@@ -73,9 +73,9 @@ func (s State) Set(strip int, pixel int, color Color) {
 }
 
 func (s State) copy() State {
-	copy := make(State)
+	copy := make(State, len(s))
 	for strip, pixels := range s {
-		copy[strip] = make(map[int]Color)
+		copy[strip] = make(map[int]Color, len(pixels))
 		for pixel, color := range pixels {
 			copy[strip][pixel] = color
 		}
