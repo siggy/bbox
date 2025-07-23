@@ -185,6 +185,13 @@ func (b *beats) run() {
 	b.in <- program.Coord{Row: 1, Col: 0}
 	b.in <- program.Coord{Row: 1, Col: 8}
 
+	pulseCache := map[struct {
+		row  int
+		peak float64
+	}]map[coord]float64{}
+	hits := 0
+	total := 0
+
 	for {
 		select {
 		case <-b.ctx.Done():
@@ -204,12 +211,30 @@ func (b *beats) run() {
 			}
 
 			// use beatAcc to determine peak location
-			for _, row := range flatRows {
+			for i, row := range flatRows {
 				peak := float64(beatIndex) + beatAcc + pulseDelay
 				if peak < 0 {
 					peak += float64(program.Cols)
 				}
-				pulse := getPulse(row, peak)
+
+				total++
+				key := struct {
+					row  int
+					peak float64
+				}{row: i, peak: peak}
+				pulse, ok := pulseCache[key]
+				if !ok {
+					// use cached pulse
+					pulse = getPulse(row, peak)
+					// pulse := map[coord]float64{}
+					pulseCache[key] = pulse
+				} else {
+					hits++
+				}
+
+				if total%100 == 0 {
+					b.log.Debugf("Pulse cache hits: %d/%d (%.2f%%)", hits, total, float64(hits)/float64(total)*100)
+				}
 
 				for coord, brightness := range pulse {
 					c := leds.Brightness(leds.Mint, brightness)
@@ -377,8 +402,33 @@ func (b *beats) Yield() <-chan struct{} {
 	return b.yield
 }
 
+// func getBeatsPerTick(bpm int) float64 {
+// 	return program.Cols / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
+// }
+
 func getBeatsPerTick(bpm int) float64 {
-	return program.Cols / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
+	// same as before
+	raw := program.Cols / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
+	if raw <= 0 {
+		return 0
+	}
+
+	// only these denominators produce terminating decimals in base‑10
+	dens := []int{1, 2, 4, 5, 8, 10, 16, 20, 25, 32, 40, 50, 64, 80, 100}
+
+	// find the denominator whose reciprocal is closest to raw
+	best := dens[0]
+	bestDiff := math.Abs(raw - 1.0/float64(best))
+	for _, d := range dens[1:] {
+		cand := 1.0 / float64(d)
+		if diff := math.Abs(raw - cand); diff < bestDiff {
+			bestDiff = diff
+			best = d
+		}
+	}
+
+	// return the exact reciprocal step (e.g. 1/5 == 0.2, 1/25 == 0.04, etc.)
+	return 1.0 / float64(best)
 }
 
 // getPulse returns map of coord -> brightness
@@ -404,6 +454,7 @@ func getPulse(r flatRow, peak float64) map[coord]float64 {
 		}
 		// steeper falloff: raise to the 8th power for an even sharper dropoff
 		bness := math.Pow(frac, 8)
+		// bness := float64(1)
 
 		// map to physical LED index
 		pixelIndex := (i + len(r.pixels)) % len(r.pixels)
