@@ -2,8 +2,9 @@ import board
 import math
 import time
 import usb_cdc
-import digitalio
-from neopixel import NeoPixel, neopixel_write
+from adafruit_led_animation.helper import PixelMap
+from adafruit_neopxl8 import NeoPxl8
+from neopixel import NeoPixel
 
 # ——— USB CDC Setup ———
 ser = usb_cdc.data
@@ -13,27 +14,33 @@ hb = NeoPixel(board.NEOPIXEL, 1, brightness=0.5, auto_write=True)
 hb[0] = (0, 255, 0)
 
 # ——— LED Strips Setup ———
-strip_lengths = [144] * 8
-TOTAL_STRIPS  = len(strip_lengths)
+num_strands = 8
+strand_length = 144
+first_led_pin = board.NEOPIXEL0
 
-output_pins = [
-    board.NEOPIXEL0, board.NEOPIXEL1, board.NEOPIXEL2, board.NEOPIXEL3,
-    board.NEOPIXEL4, board.NEOPIXEL5, board.NEOPIXEL6, board.NEOPIXEL7,
-]
+num_pixels = num_strands * strand_length
 
-# Prepare raw buffers and digital IO pins
-buffers = [bytearray(4 * L) for L in strip_lengths]
-dirty   = [True] * TOTAL_STRIPS  # mark all for initial write
-ios     = []
-for pin in output_pins:
-    dio = digitalio.DigitalInOut(pin)
-    dio.direction = digitalio.Direction.OUTPUT
-    ios.append(dio)
+# Make the object to control the pixels
+pixels = NeoPxl8(
+    first_led_pin,
+    num_pixels,
+    num_strands=num_strands,
+    auto_write=False,
+    bpp=4,
+)
+
+def strand(n):
+    return PixelMap(
+        pixels,
+        range(n * strand_length, (n + 1) * strand_length),
+        individual_pixels=True,
+    )
+
+# Create the 8 virtual strands
+strands = [strand(i) for i in range(num_strands)]
 
 # Clear at startup
-for i, dio in enumerate(ios):
-    neopixel_write(dio, buffers[i])
-    dirty[i] = False
+pixels.fill(0)
 
 # ——— Rolling serial buffer ———
 buf = bytearray()
@@ -78,17 +85,11 @@ while True:
             # apply pixel updates
             for i in range(0, length, 6):
                 si, pi, r, g, b_, w = payload[i : i + 6]
-                if si < TOTAL_STRIPS and pi < strip_lengths[si]:
-                    off = pi * 4
-                    # for GRBW strips, data must be in G,R,B,W order:
-                    buffers[si][off : off + 4] = bytes((g, r, b_, w))
-                    dirty[si] = True
+                if si < num_strands and pi < strand_length:
+                    strands[si][pi] = (r, g, b_, w)
 
         # drop processed bytes
         buf[:] = buf[total:]
 
-    # push only changed strips
-    for i, dio in enumerate(ios):
-        if dirty[i]:
-            neopixel_write(dio, buffers[i])
-            dirty[i] = False
+    # render all pixels
+    pixels.show()

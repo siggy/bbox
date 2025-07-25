@@ -28,9 +28,9 @@ pip install circup
 ### Copy files from mac to Scorpio
 
 ```bash
-cp scorpio/lib/*   /Volumes/CIRCUITPY/lib/
-cp scorpio/boot.py /Volumes/CIRCUITPY/
-cp scorpio/code.py /Volumes/CIRCUITPY/
+cp -a scorpio/lib/* /Volumes/CIRCUITPY/lib/
+cp scorpio/boot.py  /Volumes/CIRCUITPY/
+cp scorpio/code.py  /Volumes/CIRCUITPY/
 ```
 
 
