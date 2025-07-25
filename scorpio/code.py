@@ -39,8 +39,14 @@ def strand(n):
 # Create the 8 virtual strands
 strands = [strand(i) for i in range(num_strands)]
 
-# Clear at startup
+# Startup sequence: show all red for 1 second
+pixels.fill((1, 0, 0, 0))
+pixels.show()
+time.sleep(1)
+
+# clear after sequence
 pixels.fill(0)
+pixels.show()
 
 # ——— Rolling serial buffer ———
 buf = bytearray()
