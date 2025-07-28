@@ -35,7 +35,7 @@ var (
 				},
 				{
 					strip: 0,
-					start: 143,
+					start: 98,
 					end:   0,
 				},
 			},
@@ -55,7 +55,7 @@ var (
 				},
 				{
 					strip: 1,
-					start: 143,
+					start: 111,
 					end:   0,
 				},
 			},
@@ -75,7 +75,7 @@ var (
 				},
 				{
 					strip: 2,
-					start: 143,
+					start: 126,
 					end:   0,
 				},
 			},
@@ -95,7 +95,7 @@ var (
 				},
 				{
 					strip: 3,
-					start: 143,
+					start: 140,
 					end:   0,
 				},
 			},
