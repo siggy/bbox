@@ -27,10 +27,18 @@ pip install circup
 
 ### Copy files from mac to Scorpio
 
+#### Install CircuitPython
+
 ```bash
-cp -a scorpio/lib/* /Volumes/CIRCUITPY/lib/
-cp scorpio/boot.py  /Volumes/CIRCUITPY/
-cp scorpio/code.py  /Volumes/CIRCUITPY/
+cp -v scorpio/adafruit-circuitpython-adafruit_feather_rp2040_scorpio-en_US-9.2.8.uf2 /Volumes/RPI-RP2/
+```
+
+#### Install Code
+
+```bash
+cp -va scorpio/lib/*   /Volumes/CIRCUITPY/lib/
+cp -v scorpio/code.py  /Volumes/CIRCUITPY/
+cp -v scorpio/boot.py  /Volumes/CIRCUITPY/
 ```
 
 
