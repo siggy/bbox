@@ -30,7 +30,7 @@ var (
 			segments: []segment{
 				{
 					strip: 4,
-					start: 100,
+					start: 31,
 					end:   0,
 				},
 				{
@@ -50,7 +50,7 @@ var (
 			segments: []segment{
 				{
 					strip: 5,
-					start: 100,
+					start: 35,
 					end:   0,
 				},
 				{
@@ -70,7 +70,7 @@ var (
 			segments: []segment{
 				{
 					strip: 6,
-					start: 100,
+					start: 40,
 					end:   0,
 				},
 				{
@@ -90,7 +90,7 @@ var (
 			segments: []segment{
 				{
 					strip: 7,
-					start: 100,
+					start: 44,
 					end:   0,
 				},
 				{
