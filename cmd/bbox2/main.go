@@ -39,7 +39,7 @@ var (
 
 func main() {
 	logLevel := flag.String("log-level", "debug", "set log level (debug, info, warn, error, fatal, panic)")
-	bboxKB := flag.Bool("bbox-keyboard", false, "enable beatboxer keyboard")
+	bboxKB := flag.Bool("bbox-keyboard", true, "enable beatboxer keyboard")
 	fakeLEDs := flag.Bool("fake-leds", false, "enable fake LEDs")
 	macDevice := flag.Bool("mac-device", false, "connect to scorpio from a macbook (default is Raspberry Pi)")
 	flag.Parse()

@@ -34,6 +34,7 @@ const (
 	minBPM       = 30
 	maxBPM       = 480
 	pulseDelay   = -1.6
+	pulseRadius  = 10.0
 
 	// if 33% of beats are active, yield to the next program
 	beatLimit = program.Rows * program.Cols / 3
@@ -384,7 +385,7 @@ func getPulse(r flatRow, peak float64) map[coord]float64 {
 	pulse := make(map[coord]float64)
 
 	floatPeakPixel := peakToFloatPixel(r, peak)
-	radius := 10.0
+	radius := pulseRadius
 
 	startIndex := int(math.Ceil(floatPeakPixel - radius))
 	endIndex := int(math.Floor(floatPeakPixel + radius))
