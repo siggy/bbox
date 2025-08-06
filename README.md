@@ -115,7 +115,7 @@ sudo apt-get -y purge modemmanager bluez triggerhappy
 sudo apt-get -y autoremove --purge
 
 sudo grep -q 'rootdelay=' /boot/firmware/cmdline.txt \
-  || sudo sed -i 's/$/ rootdelay=2/' /boot/firmware/cmdline.txt
+  || sudo sed -i 's/$/ rootdelay=2 modules-load=dwc2/' /boot/firmware/cmdline.txt
 
 echo "PollIntervalMinSec=600" | sudo tee -a /etc/systemd/timesyncd.conf
 ```
