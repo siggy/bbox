@@ -30,8 +30,8 @@ type (
 )
 
 const (
-	macDevicePath = "/dev/tty.usbmodem1103" // macbook
-	piDevicePath  = "/dev/ttyACM1"          // pi
+	macDevicePath = "/dev/tty.usbmodem103" // macbook
+	piDevicePath  = "/dev/ttyACM1"         // pi
 
 	baudRate = 115200
 
@@ -134,9 +134,20 @@ func (l *leds) run() {
 	// clear all at startup
 	l.write(currentState)
 
+	ticks := 0
+	last := time.Now()
+	tickTime := time.Duration(0)
+
 	for {
 		select {
 		case <-ticker.C:
+			ticks++
+			tickTime += time.Since(last)
+			last = time.Now()
+			if ticks%100 == 0 {
+				l.log.Debugf("Tick %d, average tick time: %v", ticks, tickTime/time.Duration(ticks))
+				l.log.Tracef("lastTick: %v", lastTick)
+			}
 			// send a diff of the LEDs
 			if err := l.write(lastTick.diff(currentState)); err != nil {
 				l.log.Errorf("Failed to reconcile full state: %v", err)

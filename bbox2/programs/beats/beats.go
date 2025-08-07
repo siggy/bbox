@@ -34,7 +34,7 @@ const (
 	minBPM       = 30
 	maxBPM       = 480
 	pulseDelay   = -1.6
-	pulseRadius  = 10.0
+	pulseRadius  = 50.0
 
 	// if 33% of beats are active, yield to the next program
 	beatLimit = program.Rows * program.Cols / 3
