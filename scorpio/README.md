@@ -41,7 +41,6 @@ cp -v scorpio/code.py  /Volumes/CIRCUITPY/
 cp -v scorpio/boot.py  /Volumes/CIRCUITPY/
 ```
 
-
 ### Mount on Pi
 
 ```bash
