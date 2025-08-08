@@ -22,8 +22,9 @@ type (
 		render chan leds.State
 		yield  chan struct{}
 
-		beatColor  leds.Color
-		pulseColor leds.Color
+		beatColor    leds.Color
+		pulseColor   leds.Color
+		starterBeats []program.Coord
 
 		log *log.Entry
 	}
@@ -58,7 +59,7 @@ var (
 	tempoDown = program.Coord{Row: 1, Col: program.Cols - 1}
 )
 
-func New(beatColor, pulseColor leds.Color) program.ProgramFactory {
+func New(beatColor, pulseColor leds.Color, starterBeats []program.Coord) program.ProgramFactory {
 	return func(ctx context.Context) program.Program {
 		log := log.WithFields(log.Fields{"program": "beats", "beatColor": beatColor, "pulseColor": pulseColor})
 		log.Debug("New")
@@ -73,8 +74,9 @@ func New(beatColor, pulseColor leds.Color) program.ProgramFactory {
 			render: make(chan leds.State, program.ChannelBuffer),
 			yield:  make(chan struct{}, program.ChannelBuffer),
 
-			beatColor:  beatColor,
-			pulseColor: pulseColor,
+			beatColor:    beatColor,
+			pulseColor:   pulseColor,
+			starterBeats: starterBeats,
 
 			log: log,
 		}
@@ -191,8 +193,9 @@ func (b *beats) run() {
 	lastPress := program.Coord{Row: -1, Col: -1}
 
 	// starter beat
-	b.in <- program.Coord{Row: 1, Col: 0}
-	b.in <- program.Coord{Row: 1, Col: 8}
+	for _, coord := range b.starterBeats {
+		b.in <- coord
+	}
 
 	for {
 		select {

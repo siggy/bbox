@@ -91,8 +91,8 @@ func main() {
 	go keyboard.Run()
 
 	programs := []programScheduler{
-		{new: beats.New(leds.Red, leds.White), code: nil, hidden: false},
-		{new: beats.New(leds.DeepPurple, leds.Mint), code: nil, hidden: false},
+		{new: beats.New(leds.Red, leds.White, []program.Coord{{Row: 1, Col: 0}, {Row: 1, Col: 8}}), code: nil, hidden: false},
+		{new: beats.New(leds.DeepPurple, leds.Mint, nil), code: nil, hidden: false},
 		{new: song.New("wouldnt_it_be_nice.wav", time.Second*154), code: []int{1, 2, 1, 0}, hidden: true},
 		{new: song.New("runnin_with_the_devil.wav", time.Second*215), code: []int{0, 9, 1, 7}, hidden: true},
 		{new: song.New("pyramid.wav", time.Second*289), code: []int{0, 6, 0, 4}, hidden: true},
