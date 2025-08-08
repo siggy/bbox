@@ -89,6 +89,7 @@ func main() {
 	presses := keyboard.Presses()
 
 	go keyboard.Run()
+	
 
 	programs := []programScheduler{
 		{new: beats.New(leds.Red, leds.White, []program.Coord{{Row: 1, Col: 0}, {Row: 1, Col: 8}}, 120), code: nil, hidden: false},

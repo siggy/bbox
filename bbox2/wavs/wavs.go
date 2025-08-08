@@ -1,7 +1,6 @@
 package wavs
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -9,11 +8,17 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
+	"bytes"
 
 	"github.com/ebitengine/oto/v3"
+	"github.com/siggy/bbox/bbox2/equalizer"
 	log "github.com/sirupsen/logrus"
 	"github.com/youpy/go-wav"
 )
+
+// Alias for the new DisplayData struct from the equalizer package.
+type DisplayData = equalizer.DisplayData
 
 type Wavs struct {
 	ctx     *oto.Context
@@ -22,7 +27,13 @@ type Wavs struct {
 	playersLock sync.Mutex
 	players     []*oto.Player
 
+	eq  *equalizer.Equalizer
 	log *log.Entry
+}
+
+// EQ now correctly returns a channel of the new DisplayData struct.
+func (w *Wavs) EQ() <-chan DisplayData {
+	return w.eq.Data()
 }
 
 func New(dir string) (*Wavs, error) {
@@ -36,22 +47,21 @@ func New(dir string) (*Wavs, error) {
 	}
 	<-ready
 
-	filenames := []string{}
+	var filenames []string
 	dirs, _ := os.ReadDir(dir)
 	for _, d := range dirs {
 		if d.IsDir() || !d.Type().IsRegular() || !strings.HasSuffix(d.Name(), ".wav") {
 			continue
 		}
-
 		filenames = append(filenames, d.Name())
 	}
 
-	buffers := map[string][]byte{}
+	buffers := make(map[string][]byte)
 	for _, filename := range filenames {
 		filepath := filepath.Join(dir, filename)
 		buf, err := fileToAudioBytes(filepath)
 		if err != nil {
-			return nil, fmt.Errorf("fileToAudioBytes failed: %s", err)
+			return nil, fmt.Errorf("fileToAudioBytes failed: %w", err)
 		}
 		buffers[filename] = buf
 	}
@@ -59,6 +69,7 @@ func New(dir string) (*Wavs, error) {
 	return &Wavs{
 		ctx:     ctx,
 		buffers: buffers,
+		eq:      equalizer.New(16, 50*time.Millisecond),
 		log:     log.WithField("bbox2", "wavs"),
 	}, nil
 }
@@ -71,13 +82,14 @@ func (w *Wavs) Play(filename string) {
 		return
 	}
 
-	player := getPlayer(w.ctx, buf)
+	// The equalizer now implements io.Writer, so it can be passed directly.
+	reader := io.TeeReader(bytes.NewReader(buf), w.eq)
+	player := w.ctx.NewPlayer(reader)
 	player.Play()
 
 	w.playersLock.Lock()
-	defer w.playersLock.Unlock()
-
 	w.players = append(w.players, player)
+	w.playersLock.Unlock()
 }
 
 func (w *Wavs) StopAll() {
@@ -92,12 +104,7 @@ func (w *Wavs) StopAll() {
 func (w *Wavs) Close() {
 	w.StopAll()
 	w.ctx.Suspend()
-}
-
-func getPlayer(ctx *oto.Context, pcm []byte) *oto.Player {
-	return ctx.NewPlayer(
-		bytes.NewReader(pcm),
-	)
+	w.eq.Close()
 }
 
 func fileToAudioBytes(filename string) ([]byte, error) {
@@ -113,8 +120,9 @@ func fileToAudioBytes(filename string) ([]byte, error) {
 		return nil, fmt.Errorf("could not get format: %w", err)
 	}
 
-	if format.NumChannels != 1 || format.SampleRate != 44100 {
-		return nil, fmt.Errorf("unsupported format: %v", format)
+	// Allow 44.1kHz or 16kHz mono audio
+	if format.NumChannels != 1 || (format.SampleRate != 44100 && format.SampleRate != 16000) {
+		return nil, fmt.Errorf("unsupported format (must be 44.1/16kHz mono): %v", format)
 	}
 
 	var pcm []byte
@@ -124,7 +132,7 @@ func fileToAudioBytes(filename string) ([]byte, error) {
 			if err == io.EOF {
 				break
 			} else {
-				return nil, fmt.Errorf("ReadSamples failed on file %s with error: %s", filename, err)
+				return nil, fmt.Errorf("ReadSamples failed on file %s with error: %w", filename, err)
 			}
 		}
 		for _, sample := range samples {
