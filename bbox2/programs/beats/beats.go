@@ -40,8 +40,8 @@ const (
 	pulseDelay   = -1.6
 	pulseRadius  = 30.0
 
-	// if 33% of beats are active, yield to the next program
-	beatLimit = program.Rows * program.Cols / 3
+	// if 50% of beats are active, yield to the next program
+	beatLimit = program.Rows * program.Cols / 2
 
 	// test
 	// decay             = 2 * time.Second

@@ -34,6 +34,11 @@ var (
 	Mint       = Color{R: 0, G: 170, B: 140, W: 0}
 	trueGreen  = Color{0, 255, 0, 0}
 	DeepPurple = Color{200, 0, 100, 0}
+	Orange     = Color{255, 165, 0, 0}
+	Yellow     = Color{255, 255, 0, 0}
+	Cyan       = Color{0, 255, 255, 0}
+	SkyBlue    = Color{135, 206, 235, 0}
+	Gold       = Color{255, 215, 0, 80}
 
 	// special color to tell beatboxer an active beat is occurring
 	ActiveBeatPurple = Color{127, 127, 0, 127}

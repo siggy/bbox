@@ -92,7 +92,177 @@ func main() {
 
 	programs := []programScheduler{
 		{new: beats.New(leds.Red, leds.White, []program.Coord{{Row: 1, Col: 0}, {Row: 1, Col: 8}}, 120), code: nil, hidden: false},
-		{new: beats.New(leds.DeepPurple, leds.Mint, nil, 240), code: nil, hidden: false},
+
+		// We Will Rock You — Queen (thick: add kick under stomps)
+		{
+			new: beats.New(
+				leds.White, leds.Gold,
+				[]program.Coord{
+					// Stomps = kick + tom stacked
+					{Row: 1, Col: 0}, {Row: 3, Col: 0},
+					{Row: 1, Col: 4}, {Row: 3, Col: 4},
+
+					// Flam into the clap (slightly early) + bright layer
+					{Row: 2, Col: 9}, // main clap
+					{Row: 0, Col: 9}, // bright layer
+				},
+				165,
+			),
+			code: nil, hidden: false,
+		},
+
+		// Billie Jean — Michael Jackson (iconic backbeat + syncopated kick)
+		{
+			new: beats.New(
+				leds.TrueBlue, leds.White,
+				[]program.Coord{
+					// Hihat (8ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
+					{Row: 0, Col: 8}, {Row: 0, Col: 10}, {Row: 0, Col: 12}, {Row: 0, Col: 14},
+					// Kick
+					{Row: 1, Col: 0}, {Row: 1, Col: 10},
+					// Snare (perc) on 2 & 4
+					{Row: 2, Col: 4}, {Row: 2, Col: 12},
+				},
+				117,
+			),
+			code: nil, hidden: false,
+		},
+
+		// Stayin’ Alive — Bee Gees (disco: four-on-the-floor + 8th hats)
+		{
+			new: beats.New(
+				leds.Red, leds.Mint,
+				[]program.Coord{
+					// Hihat (8ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
+					{Row: 0, Col: 8}, {Row: 0, Col: 10}, {Row: 0, Col: 12}, {Row: 0, Col: 14},
+					// Kick on all quarters
+					{Row: 1, Col: 0}, {Row: 1, Col: 4}, {Row: 1, Col: 8}, {Row: 1, Col: 12},
+					// Snare on 2 & 4
+					{Row: 2, Col: 4}, {Row: 2, Col: 12},
+				},
+				104,
+			),
+			code: nil, hidden: false,
+		},
+
+		// Shape of You — Ed Sheeran (tight pop groove)
+		{
+			new: beats.New(
+				leds.Orange, leds.Cyan,
+				[]program.Coord{
+					// Hihat (8ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
+					{Row: 0, Col: 8}, {Row: 0, Col: 10}, {Row: 0, Col: 12}, {Row: 0, Col: 14},
+					// Kick
+					{Row: 1, Col: 0}, {Row: 1, Col: 8}, {Row: 1, Col: 11},
+					// Snare
+					{Row: 2, Col: 4}, {Row: 2, Col: 12},
+				},
+				96,
+			),
+			code: nil, hidden: false,
+		},
+
+		// Take On Me — a‑ha (’80s drive: 16th hats)
+		{
+			new: beats.New(
+				leds.SkyBlue, leds.White,
+				[]program.Coord{
+					// Hihat (16ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
+					{Row: 0, Col: 4}, {Row: 0, Col: 5}, {Row: 0, Col: 6}, {Row: 0, Col: 7},
+					{Row: 0, Col: 8}, {Row: 0, Col: 9}, {Row: 0, Col: 10}, {Row: 0, Col: 11},
+					{Row: 0, Col: 12}, {Row: 0, Col: 13}, {Row: 0, Col: 14}, {Row: 0, Col: 15},
+					// Kick
+					{Row: 1, Col: 0}, {Row: 1, Col: 8}, {Row: 1, Col: 14},
+					// Snare
+					{Row: 2, Col: 4}, {Row: 2, Col: 12},
+				},
+				168,
+			),
+			code: nil, hidden: false,
+		},
+
+		// Four-on-the-floor (house)
+		{
+			new: beats.New(
+				leds.Red, leds.White,
+				[]program.Coord{
+					// Hihat (8ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
+					{Row: 0, Col: 8}, {Row: 0, Col: 10}, {Row: 0, Col: 12}, {Row: 0, Col: 14},
+					// Kick
+					{Row: 1, Col: 0}, {Row: 1, Col: 8},
+					// Snare-ish (perc)
+					{Row: 2, Col: 4}, {Row: 2, Col: 12},
+				},
+				124,
+			),
+			code: nil, hidden: false,
+		},
+
+		// Boom-bap
+		{
+			new: beats.New(
+				leds.DeepPurple, leds.Mint,
+				[]program.Coord{
+					// Hihat (16ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
+					{Row: 0, Col: 4}, {Row: 0, Col: 5}, {Row: 0, Col: 6}, {Row: 0, Col: 7},
+					{Row: 0, Col: 8}, {Row: 0, Col: 9}, {Row: 0, Col: 10}, {Row: 0, Col: 11},
+					{Row: 0, Col: 12}, {Row: 0, Col: 13}, {Row: 0, Col: 14}, {Row: 0, Col: 15},
+					// Kick
+					{Row: 1, Col: 0}, {Row: 1, Col: 7},
+					// Backbeat (perc)
+					{Row: 2, Col: 4}, {Row: 2, Col: 12},
+				},
+				92,
+			),
+			code: nil, hidden: false,
+		},
+
+		// Trap halftime
+		{
+			new: beats.New(
+				leds.TrueBlue, leds.Orange,
+				[]program.Coord{
+					// Hihat (16ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
+					{Row: 0, Col: 4}, {Row: 0, Col: 5}, {Row: 0, Col: 6}, {Row: 0, Col: 7},
+					{Row: 0, Col: 8}, {Row: 0, Col: 9}, {Row: 0, Col: 10}, {Row: 0, Col: 11},
+					{Row: 0, Col: 12}, {Row: 0, Col: 13}, {Row: 0, Col: 14}, {Row: 0, Col: 15},
+					// Kick
+					{Row: 1, Col: 0}, {Row: 1, Col: 10},
+					// Halftime backbeat (perc)
+					{Row: 2, Col: 8},
+					// Tiny fill (tom)
+					{Row: 3, Col: 15},
+				},
+				140, // feels like ~70bpm
+			),
+			code: nil, hidden: false,
+		},
+
+		// Dembow / reggaeton
+		{
+			new: beats.New(
+				leds.Yellow, leds.Cyan,
+				[]program.Coord{
+					// Hihat (8ths)
+					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
+					{Row: 0, Col: 8}, {Row: 0, Col: 10}, {Row: 0, Col: 12}, {Row: 0, Col: 14},
+					// Kick
+					{Row: 1, Col: 0}, {Row: 1, Col: 8},
+					// Snare-ish (perc)
+					{Row: 2, Col: 4}, {Row: 2, Col: 10},
+				},
+				100,
+			),
+			code: nil, hidden: false,
+		},
+
 		{new: song.New("wouldnt_it_be_nice.wav", time.Second*154), code: []int{1, 2, 1, 0}, hidden: true},
 		{new: song.New("runnin_with_the_devil.wav", time.Second*215), code: []int{0, 9, 1, 7}, hidden: true},
 		{new: song.New("pyramid.wav", time.Second*289), code: []int{0, 6, 0, 4}, hidden: true},
