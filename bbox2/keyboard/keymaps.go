@@ -96,7 +96,7 @@ var KeyMapsRPI = map[rune]program.Coord{
 
 	'n': {Row: 0, Col: 0},
 	'l': {Row: 0, Col: 1},
-	'i': {Row: 0, Col: 2}, // fucked up
+	'a': {Row: 0, Col: 2}, // 2nd keyboard
 	'd': {Row: 0, Col: 3},
 	's': {Row: 0, Col: 4},
 	'u': {Row: 0, Col: 5},
@@ -111,17 +111,17 @@ var KeyMapsRPI = map[rune]program.Coord{
 	'M': {Row: 0, Col: 14},
 	'O': {Row: 0, Col: 15},
 
-	'p': {Row: 1, Col: 0}, // finnicky
+	'p': {Row: 1, Col: 0},
 	'g': {Row: 1, Col: 1},
 	'c': {Row: 1, Col: 2},
-	'a': {Row: 1, Col: 3}, // fucked up
+	'i': {Row: 1, Col: 3}, // 2nd keyboard
 	'x': {Row: 1, Col: 4},
 	'B': {Row: 1, Col: 5},
 	'v': {Row: 1, Col: 6},
 	't': {Row: 1, Col: 7},
 	'5': {Row: 1, Col: 8},
 	'.': {Row: 1, Col: 9},
-	'2': {Row: 1, Col: 10}, // finnicky
+	'2': {Row: 1, Col: 10},
 	',': {Row: 1, Col: 11},
 	'P': {Row: 1, Col: 12},
 	'W': {Row: 1, Col: 13},
@@ -131,7 +131,7 @@ var KeyMapsRPI = map[rune]program.Coord{
 	'o': {Row: 2, Col: 0},
 	'm': {Row: 2, Col: 1},
 	'k': {Row: 2, Col: 2},
-	'j': {Row: 2, Col: 3}, // fucked up2
+	'j': {Row: 2, Col: 3}, // 2nd keyboard
 	'D': {Row: 2, Col: 4},
 	'E': {Row: 2, Col: 5},
 	'w': {Row: 2, Col: 6},
@@ -148,7 +148,7 @@ var KeyMapsRPI = map[rune]program.Coord{
 	'h': {Row: 3, Col: 0},
 	'f': {Row: 3, Col: 1},
 	'e': {Row: 3, Col: 2},
-	'b': {Row: 3, Col: 3}, // fucked up2
+	'b': {Row: 3, Col: 3}, // 2nd keyboard
 	'G': {Row: 3, Col: 4},
 	'H': {Row: 3, Col: 5},
 	'F': {Row: 3, Col: 6},
