@@ -1,215 +1,146 @@
 /*
-*** THIS IS THE PLACE TO START! *** Adafruit_NeoPXL8 has complex wiring
-options that vary from board to board. This example discusses all that and
-lights pixels in predictable test patterns as a wiring diagnostic tool.
-Subsequent examples forego the long explanantion and just handle their task.
-Figure out your connections here, then copy your findings into other code.
-Pixel-setting operations are the same as Adafruit_NeoPixel and are not
-explained here -- for that, see examples included with Adafruit_NeoPixel.
-
-REQUIREMENTS:
-* Adafruit_NeoPixel library.
-* For M0 and M4 boards (SAMD21, SAMD51): Adafruit_ZeroDMA library.
-* For RP2040 boards: install Earle F. Philhower's "Raspberry Pi Pico/RP2040"
-                     board package.
-* For ESP32S3 boards: install Espressif ESP32 package. ONLY the S3 is
-*                     supported; no S2, C3 or original ESP32.
-* NeoPixels with suitable wiring and adequate power supply.
-* 5V-powered NeoPixels may require a logic level shifter (e.g. 75HCT245),
-  or use a NeoPXL8 FeatherWing or Friend. There are DIFFERENT VERSIONS of
-  the NeoPXL8 FeatherWing for M0 and M4 Feathers. For non-Feather boards,
-  consider the NeoPXL8 Friend breakout board.
-
-PRODUCT LINKS:
-* NeoPXL8 FeatherWing M0: https://www.adafruit.com/product/3249
-* NeoPXL8 FeatherWing M4: https://www.adafruit.com/product/4537
-* NeoPXL8 Friend: https://www.adafruit.com/product/3975
-* NeoPixels: https://www.adafruit.com/category/168
-
-RESOURCES:
-* NeoPixel Uberguide: https://learn.adafruit.com/adafruit-neopixel-uberguide
+  SCORPIO + Adafruit_NeoPXL8 framed USB control
+  - 8 strands, 144 pixels each, GRBW
+  - USB CDC protocol:
+      [0xAA][len_hi][len_lo][payload ...][chk]
+      payload is N * 6 bytes: [si, pi, r, g, b, w]
+      chk = XOR of all payload bytes
 */
 
 #include <Adafruit_NeoPXL8.h>
+#include <Adafruit_NeoPixel.h>
+#include <vector>
+#include <math.h>
 
-#define NUM_LEDS    144      // NeoPixels PER STRAND, total number is 8X this!
-#define COLOR_ORDER NEO_GRBW // NeoPixel color format (see Adafruit_NeoPixel)
+// -------- Configuration --------
+#define NUM_STRANDS   8
+#define STRAND_LEN    144
+#define NUM_LEDS      (NUM_STRANDS * STRAND_LEN)
+#define COLOR_ORDER   NEO_GRBW
 
-// In a moment we'll declare a global Adafruit_NeoPXL8 object.
-// The constructor expects three arguments:
-// * The number of NeoPixels PER STRAND (there can be up to 8 strands).
-// * A uint8_t array of 8 output pins, or pass NULL to use pins 0-7 on Metro
-//   Express or Arduino Zero boards.
-// * NeoPixel color order, same as with the Adafruit_NeoPixel library.
-//   Different types and revisions of NeoPixel and WS2812-compatible LEDs
-//   expect color data in a particular order.
-// Two of these were #defined above for easy use. But the middle one --
-// the pin array -- requires a whole DISCUSSION. What follows are some pin
-// arrays for different situations. MOST ARE COMMENTED OUT HERE, idea being
-// that you would enable one or another, or come up with your own list
-// following the rules explained here...
-
-// To use a default pin setup (pins 0-7 on Adafruit Metro M0/M4, Arduino
-// Zero, etc.), NULL can be used in place of the pin array. Comment this out
-// if using one of the pin lists that follow, or your own list:
-
-// int8_t *pins = NULL; // COMMENT THIS OUT IF USING A PIN LIST BELOW
-
-// In most situations you'll declare an int8_t array of 8 elements, one per
-// pin. You can use fewer than 8 outputs by placing a -1 in one or more
-// places. The array MUST have 8 elements, no more or less, and each board
-// has SPECIFIC RULES about pin choices. Within that list and those rules,
-// valid pins can be arranged in any order. For example: if integrating
-// NeoPXL8 into an existing FadeCandy or OctoWS2811 installation, you might
-// need to reverse or reorder the pin list to get a coherent LED pattern.
-
-// M0 AND M4 BOARDS (SAMD21, SAMD51 MICROCONTROLLERS) ----------------------
-
-// For Feather M0 and M4, the corresponding NeoPXL8 FeatherWings are NOT
-// interchangeable -- you must have a matched Feather and 'Wing!
-
-// Here's a pinout that works with the Feather M0 (NOT M4) w/NeoPXL8 M0
-// FeatherWing as it ships from the factory:
-// int8_t pins[8] = { PIN_SERIAL1_RX, PIN_SERIAL1_TX, MISO, 13, 5, SDA, A4, A3 };
-
-// 5 pins on the M0 Featherwing have configurable pads that can be cut and
-// solder-jumpered to altername pins, in case the default connections
-// interfere with a needed peripheral (Serial1, I2C or SPI). You do NOT need
-// to use all 5 alternates; pick and choose as needed! But if changing all 5,
-// they would be:
-// int8_t pins[8] = { 12, 10, 11, 13, SCK, MOSI, A4, A3 };
-// Notice the last two are unchanged; those outputs are not reconfigurable.
-
-// Here's a pinout that works with the Feather M4 (not M0) w/NeoPXL8 M4
-// FeatherWing in the factory configuration:
-// int8_t pins[8] = { 13, 12, 11, 10, SCK, 5, 9, 6 };
-// Similar to the M0 Wing above where the first 5 pins are configurable, on
-// M4 the last 4 can be changed with some cutting/soldering:
-// int8_t pins[8] = { 13, 12, 11, 10, PIN_SERIAL1_RX, PIN_SERIAL1_TX, SCL, SDA };
-// Notice the first four are unchanged; those outputs are not reconfigurable.
-
-// Here's a pinout that works on the Metro M4:
-// int8_t pins[8] = { 7, 4, 5, 6, 3, 2, 10, 11 };
-// An alternate set of pins on Metro M4, but only 7 outputs:
-// int8_t pins[8] = { 9, 8, 0, 1, 13, 12, -1, SCK };
-
-// For Grand Central, here are primary and alternate pin options:
-// int8_t pins[8] = { 30, 31, 32, 33, 36, 37, 34, 35 };
-// int8_t pins[8] = { 30, 31, 32, 33, 15, 14, 27, 26 };
-
-// For other SAMD21/SAMD51 (M0 and M4) boards not listed here: NeoPXL8
-// relies on these chip's "pattern generator" peripheral, which is only
-// availabe on certain pins. This requires some schematic and/or datasheet
-// sleuthing to identify PCC/DATA[0] through [7] pins.
-
-// RP2040 BOARDS -----------------------------------------------------------
-
-// IMPORTANT: when used with RP2040 devices, the pin array requires "GPxx"
-// pin numbers, which sometimes vary from the Arduino pin numbers
-// silkscreened on the board's top side. Some boards helpfully use Arduino
-// numbers on top, with GPxx equivalents on the bottom side for reference.
-// The GPxx numbers MUST be within any contiguous range of 8 pins, though
-// they can be re-ordered within that range, or unused elements set to -1.
-
-// The M4 FeatherWing *almost* aligns with the Feather RP2040, but requires
-// cutting the trace between the "n0" SCK selector pad, then soldering a
-// wire from the n0 center pad (there's no via) to D4. You can then use this
-// array to access all 8 outputs:
-// int8_t pins[8] = { 6, 7, 9, 8, 13, 12, 11, 10 }; // GPxx indices!
-// On Feather RP2040, corresponds to top-labeled 4, 5, 9, 6, 13, 12, 11, 10.
-// There are no alternate pins for Feather RP2040, since this is the only
-// 8-contiguous-bits combination, though you can reverse, reorder or use -1.
-
-// For the Feather RP2040 SCORPIO, use this list:
+// SCORPIO RP2040 PIO pins (GP16..GP23)
 int8_t pins[8] = { 16, 17, 18, 19, 20, 21, 22, 23 };
 
-// For Raspberry Pi Pico, you can use any 8 contiguous GPIO pins (e.g. the
-// default 0-7) with a level shifter or NeoPXL8 Friend.
+// Onboard heartbeat NeoPixel
+#ifndef PIN_NEOPIXEL
+#define PIN_NEOPIXEL  16  // fallback, most RP2040 boards define this
+#endif
 
-// ESP32S3 BOARDS ----------------------------------------------------------
-
-// These allow ANY 8 pins for output...so you can use the NeoPXL8 M0 or M4
-// FeatherWings unmodified, with one of the pin lists provided earlier.
-
-// LET'S DO THE THING! -----------------------------------------------------
-
-// Here's the global constructor as explained near the start:
+// -------- Globals --------
 Adafruit_NeoPXL8 leds(NUM_LEDS, pins, COLOR_ORDER);
+Adafruit_NeoPixel hb(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 
-// For this demo we use a table of 8 hues, one for each strand of pixels:
-static uint8_t colors[8][3] = {
-  255,   0,   0, // Row 0: Red
-  255, 160,   0, // Row 1: Orange
-  255, 255,   0, // Row 2: Yellow
-    0, 255,   0, // Row 3: Green
-    0, 255, 255, // Row 4: Cyan
-    0,   0, 255, // Row 5: Blue
-  192,   0, 255, // Row 6: Purple
-  255,   0, 255  // Row 7: Magenta
-};
+std::vector<uint8_t> buf;     // rolling USB buffer
 
-// setup() runs once on program startup:
-void setup() {
-  // Start NeoPXL8. If begin() returns false, either an invalid pin list
-  // was provided, or requested too many pixels for available RAM.
-  if (!leds.begin()) {
-    // Blink the onboard LED if that happens.
-    pinMode(LED_BUILTIN, OUTPUT);
-    for (;;) digitalWrite(LED_BUILTIN, (millis() / 500) & 1);
-  }
+// Protocol constants
+const uint8_t START = 0xAA;
 
-  // Otherwise, NeoPXL8 is now running, we can continue.
-
-  leds.setBrightness(32); // Tone it down, NeoPixels are BRIGHT!
-
-  // Cycle all pixels red/green/blue on startup. If you see a different
-  // sequence, COLOR_ORDER doesn't match your particular NeoPixel type.
-  // If you get a jumble of colors, you're using RGBW NeoPixels with an
-  // RGB order. Try different COLOR_ORDER values until code and hardware
-  // are in harmony.
-  for (uint32_t color = 0xFF0000; color > 0; color >>= 8) {
-    leds.fill(color);
-    leds.show();
-    delay(500);
-  }
-
-  // Light each strip in sequence. This helps verify the mapping of pins to
-  // a physical LED installation. If strips flash out of sequence, you can
-  // either re-wire, or just change the order of the pins[] array.
-  for (int i=0; i<8; i++) {
-    if (pins && (pins[i] < 0)) continue; // No pixels on this pin
-    leds.fill(0);
-    uint32_t color = leds.Color(colors[i][0], colors[i][1], colors[i][2]);
-    leds.fill(color, i * NUM_LEDS, NUM_LEDS);
-    leds.show();
-    delay(300);
-  }
-
-  // The other examples do not include the above two tests. It's assumed at
-  // that point that your code and hardware are confirmed in sync, making
-  // these redundant.
+// -------- Helpers --------
+static inline uint32_t packGRBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
+  // Adafruit_NeoPXL8 uses the same Color() signature as NeoPixel (RGB or RGBW).
+  return leds.Color(r, g, b, w);
 }
 
-// loop() runs over and over indefinitely. We use this to render each frame
-// of a repeating animation cycle based on elapsed time:
-void loop() {
-  uint32_t now = millis(); // Get time once at start of each frame
-  for(uint8_t r=0; r<8; r++) { // For each row...
-    for(int p=0; p<NUM_LEDS; p++) { // For each pixel of row...
-      leds.setPixelColor(r * NUM_LEDS + p, rain(now, r, p));
+void heartbeat() {
+  // Simple green<->blue breathing at ~1 Hz
+  static uint32_t t0 = millis();
+  float t = (millis() - t0) / 1000.0f;
+  float pulse = (sinf(2.0f * M_PI * t) + 1.0f) * 0.5f; // 0..1
+  uint8_t g = (uint8_t)(pulse * 64.0f);
+  uint8_t b = (uint8_t)((1.0f - pulse) * 64.0f);
+  hb.setPixelColor(0, hb.Color(0, g, b));
+  hb.show();
+}
+
+bool parseAndApplyFrames() {
+  // Returns true if any pixels were changed (to optionally optimize show()).
+  bool changed = false;
+
+  // We may have multiple frames in the buffer.
+  for (;;) {
+    if (buf.size() < 4) break;                  // need at least start + len + chk
+    if (buf[0] != START) { buf.erase(buf.begin()); continue; }
+
+    uint16_t length = ((uint16_t)buf[1] << 8) | buf[2];
+    uint32_t total  = 3u + length + 1u;         // start + len(2) + payload + chk
+    if (buf.size() < total) break;              // wait for full frame
+
+    // Verify checksum (XOR of payload)
+    uint8_t x = 0;
+    for (uint32_t i = 0; i < length; i++) x ^= buf[3 + i];
+    uint8_t chk = buf[3 + length];
+
+    if (x == chk && (length % 6u) == 0u) {
+      // Apply pixels
+      for (uint32_t i = 3; i < 3u + length; i += 6) {
+        uint8_t si = buf[i + 0];
+        uint8_t pi = buf[i + 1];
+        uint8_t r  = buf[i + 2];
+        uint8_t g  = buf[i + 3];
+        uint8_t b  = buf[i + 4];
+        uint8_t w  = buf[i + 5];
+
+        if (si < NUM_STRANDS && pi < STRAND_LEN) {
+          uint32_t idx = (uint32_t)si * STRAND_LEN + pi;
+          leds.setPixelColor(idx, packGRBW(r, g, b, w));
+          changed = true;
+        }
+      }
     }
+    // Drop processed frame (valid or not — resync happens via START search)
+    buf.erase(buf.begin(), buf.begin() + total);
   }
-  leds.show();
+  return changed;
 }
 
-// Given current time in milliseconds, row number (0-7) and pixel number
-// along row (0 - (NUM_LEDS-1)), first calculate brightness (b) of pixel,
-// then multiply row color by this and run it through NeoPixel library’s
-// gamma-correction table.
-uint32_t rain(uint32_t now, uint8_t row, int pixelNum) {
-  uint8_t frame = now / 4; // uint8_t rolls over for a 0-255 range
-  uint16_t b = 256 - ((frame - row * 32 + pixelNum * 256 / NUM_LEDS) & 0xFF);
-  return leds.Color(leds.gamma8((colors[row][0] * b) >> 8),
-                    leds.gamma8((colors[row][1] * b) >> 8),
-                    leds.gamma8((colors[row][2] * b) >> 8));
+// -------- Arduino lifecycle --------
+void setup() {
+  // USB serial
+  Serial.begin(115200);
+  // Give USB a moment on cold-boot; non-blocking if already up.
+  uint32_t tstart = millis();
+  while (!Serial && (millis() - tstart < 1500)) {}
+
+  // Heartbeat LED
+  hb.begin();
+  hb.setBrightness(128);
+  hb.setPixelColor(0, hb.Color(0, 255, 0)); // green on boot
+  hb.show();
+
+  // NeoPXL8 start
+  if (!leds.begin()) {
+    pinMode(LED_BUILTIN, OUTPUT);
+    for (;;) digitalWrite(LED_BUILTIN, (millis() / 250) & 1); // fatal blink
+  }
+  leds.setBrightness(255); // full; adjust if needed
+
+  // Startup: all red (R channel) for 1 second, then clear
+  leds.fill(packGRBW(255, 0, 0, 0));
+  leds.show();
+  delay(1000);
+  leds.clear();
+  leds.show();
+
+  buf.reserve(4096);
+}
+
+void loop() {
+  heartbeat();
+
+  // Pull any available USB bytes into rolling buffer
+  while (Serial.available() > 0) {
+    buf.push_back((uint8_t)Serial.read());
+    // Prevent unbounded growth on junk input
+    if (buf.size() > 65536) buf.erase(buf.begin(), buf.begin() + 32768);
+  }
+
+  bool changed = parseAndApplyFrames();
+
+  if (changed) {
+    leds.show();
+  }
+
+  // Tiny pause keeps loop snappy without starving USB
+  // (lower CPU, but still very responsive)
+  delay(1);
 }
