@@ -60,7 +60,7 @@ var (
 
 func New(beatColor, pulseColor leds.Color) program.ProgramFactory {
 	return func(ctx context.Context) program.Program {
-		log := log.WithField("program", "beats")
+		log := log.WithFields(log.Fields{"program": "beats", "beatColor": beatColor, "pulseColor": pulseColor})
 		log.Debug("New")
 
 		ctx, cancel := context.WithCancel(ctx)

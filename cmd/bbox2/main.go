@@ -8,14 +8,13 @@ import (
 	"path/filepath"
 	"slices"
 	"syscall"
+	"time"
 
 	"github.com/siggy/bbox/bbox2/keyboard"
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
 	"github.com/siggy/bbox/bbox2/programs/beats"
-	"github.com/siggy/bbox/bbox2/programs/devil"
-	"github.com/siggy/bbox/bbox2/programs/nice"
-	"github.com/siggy/bbox/bbox2/programs/pyramid"
+	"github.com/siggy/bbox/bbox2/programs/song"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
@@ -94,9 +93,9 @@ func main() {
 	programs := []programScheduler{
 		{new: beats.New(leds.Red, leds.White), code: nil, hidden: false},
 		{new: beats.New(leds.DeepPurple, leds.Mint), code: nil, hidden: false},
-		{new: nice.New, code: []int{1, 2, 1, 0}, hidden: true},
-		{new: devil.New, code: []int{0, 9, 1, 7}, hidden: true},
-		{new: pyramid.New, code: []int{0, 6, 0, 4}, hidden: true},
+		{new: song.New("wouldnt_it_be_nice.wav", time.Second*154), code: []int{1, 2, 1, 0}, hidden: true},
+		{new: song.New("runnin_with_the_devil.wav", time.Second*215), code: []int{0, 9, 1, 7}, hidden: true},
+		{new: song.New("pyramid.wav", time.Second*289), code: []int{0, 6, 0, 4}, hidden: true},
 	}
 
 	cur := 0
