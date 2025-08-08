@@ -3,12 +3,14 @@ package equalizer
 import (
 	"bytes"
 	"encoding/binary"
+
 	// "io"
 	"math"
 	"sync"
 	"time"
 
 	"github.com/mjibson/go-dsp/fft"
+	log "github.com/sirupsen/logrus"
 )
 
 // DisplayData  holds a history of the last four spectrum readings.
@@ -48,8 +50,16 @@ func New(bands int, interval time.Duration) *Equalizer {
 	return eq
 }
 
+var start = time.Now()
+var addedSamples = 0
+var addedSamplesTotal = 0
+
 // AddSamples appends new PCM samples as float64s. This method is restored to fix the error.
 func (eq *Equalizer) AddSamples(samples []float64) {
+	addedSamples++
+	addedSamplesTotal += len(samples)
+	log.Infof("AddSamples called: %d samples, total calls: %d, total samples: %d, time: %v, rate: %.2f/sec", len(samples), addedSamples, addedSamplesTotal, time.Since(start), float64(addedSamplesTotal)/time.Since(start).Seconds())
+
 	eq.mu.Lock()
 	defer eq.mu.Unlock()
 	eq.buf = append(eq.buf, samples...)
@@ -88,54 +98,88 @@ func (eq *Equalizer) Close() {
 	close(eq.data)
 }
 
+const hopSize = fftSize / 2 // 50% overlap
+
 func (eq *Equalizer) loop() {
 	const smoothingFactor = 0.6 // Smoothing factor for the newest spectrum.
 	var smoothedSpectrum = make([]float64, eq.bands)
+
+	ticks := 0
+	start := time.Now()
+
+	// ticksTop := 0
 
 	for {
 		select {
 		case <-eq.ticker.C:
 			eq.mu.Lock()
-			if len(eq.buf) < fftSize {
-				eq.mu.Unlock()
-				continue
-			}
-			window := make([]float64, fftSize)
-			copy(window, eq.buf[len(eq.buf)-fftSize:])
-			eq.buf = nil // Clear buffer after processing
+
+			// ticksTop++
+			// log.Infof("  len(eq.buf): %d, ticks TOP: %d, time: %v, rate: %.2f/sec                     ", len(eq.buf), ticksTop, time.Since(start), float64(ticksTop)/time.Since(start).Seconds())
+
+			// if len(eq.buf) < fftSize {
+			// 	eq.mu.Unlock()
+			// 	continue
+			// }
+			buf := eq.buf
+			eq.buf = nil // we'll put leftovers back after processing
 			eq.mu.Unlock()
 
-			// --- Raw Signal Analysis ---
-			spec := fft.FFTReal(window)
-			mags := make([]float64, len(spec)/2)
-			for i := 0; i < len(spec)/2; i++ {
-				mags[i] = math.Hypot(real(spec[i]), imag(spec[i]))
+			// window := make([]float64, fftSize)
+			// copy(window, eq.buf[len(eq.buf)-fftSize:])
+			// eq.buf = nil // Clear buffer after processing
+			// eq.mu.Unlock()
+
+			offset := 0
+			for offset+fftSize <= len(buf) {
+				window := buf[offset : offset+fftSize]
+				// (optional but recommended) apply a Hann/Hamming window here before FFT
+				// process(window) -> your FFT + banding + smoothing...
+				offset += hopSize
+
+				// --- Raw Signal Analysis ---
+				spec := fft.FFTReal(window)
+				mags := make([]float64, len(spec)/2)
+				for i := 0; i < len(spec)/2; i++ {
+					mags[i] = math.Hypot(real(spec[i]), imag(spec[i]))
+				}
+
+				// --- Calculate, Smooth, and Normalize Spectrum ---
+				newSpectrum := calculateLogSpectrum(mags, eq.bands)
+				for i := 0; i < eq.bands; i++ {
+					smoothedSpectrum[i] = (newSpectrum[i] * smoothingFactor) + (smoothedSpectrum[i] * (1.0 - smoothingFactor))
+				}
+				normalizedFrame := normalizeSpectrum(smoothedSpectrum)
+
+				// --- Update History ---
+				// Shift old frames down
+				eq.history[0] = eq.history[1]
+				eq.history[1] = eq.history[2]
+				eq.history[2] = eq.history[3]
+				// Add the newest frame at the end
+				eq.history[3] = normalizedFrame
+
+				// --- Populate DisplayData ---
+				displayData := DisplayData{
+					History: eq.history,
+				}
+
+				ticks++
+				log.Infof("ticks OUT: %d, time: %v, rate: %.2f/sec", ticks, time.Since(start), float64(ticks)/time.Since(start).Seconds())
+
+				select {
+				case eq.data <- displayData:
+				default: // Don't block if the channel is full
+				}
 			}
 
-			// --- Calculate, Smooth, and Normalize Spectrum ---
-			newSpectrum := calculateLogSpectrum(mags, eq.bands)
-			for i := 0; i < eq.bands; i++ {
-				smoothedSpectrum[i] = (newSpectrum[i]*smoothingFactor) + (smoothedSpectrum[i]*(1.0-smoothingFactor))
-			}
-			normalizedFrame := normalizeSpectrum(smoothedSpectrum)
-
-			// --- Update History ---
-			// Shift old frames down
-			eq.history[0] = eq.history[1]
-			eq.history[1] = eq.history[2]
-			eq.history[2] = eq.history[3]
-			// Add the newest frame at the end
-			eq.history[3] = normalizedFrame
-
-			// --- Populate DisplayData ---
-			displayData := DisplayData{
-				History: eq.history,
+			// Save leftover (not enough for a full frame yet) for next tick
+			if offset < len(buf) {
+				eq.mu.Lock()
+				eq.buf = append(eq.buf, buf[offset:]...)
+				eq.mu.Unlock()
 			}
 
-			select {
-			case eq.data <- displayData:
-			default: // Don't block if the channel is full
-			}
 		case <-eq.quit:
 			return
 		}

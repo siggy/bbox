@@ -4,12 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"math" 
+	"math"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/siggy/bbox/bbox2/keyboard"
 	"github.com/siggy/bbox/bbox2/program"
@@ -51,10 +52,11 @@ func main() {
 	presses := keyboard.Presses()
 	go keyboard.Run()
 
-	
-
 	fmt.Println("Press 1,2,3,4 for beats, press 'r' for pyramid...")
 	// fmt.Print("\033[H\033[2J") // Clear screen on start
+
+	ticks := 0
+	start := time.Now()
 
 	for {
 		select {
@@ -77,6 +79,11 @@ func main() {
 			}
 
 		case data, ok := <-wavs.EQ():
+			ticks++
+
+			t := time.Since(start)
+			log.Infof("ticks: %d, time: %v, rate: %.2f/sec", ticks, t, float64(ticks)/t.Seconds())
+
 			if !ok {
 				continue
 			}
