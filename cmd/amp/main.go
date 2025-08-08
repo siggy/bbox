@@ -112,10 +112,10 @@ func buildSpectrumBar(sb *strings.Builder, spectrum []float64, styler colorizer)
 	}
 
 	for _, norm := range spectrum {
-		sb.WriteString(styler(norm))
-		sb.WriteString(onBlock)
+		sb.WriteString(fmt.Sprintf("%.2f,", norm))
+		// sb.WriteString(onBlock)
 	}
-	sb.WriteString(resetColor)
+	// sb.WriteString(resetColor)
 	sb.WriteString("\n")
 }
 
@@ -153,7 +153,7 @@ func buildDisplay(data wavs.DisplayData) string {
 		},
 	}
 
-	sb.WriteString("\033[H") // Move cursor to home position
+	// sb.WriteString("\033[H") // Move cursor to home position
 
 	// Render the 4 historical spectrum bars, from oldest to newest.
 	for i := 0; i < 4; i++ {
