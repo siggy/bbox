@@ -145,8 +145,7 @@ func (l *leds) run() {
 			tickTime += time.Since(last)
 			last = time.Now()
 			if ticks%100 == 0 {
-				l.log.Debugf("Tick %d, average tick time: %v", ticks, tickTime/time.Duration(ticks))
-				l.log.Tracef("lastTick: %v", lastTick)
+				l.log.Tracef("Tick %d, average tick time: %v, lastTick: %v", ticks, tickTime/time.Duration(ticks), lastTick)
 			}
 			// send a diff of the LEDs
 			if err := l.write(lastTick.diff(currentState)); err != nil {
