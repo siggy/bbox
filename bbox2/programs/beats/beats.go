@@ -25,6 +25,7 @@ type (
 		beatColor    leds.Color
 		pulseColor   leds.Color
 		starterBeats []program.Coord
+		starterBPM   int
 
 		log *log.Entry
 	}
@@ -34,7 +35,6 @@ type (
 
 const (
 	tickInterval = 20 * time.Millisecond
-	defaultBPM   = 120
 	minBPM       = 30
 	maxBPM       = 480
 	pulseDelay   = -1.6
@@ -59,7 +59,7 @@ var (
 	tempoDown = program.Coord{Row: 1, Col: program.Cols - 1}
 )
 
-func New(beatColor, pulseColor leds.Color, starterBeats []program.Coord) program.ProgramFactory {
+func New(beatColor, pulseColor leds.Color, starterBeats []program.Coord, bpm int) program.ProgramFactory {
 	return func(ctx context.Context) program.Program {
 		log := log.WithFields(log.Fields{"program": "beats", "beatColor": beatColor, "pulseColor": pulseColor})
 		log.Debug("New")
@@ -77,6 +77,7 @@ func New(beatColor, pulseColor leds.Color, starterBeats []program.Coord) program
 			beatColor:    beatColor,
 			pulseColor:   pulseColor,
 			starterBeats: starterBeats,
+			starterBPM:   bpm,
 
 			log: log,
 		}
@@ -135,7 +136,7 @@ func (b *beats) run() {
 	beatIndex := 0
 	beatState := state{}
 
-	bpm := defaultBPM
+	bpm := b.starterBPM
 	bpmCh := make(chan int, program.ChannelBuffer)
 
 	beatsPerTick := getBeatsPerTick(bpm)
@@ -358,7 +359,7 @@ func (b *beats) run() {
 				default:
 				}
 			}
-			if bpm != defaultBPM {
+			if bpm != b.starterBPM {
 				tempoReset.Reset(tempoDecay)
 			}
 
@@ -376,7 +377,7 @@ func (b *beats) run() {
 			}
 
 		case <-tempoReset.C:
-			bpmCh <- defaultBPM
+			bpmCh <- b.starterBPM
 		}
 	}
 }
