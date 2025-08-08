@@ -22,6 +22,9 @@ type (
 		render chan leds.State
 		yield  chan struct{}
 
+		beatColor  leds.Color
+		pulseColor leds.Color
+
 		log *log.Entry
 	}
 
@@ -55,27 +58,32 @@ var (
 	tempoDown = program.Coord{Row: 1, Col: program.Cols - 1}
 )
 
-func New(ctx context.Context) program.Program {
-	log := log.WithField("program", "beats")
-	log.Debug("New")
+func New(beatColor, pulseColor leds.Color) program.ProgramFactory {
+	return func(ctx context.Context) program.Program {
+		log := log.WithField("program", "beats")
+		log.Debug("New")
 
-	ctx, cancel := context.WithCancel(ctx)
-	b := &beats{
-		ctx:    ctx,
-		cancel: cancel,
+		ctx, cancel := context.WithCancel(ctx)
+		b := &beats{
+			ctx:    ctx,
+			cancel: cancel,
 
-		in:     make(chan program.Coord, program.ChannelBuffer),
-		play:   make(chan string, program.ChannelBuffer),
-		render: make(chan leds.State, program.ChannelBuffer),
-		yield:  make(chan struct{}, program.ChannelBuffer),
+			in:     make(chan program.Coord, program.ChannelBuffer),
+			play:   make(chan string, program.ChannelBuffer),
+			render: make(chan leds.State, program.ChannelBuffer),
+			yield:  make(chan struct{}, program.ChannelBuffer),
 
-		log: log,
+			beatColor:  beatColor,
+			pulseColor: pulseColor,
+
+			log: log,
+		}
+
+		b.wg.Add(1)
+		go b.run()
+
+		return b
 	}
-
-	b.wg.Add(1)
-	go b.run()
-
-	return b
 }
 
 func (b *beats) Name() string {
@@ -211,7 +219,7 @@ func (b *beats) run() {
 				pulse := getPulse(row, peak)
 
 				for coord, brightness := range pulse {
-					c := leds.Brightness(leds.Mint, brightness)
+					c := leds.Brightness(b.pulseColor, brightness)
 					ledsState.Set(coord.strip, coord.pixel, c)
 				}
 			}
@@ -222,7 +230,7 @@ func (b *beats) run() {
 					if beat {
 						redPos := flatRows[rowIdx].buttons[i]
 						redIndex := flatRows[rowIdx].pixels[redPos]
-						ledsState.Set(redIndex.strip, redIndex.pixel, leds.Red)
+						ledsState.Set(redIndex.strip, redIndex.pixel, b.beatColor)
 					}
 				}
 			}
@@ -275,7 +283,7 @@ func (b *beats) run() {
 
 			b.log.Debugf("Updated beat state:\n%s", beatState)
 
-			color := leds.Red
+			color := b.beatColor
 
 			if disabling {
 				// disabling a beat

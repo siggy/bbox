@@ -33,7 +33,7 @@ var (
 	purple     = Color{82, 0, 197, 52}
 	Mint       = Color{R: 0, G: 170, B: 140, W: 0}
 	trueGreen  = Color{0, 255, 0, 0}
-	deepPurple = Color{200, 0, 100, 0}
+	DeepPurple = Color{200, 0, 100, 0}
 
 	// special color to tell beatboxer an active beat is occurring
 	ActiveBeatPurple = Color{127, 127, 0, 127}
