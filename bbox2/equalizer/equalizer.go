@@ -14,7 +14,7 @@ import (
 
 // DisplayData  holds a history of the last four spectrum readings.
 type DisplayData struct {
-	History [4][]float64
+	History [HistorySize][]float64
 }
 
 type Equalizer struct {
@@ -23,10 +23,11 @@ type Equalizer struct {
 	mu      sync.Mutex
 	cond    *sync.Cond // <— add
 	buf     []float64
-	history [4][]float64 // Stores the last 4 smoothed
+	history [HistorySize][]float64 // Stores the last 4 smoothed
 	quit    chan struct{}
 }
 
+const HistorySize = 4
 const sampleRate = 44100
 const fftSize = 1024
 
@@ -38,7 +39,7 @@ func New(bands int) *Equalizer {
 		quit:  make(chan struct{}),
 	}
 	// Initialize history slices
-	for i := 0; i < 4; i++ {
+	for i := range HistorySize {
 		eq.history[i] = make([]float64, bands)
 	}
 

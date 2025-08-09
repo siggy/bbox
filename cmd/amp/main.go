@@ -12,11 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/siggy/bbox/bbox2/equalizer"
 	"github.com/siggy/bbox/bbox2/keyboard"
 	"github.com/siggy/bbox/bbox2/program"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
 )
+
+const ticksPerColorRotation = 15
 
 func main() {
 	logLevel := flag.String("log-level", "info", "set log level")
@@ -96,8 +99,8 @@ func main() {
 			}
 			fmt.Print(buildDisplay(data, colorPos))
 			colorTicks++
-			if colorTicks == 20 {
-				colorPos = (colorPos + 1) % 4 // Cycle through colors
+			if colorTicks == ticksPerColorRotation {
+				colorPos = (colorPos + 1) % equalizer.HistorySize // Cycle through colors
 				colorTicks = 0
 			}
 
@@ -138,7 +141,7 @@ func buildDisplay(data wavs.DisplayData, colorPos int) string {
 	// This exponent will be used to create a curve, making low values even lower.
 	const exponent = 2.5
 
-	colorizers := []colorizer{
+	colorizers := [equalizer.HistorySize]colorizer{
 		// 1. Electric Blue (Oldest)
 		func(val float64) string {
 			scaledVal := math.Pow(val, exponent)
@@ -168,8 +171,8 @@ func buildDisplay(data wavs.DisplayData, colorPos int) string {
 	sb.WriteString("\033[H") // Move cursor to home position
 
 	// Render the 4 historical spectrum bars, from oldest to newest.
-	for i := colorPos; i < colorPos+4; i++ {
-		buildSpectrumBar(&sb, data.History[i%4], colorizers[i%4])
+	for i := colorPos; i < colorPos+equalizer.HistorySize; i++ {
+		buildSpectrumBar(&sb, data.History[i%equalizer.HistorySize], colorizers[i%equalizer.HistorySize])
 	}
 	return sb.String()
 }
