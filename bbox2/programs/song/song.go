@@ -8,6 +8,7 @@ import (
 	"github.com/siggy/bbox/bbox2/equalizer"
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
+	"github.com/siggy/bbox/bbox2/rows"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -118,8 +119,7 @@ func (s *songProgram) Yield() <-chan struct{} {
 func (s *songProgram) run() {
 	defer s.wg.Done()
 
-	lState := leds.State{}
-	lState.Set(0, 0, leds.Red) // first pixel lit
+	ledsState := leds.State{}
 
 	s.play <- s.song
 
@@ -145,6 +145,17 @@ func (s *songProgram) run() {
 			colors := equalizer.Colorize(displayData)
 
 			s.log.Tracef("Rendering colors: %+v", colors)
+
+			for row, band := range colors {
+				for button, color := range band {
+					buttonIndex := rows.FlatRows[row].Buttons[button]
+					coord := rows.FlatRows[row].Pixels[buttonIndex]
+
+					ledsState.Set(coord.Strip, coord.Pixel, color)
+				}
+			}
+
+			s.render <- ledsState
 		}
 	}
 }

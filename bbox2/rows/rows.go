@@ -24,6 +24,13 @@ type Row struct {
 	Buttons  [program.Cols]Coord
 }
 
+type FlatRow struct {
+	// pixels is a flat slice of pixels for an entire row
+	Pixels []Coord
+	// buttons maps button => index in Pixels slice
+	Buttons [program.Cols]int
+}
+
 var (
 	Rows = [program.Rows]Row{
 		{
@@ -149,11 +156,4 @@ func initFlatRows(rows [program.Rows]Row) [program.Rows]FlatRow {
 	}
 
 	return flatRows
-}
-
-type FlatRow struct {
-	// pixels is a flat slice of pixels for an entire row
-	Pixels []Coord
-	// buttons maps button => index in Pixels slice
-	Buttons [program.Cols]int
 }
