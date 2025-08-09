@@ -117,7 +117,7 @@ void setup() {
   // Startup: all red (R channel) for 1 second, then clear
   leds.fill(packGRBW(255, 0, 0, 0));
   leds.show();
-  delay(1000);
+  delay(2000);
   leds.clear();
   leds.show();
 

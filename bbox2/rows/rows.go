@@ -18,12 +18,13 @@ type Coord struct {
 	Pixel int
 }
 
-// Row assumes segments are in contiguous order w.r.t. buttons
+// Row assumes segments are in contiguous order w.r.t. buttons.
 type Row struct {
 	segments []Segment
 	Buttons  [program.Cols]Coord
 }
 
+// FlatRow describes the physical order of pixels.
 type FlatRow struct {
 	// pixels is a flat slice of pixels for an entire row
 	Pixels []Coord

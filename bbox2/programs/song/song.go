@@ -119,7 +119,7 @@ func (s *songProgram) Yield() <-chan struct{} {
 func (s *songProgram) run() {
 	defer s.wg.Done()
 
-	ledsState := leds.State{}
+	bands := initBands()
 
 	s.play <- s.song
 
@@ -146,16 +146,60 @@ func (s *songProgram) run() {
 
 			s.log.Tracef("Rendering colors: %+v", colors)
 
-			for row, band := range colors {
-				for button, color := range band {
-					buttonIndex := rows.FlatRows[row].Buttons[button]
-					coord := rows.FlatRows[row].Pixels[buttonIndex]
+			ledsState := leds.State{}
 
-					ledsState.Set(coord.Strip, coord.Pixel, color)
+			for row, eqColors := range colors {
+				s.log.Tracef("eqColors[%d]: %+v", row, eqColors)
+				for i, pixel := range rows.FlatRows[row].Pixels {
+					color := eqColors[bands[row][i]]
+					ledsState.Set(pixel.Strip, pixel.Pixel, color)
 				}
 			}
 
 			s.render <- ledsState
 		}
 	}
+}
+
+// initBands maps each pixel to its closest button.
+func initBands() [program.Rows][]int {
+	button := 0
+
+	bands := [program.Rows][]int{}
+
+	for row := range program.Rows {
+		bands[row] = make([]int, len(rows.FlatRows[row].Pixels))
+
+		for i := range rows.FlatRows[row].Pixels {
+			// figure out which button we are closest to
+			prevButtonIndex := rows.FlatRows[row].Buttons[(button-1+program.Cols)%program.Cols]
+			nextButtonIndex := rows.FlatRows[row].Buttons[button]
+
+			distanceToPrev := i - prevButtonIndex
+			if distanceToPrev < 0 {
+				distanceToPrev = len(rows.FlatRows[row].Pixels) - prevButtonIndex + i
+			}
+			distanceToNext := nextButtonIndex - i
+			if distanceToNext < 0 {
+				distanceToNext = len(rows.FlatRows[row].Pixels) - i + nextButtonIndex
+			}
+
+			if distanceToPrev < 0 || distanceToNext < 0 {
+				log.Errorf("Bad distances: row %d button %d i: %d prev: %d next: %d distToPrev: %d distToNext: %d",
+					row, button, i, prevButtonIndex, nextButtonIndex, distanceToPrev, distanceToNext)
+			}
+
+			bands[row][i] = button
+
+			if distanceToPrev < distanceToNext {
+				bands[row][i] = (button - 1 + program.Cols) % program.Cols
+			}
+
+			if distanceToNext == 0 {
+				button = (button + 1) % program.Cols
+			}
+		}
+	}
+
+	return bands
 }
