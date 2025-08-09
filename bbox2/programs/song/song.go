@@ -31,6 +31,8 @@ type (
 	}
 )
 
+const ticksPerColorRotation = 15
+
 func New(song string, length time.Duration) program.ProgramFactory {
 	return func(ctx context.Context) program.Program {
 		log := log.WithFields(log.Fields{"program": "song", "song": song, "length": length})
@@ -121,6 +123,9 @@ func (s *songProgram) run() {
 
 	bands := initBands()
 
+	colorPos := 0
+	colorTicks := 0
+
 	s.play <- s.song
 
 	// song duration
@@ -149,14 +154,22 @@ func (s *songProgram) run() {
 			ledsState := leds.State{}
 
 			for row, eqColors := range colors {
-				s.log.Tracef("eqColors[%d]: %+v", row, eqColors)
-				for i, pixel := range rows.FlatRows[row].Pixels {
-					color := eqColors[bands[row][i]]
+				rotatedRow := (row + colorPos) % equalizer.HistorySize
+
+				s.log.Tracef("eqColors[%d]: %+v", rotatedRow, eqColors)
+				for i, pixel := range rows.FlatRows[rotatedRow].Pixels {
+					color := eqColors[bands[rotatedRow][i]]
 					ledsState.Set(pixel.Strip, pixel.Pixel, color)
 				}
 			}
 
 			s.render <- ledsState
+
+			colorTicks++
+			if colorTicks == ticksPerColorRotation {
+				colorPos = (colorPos + 1) % equalizer.HistorySize // Cycle through colors
+				colorTicks = 0
+			}
 		}
 	}
 }
