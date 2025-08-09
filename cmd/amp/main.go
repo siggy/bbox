@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/siggy/bbox/bbox2/equalizer"
 	"github.com/siggy/bbox/bbox2/keyboard"
+	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
 	"github.com/siggy/bbox/bbox2/wavs"
 	log "github.com/sirupsen/logrus"
@@ -111,11 +111,12 @@ func main() {
 	}
 }
 
-// colorizer is a function type that maps a value from 0.0-1.0 to an ANSI color string.
-type colorizer func(float64) string
+func colorizer(c leds.Color) string {
+	return fmt.Sprintf("\033[38;2;%d;%d;%dm", c.R, c.G, c.B)
+}
 
 // Renders the 16-segment spectrum bar with a dynamic, per-segment color scheme.
-func buildSpectrumBar(sb *strings.Builder, spectrum []float64, styler colorizer) {
+func buildSpectrumBar(sb *strings.Builder, spectrum []leds.Color) {
 	const resetColor = "\033[0m"
 	const onBlock = "█"
 
@@ -127,7 +128,7 @@ func buildSpectrumBar(sb *strings.Builder, spectrum []float64, styler colorizer)
 	}
 
 	for _, norm := range spectrum {
-		sb.WriteString(styler(norm))
+		sb.WriteString(colorizer(norm))
 		sb.WriteString(onBlock)
 	}
 	sb.WriteString(resetColor)
@@ -136,43 +137,15 @@ func buildSpectrumBar(sb *strings.Builder, spectrum []float64, styler colorizer)
 
 // buildDisplay constructs the new 4-bar spectrum history dashboard.
 func buildDisplay(data equalizer.DisplayData, colorPos int) string {
+	colors := equalizer.Colorize(data)
+
 	var sb strings.Builder
-
-	// This exponent will be used to create a curve, making low values even lower.
-	const exponent = 2.5
-
-	colorizers := [equalizer.HistorySize]colorizer{
-		// 1. Electric Blue (Oldest)
-		func(val float64) string {
-			scaledVal := math.Pow(val, exponent)
-			r, g, b := int(0*scaledVal), int(200*scaledVal), int(255*scaledVal)
-			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
-		},
-		// 2. Toxic Green
-		func(val float64) string {
-			scaledVal := math.Pow(val, exponent)
-			r, g, b := int(100*scaledVal), int(255*scaledVal), int(100*scaledVal)
-			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
-		},
-		// 3. Sunset Orange
-		func(val float64) string {
-			scaledVal := math.Pow(val, exponent)
-			r, g, b := int(255*scaledVal), int(150*scaledVal), int(20*scaledVal)
-			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
-		},
-		// 4. Cyberpunk Pink (Newest)
-		func(val float64) string {
-			scaledVal := math.Pow(val, exponent)
-			r, g, b := int(255*scaledVal), int(50*scaledVal), int(200*scaledVal)
-			return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
-		},
-	}
 
 	sb.WriteString("\033[H") // Move cursor to home position
 
 	// Render the 4 historical spectrum bars, from oldest to newest.
 	for i := colorPos; i < colorPos+equalizer.HistorySize; i++ {
-		buildSpectrumBar(&sb, data[i%equalizer.HistorySize], colorizers[i%equalizer.HistorySize])
+		buildSpectrumBar(&sb, colors[i%equalizer.HistorySize])
 	}
 	return sb.String()
 }
