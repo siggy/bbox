@@ -363,6 +363,11 @@ func main() {
 
 			wavs.Play(play)
 
+		case play := <-curProgram.PlayWithEQ():
+			log.Tracef("play with eq: %s", play)
+
+			wavs.PlayWithEQ(play)
+
 		case <-curProgram.Yield():
 			yield(nil)
 

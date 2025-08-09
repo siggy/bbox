@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/mjibson/go-dsp/fft"
-	log "github.com/sirupsen/logrus"
 )
 
 // DisplayData  holds a history of the last four spectrum readings.
@@ -50,19 +49,8 @@ func New(bands int) *Equalizer {
 	return eq
 }
 
-var start = time.Now()
-var last = time.Now()
-var addedSamples = 0
-var addedSamplesTotal = 0
-
 // AddSamples appends new PCM samples as float64s. This method is restored to fix the error.
 func (eq *Equalizer) AddSamples(samples []float64) {
-	addedSamples++
-	addedSamplesTotal += len(samples)
-	log.Infof("AddSamples called: %d samples, total calls: %d, total samples: %d, time: %v, rate: %.2f/sec", len(samples), addedSamples, addedSamplesTotal, time.Since(start), float64(addedSamplesTotal)/time.Since(start).Seconds())
-	log.Info("Time since last AddSamples: ", time.Since(last))
-	last = time.Now()
-
 	eq.mu.Lock()
 	eq.buf = append(eq.buf, samples...)
 	eq.cond.Signal() // signal *while holding* eq.mu
@@ -113,9 +101,6 @@ func (eq *Equalizer) loop() {
 	smoothedSpectrum := make([]float64, eq.bands)
 	window := make([]float64, fftSize)
 	mags := make([]float64, fftSize/2)
-
-	ticks := 0
-	start := time.Now()
 
 	// Pace by audio time: ~86.1 hops/sec for 44.1k, 1024/2.
 	hopDur := time.Second * time.Duration(hopSize) / time.Duration(sampleRate)
@@ -168,9 +153,6 @@ func (eq *Equalizer) loop() {
 
 		// --- Populate DisplayData ---
 		displayData := eq.displayData
-
-		ticks++
-		log.Infof("ticks OUT: %d, time: %v, rate: %.2f/sec", ticks, time.Since(start), float64(ticks)/time.Since(start).Seconds())
 
 		select {
 		case eq.data <- displayData:

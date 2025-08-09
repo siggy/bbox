@@ -83,6 +83,9 @@ func (s *songProgram) Press(press program.Coord) {
 }
 
 func (s *songProgram) Play() <-chan string {
+	return nil
+}
+func (s *songProgram) PlayWithEQ() <-chan string {
 	return s.play
 }
 func (s *songProgram) Render() <-chan leds.State {

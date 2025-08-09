@@ -119,6 +119,9 @@ func (b *beats) Press(press program.Coord) {
 func (b *beats) Play() <-chan string {
 	return b.play
 }
+func (b *beats) PlayWithEQ() <-chan string {
+	return nil
+}
 func (b *beats) Render() <-chan leds.State {
 	return b.render
 }
