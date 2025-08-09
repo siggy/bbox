@@ -1,6 +1,7 @@
 package wavs
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -8,8 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
-	"bytes"
 
 	"github.com/ebitengine/oto/v3"
 	"github.com/siggy/bbox/bbox2/equalizer"
@@ -69,7 +68,7 @@ func New(dir string) (*Wavs, error) {
 	return &Wavs{
 		ctx:     ctx,
 		buffers: buffers,
-		eq:      equalizer.New(16, 50*time.Millisecond),
+		eq:      equalizer.New(16),
 		log:     log.WithField("bbox2", "wavs"),
 	}, nil
 }

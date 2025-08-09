@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	// "io"
 	"math"
 	"sync"
 	"time"
@@ -13,44 +12,36 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// DisplayData  holds a history of the last four spectrum readings.
-type DisplayData struct {
-	History [4][]float64
-}
+// DisplayData 16 spectrum readings.
+type DisplayData [16]float64
 
 type Equalizer struct {
-	bands    int
-	interval time.Duration
-	data     chan DisplayData
-	mu       sync.Mutex
-	buf      []float64
-	history  [4][]float64 // Stores the last 4 smoothed spectrums
-	ticker   *time.Ticker
-	quit     chan struct{}
+	bands int
+	data  chan DisplayData
+	mu    sync.Mutex
+	cond  *sync.Cond // <— add
+	buf   []float64
+	quit  chan struct{}
 }
 
 const sampleRate = 44100
 const fftSize = 1024
 
 // New creates an Equalizer. The 'bands' argument is used for display resolution.
-func New(bands int, interval time.Duration) *Equalizer {
+func New(bands int) *Equalizer {
 	eq := &Equalizer{
-		bands:    bands,
-		interval: interval,
-		data:     make(chan DisplayData, 1),
-		quit:     make(chan struct{}),
-	}
-	// Initialize history slices
-	for i := 0; i < 4; i++ {
-		eq.history[i] = make([]float64, bands)
+		bands: bands,
+		data:  make(chan DisplayData, 1),
+		quit:  make(chan struct{}),
 	}
 
-	eq.ticker = time.NewTicker(interval)
+	eq.cond = sync.NewCond(&eq.mu)
 	go eq.loop()
 	return eq
 }
 
 var start = time.Now()
+var last = time.Now()
 var addedSamples = 0
 var addedSamplesTotal = 0
 
@@ -59,10 +50,13 @@ func (eq *Equalizer) AddSamples(samples []float64) {
 	addedSamples++
 	addedSamplesTotal += len(samples)
 	log.Infof("AddSamples called: %d samples, total calls: %d, total samples: %d, time: %v, rate: %.2f/sec", len(samples), addedSamples, addedSamplesTotal, time.Since(start), float64(addedSamplesTotal)/time.Since(start).Seconds())
+	log.Info("Time since last AddSamples: ", time.Since(last))
+	last = time.Now()
 
 	eq.mu.Lock()
-	defer eq.mu.Unlock()
 	eq.buf = append(eq.buf, samples...)
+	eq.cond.Signal() // signal *while holding* eq.mu
+	eq.mu.Unlock()
 }
 
 // Write implements the io.Writer interface to process raw audio bytes.
@@ -94,94 +88,112 @@ func (eq *Equalizer) Data() <-chan DisplayData {
 // Close stops the background goroutine.
 func (eq *Equalizer) Close() {
 	close(eq.quit)
-	eq.ticker.Stop()
+	eq.mu.Lock()
+	eq.cond.Broadcast()
+	eq.mu.Unlock()
 	close(eq.data)
 }
 
 const hopSize = fftSize / 2 // 50% overlap
 
 func (eq *Equalizer) loop() {
-	const smoothingFactor = 0.6 // Smoothing factor for the newest spectrum.
-	var smoothedSpectrum = make([]float64, eq.bands)
+	const smoothingFactor = 0.6
+	smoothedSpectrum := make([]float64, eq.bands)
 
 	ticks := 0
 	start := time.Now()
 
-	// ticksTop := 0
+	// Pace by audio time: ~86.1 hops/sec for 44.1k, 1024/2.
+	hopDur := time.Second * time.Duration(hopSize) / time.Duration(sampleRate)
+	next := time.Now()
 
 	for {
-		select {
-		case <-eq.ticker.C:
-			eq.mu.Lock()
-
-			// ticksTop++
-			// log.Infof("  len(eq.buf): %d, ticks TOP: %d, time: %v, rate: %.2f/sec                     ", len(eq.buf), ticksTop, time.Since(start), float64(ticksTop)/time.Since(start).Seconds())
-
-			// if len(eq.buf) < fftSize {
-			// 	eq.mu.Unlock()
-			// 	continue
-			// }
-			buf := eq.buf
-			eq.buf = nil // we'll put leftovers back after processing
-			eq.mu.Unlock()
-
-			// window := make([]float64, fftSize)
-			// copy(window, eq.buf[len(eq.buf)-fftSize:])
-			// eq.buf = nil // Clear buffer after processing
-			// eq.mu.Unlock()
-
-			offset := 0
-			for offset+fftSize <= len(buf) {
-				window := buf[offset : offset+fftSize]
-				// (optional but recommended) apply a Hann/Hamming window here before FFT
-				// process(window) -> your FFT + banding + smoothing...
-				offset += hopSize
-
-				// --- Raw Signal Analysis ---
-				spec := fft.FFTReal(window)
-				mags := make([]float64, len(spec)/2)
-				for i := 0; i < len(spec)/2; i++ {
-					mags[i] = math.Hypot(real(spec[i]), imag(spec[i]))
-				}
-
-				// --- Calculate, Smooth, and Normalize Spectrum ---
-				newSpectrum := calculateLogSpectrum(mags, eq.bands)
-				for i := 0; i < eq.bands; i++ {
-					smoothedSpectrum[i] = (newSpectrum[i] * smoothingFactor) + (smoothedSpectrum[i] * (1.0 - smoothingFactor))
-				}
-				normalizedFrame := normalizeSpectrum(smoothedSpectrum)
-
-				// --- Update History ---
-				// Shift old frames down
-				eq.history[0] = eq.history[1]
-				eq.history[1] = eq.history[2]
-				eq.history[2] = eq.history[3]
-				// Add the newest frame at the end
-				eq.history[3] = normalizedFrame
-
-				// --- Populate DisplayData ---
-				displayData := DisplayData{
-					History: eq.history,
-				}
-
-				ticks++
-				log.Infof("ticks OUT: %d, time: %v, rate: %.2f/sec", ticks, time.Since(start), float64(ticks)/time.Since(start).Seconds())
-
-				select {
-				case eq.data <- displayData:
-				default: // Don't block if the channel is full
-				}
-			}
-
-			// Save leftover (not enough for a full frame yet) for next tick
-			if offset < len(buf) {
-				eq.mu.Lock()
-				eq.buf = append(eq.buf, buf[offset:]...)
+		// Wait until we have enough for one frame (or we're told to quit).
+		eq.mu.Lock()
+		for len(eq.buf) < fftSize {
+			// Wake on AddSamples (Signal) or Close (Broadcast).
+			eq.cond.Wait()
+			select {
+			case <-eq.quit:
 				eq.mu.Unlock()
+				return
+			default:
 			}
+		}
 
+		// Take the oldest fftSize samples to preserve temporal order.
+		window := make([]float64, fftSize)
+		copy(window, eq.buf[:fftSize])
+
+		if hopSize > len(eq.buf) { // defensive
+			eq.buf = eq.buf[:0]
+		} else {
+			eq.buf = eq.buf[hopSize:]
+		}
+		eq.mu.Unlock()
+
+		// --- Raw Signal Analysis ---
+		// (Optional) apply a Hann window to `window` here to reduce leakage.
+		spec := fft.FFTReal(window)
+		mags := make([]float64, len(spec)/2)
+		for i := 0; i < len(mags); i++ {
+			mags[i] = math.Hypot(real(spec[i]), imag(spec[i]))
+		}
+
+		// --- Calculate, Smooth, and Normalize Spectrum ---
+		newSpectrum := calculateLogSpectrum(mags, eq.bands)
+		for i := 0; i < eq.bands; i++ {
+			smoothedSpectrum[i] = newSpectrum[i]*smoothingFactor + smoothedSpectrum[i]*(1.0-smoothingFactor)
+		}
+		normalizedFrame := normalizeSpectrum(smoothedSpectrum)
+
+		// --- Emit ---
+		var displayData DisplayData
+		copy(displayData[:], normalizedFrame) // copies up to 16 elements from slice
+
+		ticks++
+		log.Infof("ticks OUT: %d, time: %v, rate: %.2f/sec", ticks, time.Since(start), float64(ticks)/time.Since(start).Seconds())
+
+		select {
+		case eq.data <- displayData:
+		default: // Don't block if the channel is full
+		}
+
+		// --- Pace to audio clock & cap latency if behind ---
+		next = next.Add(hopDur)
+		if d := time.Until(next); d > 0 {
+			// Sleep (interruptible by quit).
+			timer := time.NewTimer(d)
+			select {
+			case <-timer.C:
+			case <-eq.quit:
+				timer.Stop()
+				return
+			}
+		} else if d < -3*hopDur {
+			// We're > ~3 hops behind: drop some oldest samples to avoid display lag.
+			eq.mu.Lock()
+			hopsBehind := int((-d) / hopDur)
+			drop := hopsBehind * hopSize
+			// Keep at least one full frame to avoid starving the next cycle.
+			if keep := len(eq.buf) - drop; keep < fftSize {
+				drop = len(eq.buf) - fftSize
+			}
+			if drop > 0 {
+				if drop > len(eq.buf) {
+					drop = len(eq.buf)
+				}
+				eq.buf = eq.buf[drop:]
+			}
+			eq.mu.Unlock()
+			next = time.Now()
+		}
+
+		// Allow quit between cycles.
+		select {
 		case <-eq.quit:
 			return
+		default:
 		}
 	}
 }
