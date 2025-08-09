@@ -3,6 +3,7 @@ package program
 import (
 	"context"
 
+	"github.com/siggy/bbox/bbox2/equalizer"
 	"github.com/siggy/bbox/bbox2/leds"
 )
 
@@ -18,6 +19,7 @@ type (
 
 		// input
 		Press(press Coord)
+		EQ(equalizer.DisplayData)
 
 		// output
 		Play() <-chan string

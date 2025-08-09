@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/siggy/bbox/bbox2/equalizer"
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
 	log "github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ type (
 		wg     sync.WaitGroup
 
 		in     chan program.Coord
+		eq     chan equalizer.DisplayData
 		play   chan string
 		render chan leds.State
 		yield  chan struct{}
@@ -39,6 +41,7 @@ func New(song string, length time.Duration) program.ProgramFactory {
 			cancel: cancel,
 
 			in:     make(chan program.Coord, program.ChannelBuffer),
+			eq:     make(chan equalizer.DisplayData, program.ChannelBuffer),
 			play:   make(chan string, program.ChannelBuffer),
 			render: make(chan leds.State, program.ChannelBuffer),
 			yield:  make(chan struct{}, program.ChannelBuffer),
@@ -75,9 +78,26 @@ func (s *songProgram) Press(press program.Coord) {
 		return
 	default:
 	}
+
 	// enqueue input non-blockingly
 	select {
 	case s.in <- press:
+	default:
+	}
+}
+
+func (s *songProgram) EQ(displayData equalizer.DisplayData) {
+	s.log.Tracef("EQ: %+v", displayData)
+
+	select {
+	case <-s.ctx.Done():
+		return
+	default:
+	}
+
+	// enqueue input non-blockingly
+	select {
+	case s.eq <- displayData:
 	default:
 	}
 }
@@ -118,6 +138,9 @@ func (s *songProgram) run() {
 
 		case press := <-s.in:
 			s.log.Debugf("Processing press: %+v", press)
+
+		case displayData := <-s.eq:
+			s.log.Tracef("Processing EQ: %+v", displayData)
 		}
 	}
 }

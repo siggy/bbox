@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/siggy/bbox/bbox2/equalizer"
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
 	log "github.com/sirupsen/logrus"
@@ -114,6 +115,10 @@ func (b *beats) Press(press program.Coord) {
 	case b.in <- press:
 	default:
 	}
+}
+
+func (b *beats) EQ(equalizer.DisplayData) {
+	b.log.Error("EQ called, but not used in beats program")
 }
 
 func (b *beats) Play() <-chan string {

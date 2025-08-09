@@ -353,6 +353,14 @@ func main() {
 
 			curProgram.Press(press)
 
+		case displayData, ok := <-wavs.EQ():
+			if !ok {
+				log.Info("wavs.EQ() channel closed")
+				continue
+			}
+
+			curProgram.EQ(displayData)
+
 		case leds := <-curProgram.Render():
 			log.Tracef("leds: %s", leds)
 
