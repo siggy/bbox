@@ -91,6 +91,8 @@ func main() {
 	go keyboard.Run()
 
 	programs := []programScheduler{
+		{new: song.New("pyramid.wav", time.Second*289), code: []int{0, 6, 0, 4}, hidden: true},
+
 		{new: beats.New(leds.Red, leds.White, []program.Coord{{Row: 1, Col: 0}, {Row: 1, Col: 8}}, 120), code: nil, hidden: false},
 
 		// We Will Rock You — Queen (thick: add kick under stomps)

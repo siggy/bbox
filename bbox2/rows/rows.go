@@ -1,4 +1,4 @@
-package beats
+package rows
 
 import (
 	"fmt"
@@ -7,27 +7,27 @@ import (
 )
 
 // define a set of pixels on a given strip, inclusive
-type segment struct {
+type Segment struct {
 	strip int
 	start int
 	end   int
 }
 
-type coord struct {
-	strip int
-	pixel int
+type Coord struct {
+	Strip int
+	Pixel int
 }
 
-// row assumes segments are in contiguous order w.r.t. buttons
-type row struct {
-	segments []segment
-	buttons  [program.Cols]coord
+// Row assumes segments are in contiguous order w.r.t. buttons
+type Row struct {
+	segments []Segment
+	Buttons  [program.Cols]Coord
 }
 
 var (
-	rows = [program.Rows]row{
+	Rows = [program.Rows]Row{
 		{
-			segments: []segment{
+			segments: []Segment{
 				{
 					strip: 4,
 					start: 31,
@@ -39,7 +39,7 @@ var (
 					end:   0,
 				},
 			},
-			buttons: [program.Cols]coord{
+			Buttons: [program.Cols]Coord{
 				{4, 30}, {4, 20}, {4, 10}, {4, 0},
 				{0, 96}, {0, 87}, {0, 77}, {0, 68},
 				{0, 62}, {0, 52}, {0, 43}, {0, 33},
@@ -47,7 +47,7 @@ var (
 			},
 		},
 		{
-			segments: []segment{
+			segments: []Segment{
 				{
 					strip: 5,
 					start: 35,
@@ -59,7 +59,7 @@ var (
 					end:   0,
 				},
 			},
-			buttons: [program.Cols]coord{
+			Buttons: [program.Cols]Coord{
 				{5, 33}, {5, 23}, {5, 12}, {5, 0},
 				{1, 109}, {1, 99}, {1, 88}, {1, 78},
 				{1, 71}, {1, 60}, {1, 49}, {1, 39},
@@ -67,7 +67,7 @@ var (
 			},
 		},
 		{
-			segments: []segment{
+			segments: []Segment{
 				{
 					strip: 6,
 					start: 40,
@@ -79,7 +79,7 @@ var (
 					end:   0,
 				},
 			},
-			buttons: [program.Cols]coord{
+			Buttons: [program.Cols]Coord{
 				{6, 38}, {6, 25}, {6, 13}, {6, 0},
 				{2, 123}, {2, 112}, {2, 99}, {2, 87},
 				{2, 80}, {2, 68}, {2, 55}, {2, 43},
@@ -87,7 +87,7 @@ var (
 			},
 		},
 		{
-			segments: []segment{
+			segments: []Segment{
 				{
 					strip: 7,
 					start: 44,
@@ -99,7 +99,7 @@ var (
 					end:   0,
 				},
 			},
-			buttons: [program.Cols]coord{
+			Buttons: [program.Cols]Coord{
 				{7, 41}, {7, 27}, {7, 14}, {7, 0},
 				{3, 137}, {3, 124}, {3, 111}, {3, 97},
 				{3, 89}, {3, 75}, {3, 61}, {3, 48},
@@ -107,12 +107,10 @@ var (
 			},
 		},
 	}
-
-	flatRows = initRows(rows)
 )
 
-func initRows(rows [program.Rows]row) [program.Rows]flatRow {
-	flatRows := [program.Rows]flatRow{}
+func InitFlatRows(rows [program.Rows]Row) [program.Rows]FlatRow {
+	flatRows := [program.Rows]FlatRow{}
 
 	for i, row := range rows {
 		buttonIndex := 0
@@ -131,15 +129,15 @@ func initRows(rows [program.Rows]row) [program.Rows]flatRow {
 				}
 
 				if buttonIndex < program.Cols &&
-					row.buttons[buttonIndex].strip == segment.strip &&
-					row.buttons[buttonIndex].pixel == j {
-					flatRows[i].buttons[buttonIndex] = len(flatRows[i].pixels)
+					row.Buttons[buttonIndex].Strip == segment.strip &&
+					row.Buttons[buttonIndex].Pixel == j {
+					flatRows[i].Buttons[buttonIndex] = len(flatRows[i].Pixels)
 					buttonIndex++
 				}
 
-				flatRows[i].pixels = append(flatRows[i].pixels, coord{
-					strip: segment.strip,
-					pixel: j,
+				flatRows[i].Pixels = append(flatRows[i].Pixels, Coord{
+					Strip: segment.strip,
+					Pixel: j,
 				})
 			}
 		}
@@ -151,9 +149,9 @@ func initRows(rows [program.Rows]row) [program.Rows]flatRow {
 	return flatRows
 }
 
-type flatRow struct {
+type FlatRow struct {
 	// pixels is a flat slice of pixels for an entire row
-	pixels []coord
+	Pixels []Coord
 	// buttons maps button => index in pixels slice
-	buttons [program.Cols]int
+	Buttons [program.Cols]int
 }

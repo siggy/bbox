@@ -141,6 +141,10 @@ func (s *songProgram) run() {
 
 		case displayData := <-s.eq:
 			s.log.Tracef("Processing EQ: %+v", displayData)
+
+			colors := equalizer.Colorize(displayData)
+
+			s.log.Tracef("Rendering colors: %+v", colors)
 		}
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/siggy/bbox/bbox2/equalizer"
 	"github.com/siggy/bbox/bbox2/leds"
 	"github.com/siggy/bbox/bbox2/program"
+	"github.com/siggy/bbox/bbox2/rows"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -118,7 +119,7 @@ func (b *beats) Press(press program.Coord) {
 }
 
 func (b *beats) EQ(equalizer.DisplayData) {
-	b.log.Error("EQ called, but not used in beats program")
+	b.log.Warn("EQ called, but not used in beats program")
 }
 
 func (b *beats) Play() <-chan string {
@@ -140,6 +141,8 @@ func (b *beats) run() {
 		"perc-808.wav",
 		"tom-808.wav",
 	}
+
+	flatRows := rows.InitFlatRows(rows.Rows)
 
 	beatIndex := 0
 	beatState := state{}
@@ -217,8 +220,8 @@ func (b *beats) run() {
 
 			// for each row, clear its full physical range:
 			for _, row := range flatRows {
-				for _, pixel := range row.pixels {
-					ledsState.Set(pixel.strip, pixel.pixel, leds.Black)
+				for _, pixel := range row.Pixels {
+					ledsState.Set(pixel.Strip, pixel.Pixel, leds.Black)
 				}
 			}
 
@@ -232,7 +235,7 @@ func (b *beats) run() {
 
 				for coord, brightness := range pulse {
 					c := leds.Brightness(b.pulseColor, brightness)
-					ledsState.Set(coord.strip, coord.pixel, c)
+					ledsState.Set(coord.Strip, coord.Pixel, c)
 				}
 			}
 
@@ -240,9 +243,9 @@ func (b *beats) run() {
 			for rowIdx, beats := range beatState {
 				for i, beat := range beats {
 					if beat {
-						redPos := flatRows[rowIdx].buttons[i]
-						redIndex := flatRows[rowIdx].pixels[redPos]
-						ledsState.Set(redIndex.strip, redIndex.pixel, b.beatColor)
+						redPos := flatRows[rowIdx].Buttons[i]
+						redIndex := flatRows[rowIdx].Pixels[redPos]
+						ledsState.Set(redIndex.Strip, redIndex.Pixel, b.beatColor)
 					}
 				}
 			}
@@ -337,8 +340,8 @@ func (b *beats) run() {
 			}
 
 			ledsState := leds.State{}
-			phys := rows[press.Row].buttons[press.Col]
-			ledsState.Set(phys.strip, phys.pixel, color)
+			phys := rows.Rows[press.Row].Buttons[press.Col]
+			ledsState.Set(phys.Strip, phys.Pixel, color)
 			b.render <- ledsState
 
 			// check for tempo changes
@@ -401,8 +404,8 @@ func getBeatsPerTick(bpm int) float64 {
 // getPulse returns map of coord -> brightness
 // 0 <= peak < 16
 // TODO: cache results?
-func getPulse(r flatRow, peak float64) map[coord]float64 {
-	pulse := make(map[coord]float64)
+func getPulse(r rows.FlatRow, peak float64) map[rows.Coord]float64 {
+	pulse := make(map[rows.Coord]float64)
 
 	floatPeakPixel := peakToFloatPixel(r, peak)
 	radius := pulseRadius
@@ -423,11 +426,11 @@ func getPulse(r flatRow, peak float64) map[coord]float64 {
 		bness := math.Pow(frac, 8)
 
 		// map to physical LED index
-		pixelIndex := (i + len(r.pixels)) % len(r.pixels)
+		pixelIndex := (i + len(r.Pixels)) % len(r.Pixels)
 
-		coord := coord{
-			strip: r.pixels[pixelIndex].strip,
-			pixel: r.pixels[pixelIndex].pixel,
+		coord := rows.Coord{
+			Strip: r.Pixels[pixelIndex].Strip,
+			Pixel: r.Pixels[pixelIndex].Pixel,
 		}
 
 		pulse[coord] = bness
@@ -438,7 +441,7 @@ func getPulse(r flatRow, peak float64) map[coord]float64 {
 
 // peakToFloatPixel converts a peak [0-16) to a float pixel value [0-143].
 // 0 <= peak < 16
-func peakToFloatPixel(r flatRow, peak float64) float64 {
+func peakToFloatPixel(r rows.FlatRow, peak float64) float64 {
 	// assume peak == 12.7
 	beat1 := math.Floor(peak) // 12 // 15
 	beat2 := math.Ceil(peak)  // 13 // 16
@@ -449,13 +452,13 @@ func peakToFloatPixel(r flatRow, peak float64) float64 {
 		beat2 = 0.0
 	}
 
-	pixelIndex1 := r.buttons[int(beat1)] // 12 => 134
-	pixelIndex2 := r.buttons[int(beat2)] // 13 => 142
+	pixelIndex1 := r.Buttons[int(beat1)] // 12 => 134
+	pixelIndex2 := r.Buttons[int(beat2)] // 13 => 142
 
 	percentAhead := peak - beat1 // 12.7 - 12 => 0.7
 	distance := pixelIndex2 - pixelIndex1
 	if distance < 0 {
-		distance = (len(r.pixels) - pixelIndex1) + pixelIndex2
+		distance = (len(r.Pixels) - pixelIndex1) + pixelIndex2
 	}
 	diff := percentAhead * float64(distance) // 0.7 * (142 - 134) => 0.7 * 8 => 5.6
 
