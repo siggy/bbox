@@ -70,15 +70,15 @@ func main() {
 			}
 			switch press {
 			case program.Coord{Row: 0, Col: 0}:
-				wavs.Play("hihat-808.wav")
+				wavs.PlayWithEQ("hihat-808.wav")
 			case program.Coord{Row: 0, Col: 1}:
-				wavs.Play("kick-classic.wav")
+				wavs.PlayWithEQ("kick-classic.wav")
 			case program.Coord{Row: 0, Col: 2}:
-				wavs.Play("perc-808.wav")
+				wavs.PlayWithEQ("perc-808.wav")
 			case program.Coord{Row: 0, Col: 3}:
-				wavs.Play("tom-808.wav")
+				wavs.PlayWithEQ("tom-808.wav")
 			case program.Coord{Row: 1, Col: 3}:
-				wavs.Play("pyramid.wav")
+				wavs.PlayWithEQ("pyramid.wav")
 			}
 
 		case data, ok := <-wavs.EQ():

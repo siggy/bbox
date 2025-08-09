@@ -74,6 +74,14 @@ func New(dir string) (*Wavs, error) {
 }
 
 func (w *Wavs) Play(filename string) {
+	w.play(filename, false)
+}
+
+func (w *Wavs) PlayWithEQ(filename string) {
+	w.play(filename, true)
+}
+
+func (w *Wavs) play(filename string, eq bool) {
 	w.log.Tracef("play: %s", filename)
 	buf, ok := w.buffers[filename]
 	if !ok {
@@ -82,7 +90,10 @@ func (w *Wavs) Play(filename string) {
 	}
 
 	// The equalizer now implements io.Writer, so it can be passed directly.
-	reader := io.TeeReader(bytes.NewReader(buf), w.eq)
+	var reader io.Reader = bytes.NewReader(buf)
+	if eq {
+		reader = io.TeeReader(reader, w.eq)
+	}
 	player := w.ctx.NewPlayer(reader)
 	player.Play()
 
