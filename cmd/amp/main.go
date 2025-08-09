@@ -54,6 +54,9 @@ func main() {
 
 	fmt.Println("Press 1,2,3,4 for beats, press 'r' for pyramid...")
 
+	colorPos := 0
+	colorTicks := 0
+
 	ticks := 0
 	start := time.Now()
 	last := time.Now()
@@ -91,7 +94,12 @@ func main() {
 			if !ok {
 				continue
 			}
-			fmt.Print(buildDisplay(data))
+			fmt.Print(buildDisplay(data, colorPos))
+			colorTicks++
+			if colorTicks == 20 {
+				colorPos = (colorPos + 1) % 4 // Cycle through colors
+				colorTicks = 0
+			}
 
 		case <-ctx.Done():
 			log.Info("context done")
@@ -124,7 +132,7 @@ func buildSpectrumBar(sb *strings.Builder, spectrum []float64, styler colorizer)
 }
 
 // buildDisplay constructs the new 4-bar spectrum history dashboard.
-func buildDisplay(data wavs.DisplayData) string {
+func buildDisplay(data wavs.DisplayData, colorPos int) string {
 	var sb strings.Builder
 
 	// This exponent will be used to create a curve, making low values even lower.
@@ -160,8 +168,8 @@ func buildDisplay(data wavs.DisplayData) string {
 	sb.WriteString("\033[H") // Move cursor to home position
 
 	// Render the 4 historical spectrum bars, from oldest to newest.
-	for i := 0; i < 4; i++ {
-		buildSpectrumBar(&sb, data.History[i], colorizers[i])
+	for i := colorPos; i < colorPos+4; i++ {
+		buildSpectrumBar(&sb, data.History[i%4], colorizers[i%4])
 	}
 	return sb.String()
 }
