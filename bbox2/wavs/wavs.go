@@ -16,9 +16,6 @@ import (
 	"github.com/youpy/go-wav"
 )
 
-// Alias for the new DisplayData struct from the equalizer package.
-type DisplayData = equalizer.DisplayData
-
 type Wavs struct {
 	ctx     *oto.Context
 	buffers map[string][]byte
@@ -31,7 +28,7 @@ type Wavs struct {
 }
 
 // EQ now correctly returns a channel of the new DisplayData struct.
-func (w *Wavs) EQ() <-chan DisplayData {
+func (w *Wavs) EQ() <-chan equalizer.DisplayData {
 	return w.eq.Data()
 }
 

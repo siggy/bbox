@@ -13,18 +13,16 @@ import (
 )
 
 // DisplayData  holds a history of the last four spectrum readings.
-type DisplayData struct {
-	History [HistorySize][]float64
-}
+type DisplayData [HistorySize][]float64
 
 type Equalizer struct {
-	bands   int
-	data    chan DisplayData
-	mu      sync.Mutex
-	cond    *sync.Cond
-	buf     []float64
-	history [HistorySize][]float64 // Stores the last 4 smoothed
-	quit    chan struct{}
+	bands       int
+	data        chan DisplayData
+	mu          sync.Mutex
+	cond        *sync.Cond
+	buf         []float64
+	displayData DisplayData // Stores the last 4 smoothed
+	quit        chan struct{}
 }
 
 const (
@@ -44,7 +42,7 @@ func New(bands int) *Equalizer {
 	}
 	// Initialize history slices
 	for i := range HistorySize {
-		eq.history[i] = make([]float64, bands)
+		eq.displayData[i] = make([]float64, bands)
 	}
 
 	eq.cond = sync.NewCond(&eq.mu)
@@ -164,14 +162,12 @@ func (eq *Equalizer) loop() {
 
 		// --- Update History ---
 		// Shift old frames down
-		copy(eq.history[:], eq.history[1:])
+		copy(eq.displayData[:], eq.displayData[1:])
 		// Add the newest frame at the end
-		eq.history[HistorySize-1] = normalizedFrame
+		eq.displayData[HistorySize-1] = normalizedFrame
 
 		// --- Populate DisplayData ---
-		displayData := DisplayData{
-			History: eq.history,
-		}
+		displayData := eq.displayData
 
 		ticks++
 		log.Infof("ticks OUT: %d, time: %v, rate: %.2f/sec", ticks, time.Since(start), float64(ticks)/time.Since(start).Seconds())

@@ -135,7 +135,7 @@ func buildSpectrumBar(sb *strings.Builder, spectrum []float64, styler colorizer)
 }
 
 // buildDisplay constructs the new 4-bar spectrum history dashboard.
-func buildDisplay(data wavs.DisplayData, colorPos int) string {
+func buildDisplay(data equalizer.DisplayData, colorPos int) string {
 	var sb strings.Builder
 
 	// This exponent will be used to create a curve, making low values even lower.
@@ -172,7 +172,7 @@ func buildDisplay(data wavs.DisplayData, colorPos int) string {
 
 	// Render the 4 historical spectrum bars, from oldest to newest.
 	for i := colorPos; i < colorPos+equalizer.HistorySize; i++ {
-		buildSpectrumBar(&sb, data.History[i%equalizer.HistorySize], colorizers[i%equalizer.HistorySize])
+		buildSpectrumBar(&sb, data[i%equalizer.HistorySize], colorizers[i%equalizer.HistorySize])
 	}
 	return sb.String()
 }
