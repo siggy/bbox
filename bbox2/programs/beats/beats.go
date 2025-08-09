@@ -142,8 +142,6 @@ func (b *beats) run() {
 		"tom-808.wav",
 	}
 
-	flatRows := rows.InitFlatRows(rows.Rows)
-
 	beatIndex := 0
 	beatState := state{}
 
@@ -219,14 +217,14 @@ func (b *beats) run() {
 			ledsState := leds.State{}
 
 			// for each row, clear its full physical range:
-			for _, row := range flatRows {
+			for _, row := range rows.FlatRows {
 				for _, pixel := range row.Pixels {
 					ledsState.Set(pixel.Strip, pixel.Pixel, leds.Black)
 				}
 			}
 
 			// use beatAcc to determine peak location
-			for _, row := range flatRows {
+			for _, row := range rows.FlatRows {
 				peak := float64(beatIndex) + beatAcc + pulseDelay
 				if peak < 0 {
 					peak += float64(program.Cols)
@@ -243,8 +241,8 @@ func (b *beats) run() {
 			for rowIdx, beats := range beatState {
 				for i, beat := range beats {
 					if beat {
-						redPos := flatRows[rowIdx].Buttons[i]
-						redIndex := flatRows[rowIdx].Pixels[redPos]
+						redPos := rows.FlatRows[rowIdx].Buttons[i]
+						redIndex := rows.FlatRows[rowIdx].Pixels[redPos]
 						ledsState.Set(redIndex.Strip, redIndex.Pixel, b.beatColor)
 					}
 				}

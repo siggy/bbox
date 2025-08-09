@@ -107,9 +107,11 @@ var (
 			},
 		},
 	}
+
+	FlatRows = initFlatRows(Rows)
 )
 
-func InitFlatRows(rows [program.Rows]Row) [program.Rows]FlatRow {
+func initFlatRows(rows [program.Rows]Row) [program.Rows]FlatRow {
 	flatRows := [program.Rows]FlatRow{}
 
 	for i, row := range rows {
@@ -152,6 +154,6 @@ func InitFlatRows(rows [program.Rows]Row) [program.Rows]FlatRow {
 type FlatRow struct {
 	// pixels is a flat slice of pixels for an entire row
 	Pixels []Coord
-	// buttons maps button => index in pixels slice
+	// buttons maps button => index in Pixels slice
 	Buttons [program.Cols]int
 }
