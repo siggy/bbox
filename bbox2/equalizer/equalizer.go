@@ -21,15 +21,19 @@ type Equalizer struct {
 	bands   int
 	data    chan DisplayData
 	mu      sync.Mutex
-	cond    *sync.Cond // <— add
+	cond    *sync.Cond
 	buf     []float64
 	history [HistorySize][]float64 // Stores the last 4 smoothed
 	quit    chan struct{}
 }
 
-const HistorySize = 4
-const sampleRate = 44100
-const fftSize = 1024
+const (
+	HistorySize     = 4
+	sampleRate      = 44100
+	fftSize         = 1024
+	hopSize         = fftSize / 2 // 50% overlap
+	smoothingFactor = 0.6
+)
 
 // New creates an Equalizer. The 'bands' argument is used for display resolution.
 func New(bands int) *Equalizer {
@@ -93,20 +97,24 @@ func (eq *Equalizer) Data() <-chan DisplayData {
 	return eq.data
 }
 
-// Close stops the background goroutine.
 func (eq *Equalizer) Close() {
-	close(eq.quit)
 	eq.mu.Lock()
-	eq.cond.Broadcast()
+	select {
+	case <-eq.quit:
+		// already closed
+	default:
+		close(eq.quit)      // tell loop to exit
+		eq.cond.Broadcast() // wake any Wait()ing goroutine
+	}
 	eq.mu.Unlock()
-	close(eq.data)
 }
 
-const hopSize = fftSize / 2 // 50% overlap
-
 func (eq *Equalizer) loop() {
-	const smoothingFactor = 0.6
+	defer close(eq.data) // producer closes channel exactly once
+
 	smoothedSpectrum := make([]float64, eq.bands)
+	window := make([]float64, fftSize)
+	mags := make([]float64, fftSize/2)
 
 	ticks := 0
 	start := time.Now()
@@ -120,17 +128,17 @@ func (eq *Equalizer) loop() {
 		eq.mu.Lock()
 		for len(eq.buf) < fftSize {
 			// Wake on AddSamples (Signal) or Close (Broadcast).
-			eq.cond.Wait()
 			select {
 			case <-eq.quit:
 				eq.mu.Unlock()
 				return
 			default:
 			}
+			eq.cond.Wait()
 		}
 
 		// Take the oldest fftSize samples to preserve temporal order.
-		window := make([]float64, fftSize)
+		// copy into reusable window
 		copy(window, eq.buf[:fftSize])
 
 		if hopSize > len(eq.buf) { // defensive
@@ -143,8 +151,7 @@ func (eq *Equalizer) loop() {
 		// --- Raw Signal Analysis ---
 		// (Optional) apply a Hann window to `window` here to reduce leakage.
 		spec := fft.FFTReal(window)
-		mags := make([]float64, len(spec)/2)
-		for i := 0; i < len(mags); i++ {
+		for i := range mags {
 			mags[i] = math.Hypot(real(spec[i]), imag(spec[i]))
 		}
 
@@ -157,11 +164,9 @@ func (eq *Equalizer) loop() {
 
 		// --- Update History ---
 		// Shift old frames down
-		eq.history[0] = eq.history[1]
-		eq.history[1] = eq.history[2]
-		eq.history[2] = eq.history[3]
+		copy(eq.history[:], eq.history[1:])
 		// Add the newest frame at the end
-		eq.history[3] = normalizedFrame
+		eq.history[HistorySize-1] = normalizedFrame
 
 		// --- Populate DisplayData ---
 		displayData := DisplayData{
@@ -195,6 +200,9 @@ func (eq *Equalizer) loop() {
 			// Keep at least one full frame to avoid starving the next cycle.
 			if keep := len(eq.buf) - drop; keep < fftSize {
 				drop = len(eq.buf) - fftSize
+			}
+			if drop < 0 {
+				drop = 0
 			}
 			if drop > 0 {
 				if drop > len(eq.buf) {
@@ -259,7 +267,7 @@ func calculateLogSpectrum(mags []float64, numBands int) []float64 {
 	maxLogFreq := math.Log10(maxFreq)
 	logRange := maxLogFreq - minLogFreq
 
-	for i := 0; i < numBands; i++ {
+	for i := range numBands {
 		// Determine frequency range for this band
 		logStart := minLogFreq + (float64(i)*logRange)/float64(numBands)
 		logEnd := minLogFreq + (float64(i+1)*logRange)/float64(numBands)
