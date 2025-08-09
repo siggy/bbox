@@ -12,16 +12,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// DisplayData 16 spectrum readings.
-type DisplayData [16]float64
+// DisplayData  holds a history of the last four spectrum readings.
+type DisplayData struct {
+	History [4][]float64
+}
 
 type Equalizer struct {
-	bands int
-	data  chan DisplayData
-	mu    sync.Mutex
-	cond  *sync.Cond // <— add
-	buf   []float64
-	quit  chan struct{}
+	bands   int
+	data    chan DisplayData
+	mu      sync.Mutex
+	cond    *sync.Cond // <— add
+	buf     []float64
+	history [4][]float64 // Stores the last 4 smoothed
+	quit    chan struct{}
 }
 
 const sampleRate = 44100
@@ -33,6 +36,10 @@ func New(bands int) *Equalizer {
 		bands: bands,
 		data:  make(chan DisplayData, 1),
 		quit:  make(chan struct{}),
+	}
+	// Initialize history slices
+	for i := 0; i < 4; i++ {
+		eq.history[i] = make([]float64, bands)
 	}
 
 	eq.cond = sync.NewCond(&eq.mu)
@@ -147,9 +154,18 @@ func (eq *Equalizer) loop() {
 		}
 		normalizedFrame := normalizeSpectrum(smoothedSpectrum)
 
-		// --- Emit ---
-		var displayData DisplayData
-		copy(displayData[:], normalizedFrame) // copies up to 16 elements from slice
+		// --- Update History ---
+		// Shift old frames down
+		eq.history[0] = eq.history[1]
+		eq.history[1] = eq.history[2]
+		eq.history[2] = eq.history[3]
+		// Add the newest frame at the end
+		eq.history[3] = normalizedFrame
+
+		// --- Populate DisplayData ---
+		displayData := DisplayData{
+			History: eq.history,
+		}
 
 		ticks++
 		log.Infof("ticks OUT: %d, time: %v, rate: %.2f/sec", ticks, time.Since(start), float64(ticks)/time.Since(start).Seconds())
