@@ -1,12 +1,7 @@
 # TODO
 
-- auto speed up to 480
-- pyramid song
-- consider diff'ing against last LED state in leds.go
-- pre-programmed beats, like queen songs
-- need amplitude input into the programs
-- generic interface for LED lighting
-- change pulse colors as buttons are pressed
+- handle multiple keyboards
+- fix baux deadlock
 
 # BBox
 
