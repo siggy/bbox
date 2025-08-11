@@ -1,5 +1,6 @@
 # TODO
 
+- confirm drum timing
 - handle multiple keyboards
 - fix baux deadlock
 

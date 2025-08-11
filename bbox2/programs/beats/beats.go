@@ -26,6 +26,7 @@ type (
 
 		beatColor    leds.Color
 		pulseColor   leds.Color
+		sounds       [program.Rows]string
 		starterBeats []program.Coord
 		starterBPM   int
 
@@ -61,9 +62,13 @@ var (
 	tempoDown = program.Coord{Row: 1, Col: program.Cols - 1}
 )
 
-func New(beatColor, pulseColor leds.Color, starterBeats []program.Coord, bpm int) program.ProgramFactory {
+func New(
+	name string,
+	beatColor, pulseColor leds.Color,
+	sounds [program.Rows]string, starterBeats []program.Coord, bpm int,
+) program.ProgramFactory {
 	return func(ctx context.Context) program.Program {
-		log := log.WithFields(log.Fields{"program": "beats", "beatColor": beatColor, "pulseColor": pulseColor})
+		log := log.WithFields(log.Fields{"program": "beats", "song": name})
 		log.Debug("New")
 
 		ctx, cancel := context.WithCancel(ctx)
@@ -78,6 +83,7 @@ func New(beatColor, pulseColor leds.Color, starterBeats []program.Coord, bpm int
 
 			beatColor:    beatColor,
 			pulseColor:   pulseColor,
+			sounds:       sounds,
 			starterBeats: starterBeats,
 			starterBPM:   bpm,
 
@@ -134,13 +140,6 @@ func (b *beats) Render() <-chan leds.State {
 
 func (b *beats) run() {
 	defer b.wg.Done()
-
-	sounds := []string{
-		"hihat-808.wav",
-		"kick-classic.wav",
-		"perc-808.wav",
-		"tom-808.wav",
-	}
 
 	beatIndex := 0
 	beatState := state{}
@@ -258,7 +257,7 @@ func (b *beats) run() {
 					for i, beat := range beats {
 						if beat {
 							if i == beatIndex {
-								b.play <- sounds[rowIdx]
+								b.play <- b.sounds[rowIdx]
 							}
 						}
 					}

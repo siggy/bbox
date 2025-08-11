@@ -33,6 +33,13 @@ var (
 	// should match scorpio/code.py
 	// StripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
 	stripLengths = []int{144, 144, 144, 144, 144, 144, 144, 144}
+
+	defaultSounds = [program.Rows]string{
+		"hihat-808.wav",
+		"kick-classic.wav",
+		"perc-808.wav",
+		"tom-808.wav",
+	}
 )
 
 func main() {
@@ -91,12 +98,31 @@ func main() {
 	go keyboard.Run()
 
 	programs := []programScheduler{
-		{new: beats.New(leds.Red, leds.White, []program.Coord{{Row: 1, Col: 0}, {Row: 1, Col: 8}}, 120), code: nil, hidden: false},
+		{
+			new: beats.New(
+				"default",
+				leds.Red, leds.White,
+				defaultSounds,
+				[]program.Coord{
+					{Row: 1, Col: 0},
+					{Row: 1, Col: 8},
+				},
+				120,
+			),
+			code: nil, hidden: false,
+		},
 
 		// We Will Rock You — Queen (thick: add kick under stomps)
 		{
 			new: beats.New(
+				"we will rock you",
 				leds.White, leds.Gold,
+				[program.Rows]string{
+					"clap-analog.wav",    // bright accent layer for clap
+					"kick-stomp.wav",     // stomp core
+					"clap-fat.wav",       // main clap
+					"tom-acoustic01.wav", // low tom for stomp layer
+				},
 				[]program.Coord{
 					// Stomps = kick + tom stacked
 					{Row: 1, Col: 0}, {Row: 3, Col: 0},
@@ -111,28 +137,17 @@ func main() {
 			code: nil, hidden: false,
 		},
 
-		// Billie Jean — Michael Jackson (iconic backbeat + syncopated kick)
-		{
-			new: beats.New(
-				leds.TrueBlue, leds.White,
-				[]program.Coord{
-					// Hihat (8ths)
-					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
-					{Row: 0, Col: 8}, {Row: 0, Col: 10}, {Row: 0, Col: 12}, {Row: 0, Col: 14},
-					// Kick
-					{Row: 1, Col: 0}, {Row: 1, Col: 10},
-					// Snare (perc) on 2 & 4
-					{Row: 2, Col: 4}, {Row: 2, Col: 12},
-				},
-				117,
-			),
-			code: nil, hidden: false,
-		},
-
 		// Stayin’ Alive — Bee Gees (disco: four-on-the-floor + 8th hats)
 		{
 			new: beats.New(
+				"stayin alive",
 				leds.Red, leds.Mint,
+				[program.Rows]string{
+					"hihat-acoustic02.wav", // Row 0 - bright disco hihat
+					"kick-classic.wav",     // Row 1 - disco kick
+					"snare-big.wav",        // Row 2 - roomy snare
+					"openhat-tight.wav",    // Row 3 - open hihat accent
+				},
 				[]program.Coord{
 					// Hihat (8ths)
 					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
@@ -150,7 +165,14 @@ func main() {
 		// Shape of You — Ed Sheeran (tight pop groove)
 		{
 			new: beats.New(
+				"shape of you",
 				leds.Orange, leds.Cyan,
+				[program.Rows]string{
+					"hihat-acoustic02.wav", // Row 0 - clean hihat
+					"kick-classic.wav",     // Row 1 - main kick
+					"snare-acoustic02.wav", // Row 2 - snare/clap blend
+					"perc-tambo.wav",       // Row 3 - tambourine accent
+				},
 				[]program.Coord{
 					// Hihat (8ths)
 					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
@@ -168,7 +190,14 @@ func main() {
 		// Take On Me — a‑ha (’80s drive: 16th hats)
 		{
 			new: beats.New(
+				"take on me",
 				leds.SkyBlue, leds.White,
+				[program.Rows]string{
+					"hihat-808.wav", // Row 0 - synthetic closed hihat
+					"kick-808.wav",  // Row 1 - 808 kick
+					"snare-808.wav", // Row 2 - 808 snare
+					"tom-808.wav",   // Row 3 - 808 tom
+				},
 				[]program.Coord{
 					// Hihat (16ths)
 					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
@@ -188,7 +217,14 @@ func main() {
 		// Four-on-the-floor (house)
 		{
 			new: beats.New(
+				"four on the floor",
 				leds.Red, leds.White,
+				[program.Rows]string{
+					"hihat-analog.wav",  // Row 0 - tight closed hihat
+					"kick-classic.wav",  // Row 1 - punchy house kick
+					"clap-808.wav",      // Row 2 - snappy clap/snare
+					"openhat-tight.wav", // Row 3 - short open hihat
+				},
 				[]program.Coord{
 					// Hihat (8ths)
 					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
@@ -206,7 +242,14 @@ func main() {
 		// Boom-bap
 		{
 			new: beats.New(
+				"boom bap",
 				leds.DeepPurple, leds.Mint,
+				[program.Rows]string{
+					"hihat-acoustic02.wav", // Row 0 - warm closed hihat
+					"kick-deep.wav",        // Row 1 - deep, boom-y kick
+					"snare-acoustic01.wav", // Row 2 - crisp snare
+					"tom-acoustic01.wav",   // Row 3 - low tom
+				},
 				[]program.Coord{
 					// Hihat (16ths)
 					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
@@ -226,7 +269,14 @@ func main() {
 		// Trap halftime
 		{
 			new: beats.New(
+				"trap halftime",
 				leds.TrueBlue, leds.Orange,
+				[program.Rows]string{
+					"hihat-808.wav",     // Row 0 - tight closed 808 hat
+					"kick-808.wav",      // Row 1 - subby 808 kick
+					"snare-electro.wav", // Row 2 - bright, snappy snare
+					"tom-808.wav",       // Row 3 - deep tom hit
+				},
 				[]program.Coord{
 					// Hihat (16ths)
 					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
@@ -248,7 +298,14 @@ func main() {
 		// Dembow / reggaeton
 		{
 			new: beats.New(
+				"dembow",
 				leds.Yellow, leds.Cyan,
+				[program.Rows]string{
+					"hihat-acoustic01.wav", // Row 0 - bright hat
+					"kick-classic.wav",     // Row 1 - punchy kick
+					"snare-analog.wav",     // Row 2 - rimshot/snare tone
+					"perc-tambo.wav",       // Row 3 - tambourine accent
+				},
 				[]program.Coord{
 					// Hihat (8ths)
 					{Row: 0, Col: 0}, {Row: 0, Col: 2}, {Row: 0, Col: 4}, {Row: 0, Col: 6},
