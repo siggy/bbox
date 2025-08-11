@@ -249,8 +249,8 @@ func (b *beats) run() {
 			b.render <- ledsState
 
 			beatAcc += beatsPerTick
-			for beatAcc >= 1.0 {
-				beatAcc -= 1.0
+			for beatAcc >= 0.999999 {
+				beatAcc = 0
 
 				// play active beats if index matches
 				for rowIdx, beats := range beatState {
@@ -395,7 +395,11 @@ func (b *beats) Yield() <-chan struct{} {
 }
 
 func getBeatsPerTick(bpm int) float64 {
-	return program.Cols / 4.0 * float64(bpm) / 60.0 * tickInterval.Seconds()
+	// total ticks per beat
+	ticksPerBeat := math.Round(
+		(60.0 / tickInterval.Seconds()) / (4.0 * float64(bpm)),
+	)
+	return 1.0 / ticksPerBeat
 }
 
 // getPulse returns map of coord -> brightness
@@ -405,18 +409,17 @@ func getPulse(r rows.FlatRow, peak float64) map[rows.Coord]float64 {
 	pulse := make(map[rows.Coord]float64)
 
 	floatPeakPixel := peakToFloatPixel(r, peak)
-	radius := pulseRadius
 
-	startIndex := int(math.Ceil(floatPeakPixel - radius))
-	endIndex := int(math.Floor(floatPeakPixel + radius))
+	startIndex := int(math.Ceil(floatPeakPixel - pulseRadius))
+	endIndex := int(math.Floor(floatPeakPixel + pulseRadius))
 	for i := startIndex; i <= endIndex; i++ {
 		// calculate distance from peak
 		distance := math.Abs(float64(i) - floatPeakPixel)
 		// distance == radius => 0 brightness
 		// distance == 0 => 1 brightness
-		frac := 1 - distance/radius
+		frac := 1 - distance/pulseRadius
 		if frac < 0 {
-			log.Errorf("FRAC <= 0 frac: %+v, distance %+v, radius %+v, getPulse(%+v, %f)", frac, distance, radius, r, peak)
+			log.Errorf("FRAC <= 0 frac: %+v, distance %+v, radius %+v, getPulse(%+v, %f)", frac, distance, pulseRadius, r, peak)
 			continue
 		}
 		// steeper falloff: raise to the 8th power for an even sharper dropoff
