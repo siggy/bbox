@@ -40,6 +40,10 @@ var (
 		"perc-808.wav",
 		"tom-808.wav",
 	}
+
+	// if 75% of beats are active, yield to the next program
+	defaultBeatLimit  = program.Rows * program.Cols * 3 / 4
+	oneThirdBeatLimit = program.Rows * program.Cols / 3
 )
 
 func main() {
@@ -97,6 +101,7 @@ func main() {
 
 	go keyboard.Run()
 
+	// TODO: first program should not be marked hidden
 	programs := []programScheduler{
 		{
 			new: beats.New(
@@ -108,6 +113,7 @@ func main() {
 					{Row: 1, Col: 8},
 				},
 				120,
+				defaultBeatLimit,
 			),
 			code: nil, hidden: false,
 		},
@@ -133,6 +139,7 @@ func main() {
 					{Row: 0, Col: 9}, // bright layer
 				},
 				165,
+				oneThirdBeatLimit,
 			),
 			code: nil, hidden: false,
 		},
@@ -158,6 +165,7 @@ func main() {
 					{Row: 2, Col: 4}, {Row: 2, Col: 12},
 				},
 				104,
+				oneThirdBeatLimit,
 			),
 			code: nil, hidden: false,
 		},
@@ -183,33 +191,7 @@ func main() {
 					{Row: 2, Col: 4}, {Row: 2, Col: 12},
 				},
 				96,
-			),
-			code: nil, hidden: false,
-		},
-
-		// Take On Me — a‑ha (’80s drive: 16th hats)
-		{
-			new: beats.New(
-				"take on me",
-				leds.SkyBlue, leds.White,
-				[program.Rows]string{
-					"hihat-808.wav", // Row 0 - synthetic closed hihat
-					"kick-808.wav",  // Row 1 - 808 kick
-					"snare-808.wav", // Row 2 - 808 snare
-					"tom-808.wav",   // Row 3 - 808 tom
-				},
-				[]program.Coord{
-					// Hihat (16ths)
-					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
-					{Row: 0, Col: 4}, {Row: 0, Col: 5}, {Row: 0, Col: 6}, {Row: 0, Col: 7},
-					{Row: 0, Col: 8}, {Row: 0, Col: 9}, {Row: 0, Col: 10}, {Row: 0, Col: 11},
-					{Row: 0, Col: 12}, {Row: 0, Col: 13}, {Row: 0, Col: 14}, {Row: 0, Col: 15},
-					// Kick
-					{Row: 1, Col: 0}, {Row: 1, Col: 8}, {Row: 1, Col: 14},
-					// Snare
-					{Row: 2, Col: 4}, {Row: 2, Col: 12},
-				},
-				168,
+				oneThirdBeatLimit,
 			),
 			code: nil, hidden: false,
 		},
@@ -235,62 +217,7 @@ func main() {
 					{Row: 2, Col: 4}, {Row: 2, Col: 12},
 				},
 				124,
-			),
-			code: nil, hidden: false,
-		},
-
-		// Boom-bap
-		{
-			new: beats.New(
-				"boom bap",
-				leds.DeepPurple, leds.Mint,
-				[program.Rows]string{
-					"hihat-acoustic02.wav", // Row 0 - warm closed hihat
-					"kick-deep.wav",        // Row 1 - deep, boom-y kick
-					"snare-acoustic01.wav", // Row 2 - crisp snare
-					"tom-acoustic01.wav",   // Row 3 - low tom
-				},
-				[]program.Coord{
-					// Hihat (16ths)
-					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
-					{Row: 0, Col: 4}, {Row: 0, Col: 5}, {Row: 0, Col: 6}, {Row: 0, Col: 7},
-					{Row: 0, Col: 8}, {Row: 0, Col: 9}, {Row: 0, Col: 10}, {Row: 0, Col: 11},
-					{Row: 0, Col: 12}, {Row: 0, Col: 13}, {Row: 0, Col: 14}, {Row: 0, Col: 15},
-					// Kick
-					{Row: 1, Col: 0}, {Row: 1, Col: 7},
-					// Backbeat (perc)
-					{Row: 2, Col: 4}, {Row: 2, Col: 12},
-				},
-				92,
-			),
-			code: nil, hidden: false,
-		},
-
-		// Trap halftime
-		{
-			new: beats.New(
-				"trap halftime",
-				leds.TrueBlue, leds.Orange,
-				[program.Rows]string{
-					"hihat-808.wav",     // Row 0 - tight closed 808 hat
-					"kick-808.wav",      // Row 1 - subby 808 kick
-					"snare-electro.wav", // Row 2 - bright, snappy snare
-					"tom-808.wav",       // Row 3 - deep tom hit
-				},
-				[]program.Coord{
-					// Hihat (16ths)
-					{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3},
-					{Row: 0, Col: 4}, {Row: 0, Col: 5}, {Row: 0, Col: 6}, {Row: 0, Col: 7},
-					{Row: 0, Col: 8}, {Row: 0, Col: 9}, {Row: 0, Col: 10}, {Row: 0, Col: 11},
-					{Row: 0, Col: 12}, {Row: 0, Col: 13}, {Row: 0, Col: 14}, {Row: 0, Col: 15},
-					// Kick
-					{Row: 1, Col: 0}, {Row: 1, Col: 10},
-					// Halftime backbeat (perc)
-					{Row: 2, Col: 8},
-					// Tiny fill (tom)
-					{Row: 3, Col: 15},
-				},
-				140, // feels like ~70bpm
+				oneThirdBeatLimit,
 			),
 			code: nil, hidden: false,
 		},
@@ -316,6 +243,7 @@ func main() {
 					{Row: 2, Col: 4}, {Row: 2, Col: 10},
 				},
 				100,
+				oneThirdBeatLimit,
 			),
 			code: nil, hidden: false,
 		},

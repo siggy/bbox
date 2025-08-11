@@ -29,6 +29,7 @@ type (
 		sounds       [program.Rows]string
 		starterBeats []program.Coord
 		starterBPM   int
+		beatLimit    int
 
 		log *log.Entry
 	}
@@ -42,9 +43,6 @@ const (
 	maxBPM       = 480
 	pulseDelay   = -1.3
 	pulseLength  = 50.0
-
-	// if 50% of beats are active, yield to the next program
-	beatLimit = program.Rows * program.Cols / 2
 
 	// test
 	// decay             = 2 * time.Second
@@ -65,7 +63,8 @@ var (
 func New(
 	name string,
 	beatColor, pulseColor leds.Color,
-	sounds [program.Rows]string, starterBeats []program.Coord, bpm int,
+	sounds [program.Rows]string, starterBeats []program.Coord,
+	bpm int, beatLimit int,
 ) program.ProgramFactory {
 	return func(ctx context.Context) program.Program {
 		log := log.WithFields(log.Fields{"program": "beats", "song": name})
@@ -86,6 +85,7 @@ func New(
 			sounds:       sounds,
 			starterBeats: starterBeats,
 			starterBPM:   bpm,
+			beatLimit:    beatLimit,
 
 			log: log,
 		}
@@ -312,7 +312,7 @@ func (b *beats) run() {
 			} else {
 				// enabling a beat
 
-				if beatState.activeButtons() >= beatLimit {
+				if beatState.activeButtons() >= b.beatLimit {
 					b.log.Debugf("Beat limit reached (%d active buttons), yielding...", beatState.activeButtons())
 					b.yield <- struct{}{}
 					return
