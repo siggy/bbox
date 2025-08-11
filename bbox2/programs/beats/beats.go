@@ -40,8 +40,8 @@ const (
 	tickInterval = 20 * time.Millisecond
 	minBPM       = 30
 	maxBPM       = 480
-	pulseDelay   = -1.6
-	pulseRadius  = 30.0
+	pulseDelay   = -1.3
+	pulseLength  = 50.0
 
 	// if 50% of beats are active, yield to the next program
 	beatLimit = program.Rows * program.Cols / 2
@@ -228,11 +228,10 @@ func (b *beats) run() {
 				if peak < 0 {
 					peak += float64(program.Cols)
 				}
-				pulse := getPulse(row, peak)
+				pulse := getPulse(row, peak, b.pulseColor)
 
-				for coord, brightness := range pulse {
-					c := leds.Brightness(b.pulseColor, brightness)
-					ledsState.Set(coord.Strip, coord.Pixel, c)
+				for coord, color := range pulse {
+					ledsState.Set(coord.Strip, coord.Pixel, color)
 				}
 			}
 
@@ -405,21 +404,21 @@ func getBeatsPerTick(bpm int) float64 {
 // getPulse returns map of coord -> brightness
 // 0 <= peak < 16
 // TODO: cache results?
-func getPulse(r rows.FlatRow, peak float64) map[rows.Coord]float64 {
-	pulse := make(map[rows.Coord]float64)
+func getPulse(r rows.FlatRow, peak float64, color leds.Color) map[rows.Coord]leds.Color {
+	pulse := make(map[rows.Coord]leds.Color)
 
 	floatPeakPixel := peakToFloatPixel(r, peak)
 
-	startIndex := int(math.Ceil(floatPeakPixel - pulseRadius))
-	endIndex := int(math.Floor(floatPeakPixel + pulseRadius))
+	startIndex := int(math.Ceil(floatPeakPixel - pulseLength))
+	endIndex := int(math.Ceil(floatPeakPixel))
 	for i := startIndex; i <= endIndex; i++ {
 		// calculate distance from peak
 		distance := math.Abs(float64(i) - floatPeakPixel)
-		// distance == radius => 0 brightness
-		// distance == 0 => 1 brightness
-		frac := 1 - distance/pulseRadius
+		// distance == length => 0 brightness
+		// distance == 0      => 1 brightness
+		frac := 1 - distance/pulseLength
 		if frac < 0 {
-			log.Errorf("FRAC <= 0 frac: %+v, distance %+v, radius %+v, getPulse(%+v, %f)", frac, distance, pulseRadius, r, peak)
+			log.Errorf("FRAC <= 0 frac: %+v, distance %+v, length %+v, getPulse(%+v, %f)", frac, distance, pulseLength, r, peak)
 			continue
 		}
 		// steeper falloff: raise to the 8th power for an even sharper dropoff
@@ -433,7 +432,7 @@ func getPulse(r rows.FlatRow, peak float64) map[rows.Coord]float64 {
 			Pixel: r.Pixels[pixelIndex].Pixel,
 		}
 
-		pulse[coord] = bness
+		pulse[coord] = leds.PulseColor(color, bness)
 	}
 
 	return pulse

@@ -46,7 +46,9 @@ var (
 
 // TODO: cache?
 func Brightness(c Color, brightness float64) Color {
-	if brightness < 0 || brightness > 1 {
+	if brightness <= 0 {
+		return Black
+	} else if brightness >= 1 {
 		return c
 	}
 
@@ -55,6 +57,36 @@ func Brightness(c Color, brightness float64) Color {
 		G: uint8(float64(c.G) * brightness),
 		B: uint8(float64(c.B) * brightness),
 		W: uint8(float64(c.W) * brightness),
+	}
+}
+
+// TODO: cache?
+func PulseColor(c Color, brightness float64) Color {
+	// clamp to [0,1]
+	if brightness <= 0 {
+		return Black
+	} else if brightness >= 1 {
+		return White
+	}
+
+	if brightness <= 0.5 {
+		// 0.0 → black, 0.5 → c at half brightness
+		return Brightness(c, brightness)
+	}
+
+	// 0.5 → c at 0.5 brightness
+	// 1.0 → pure white (W=255)
+	t := (brightness - 0.5) / 0.5 // remap 0.5..1 → 0..1
+
+	// fade RGBW of c (at half brightness) to W-only white
+	start := Brightness(c, 0.5)
+	end := Color{R: 0, G: 0, B: 0, W: 255}
+
+	return Color{
+		R: uint8(float64(start.R)*(1-t) + float64(end.R)*t),
+		G: uint8(float64(start.G)*(1-t) + float64(end.G)*t),
+		B: uint8(float64(start.B)*(1-t) + float64(end.B)*t),
+		W: uint8(float64(start.W)*(1-t) + float64(end.W)*t),
 	}
 }
 

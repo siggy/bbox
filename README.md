@@ -1,7 +1,5 @@
 # TODO
 
-- make pulse have strong attack, then tail, not from the middle
-  - peak should be first pixel
 - confirm drum timing
 - handle multiple keyboards
 - fix baux deadlock
