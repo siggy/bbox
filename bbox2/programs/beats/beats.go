@@ -418,8 +418,8 @@ func getPulse(r rows.FlatRow, peak float64, color leds.Color) map[rows.Coord]led
 		// distance == 0      => 1 brightness
 		frac := 1 - distance/pulseLength
 		if frac < 0 {
-			log.Errorf("FRAC <= 0 frac: %+v, distance %+v, length %+v, getPulse(%+v, %f)", frac, distance, pulseLength, r, peak)
-			continue
+			log.Warnf("FRAC <= 0 frac: %+v, distance %+v, length %+v, getPulse(%+v, %f)", frac, distance, pulseLength, r, peak)
+			frac = 0
 		}
 		// steeper falloff: raise to the 8th power for an even sharper dropoff
 		bness := math.Pow(frac, 8)
