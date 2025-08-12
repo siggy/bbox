@@ -135,6 +135,7 @@ func main() {
 				}
 			}
 
+			ledStrips.Clear()
 			ledStrips.Set(ledsState)
 
 		case level := <-amp.Level():
