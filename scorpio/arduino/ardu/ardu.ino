@@ -27,7 +27,7 @@ int8_t pins[8] = { 16, 17, 18, 19, 20, 21, 22, 23 };
 #endif
 
 // -------- Globals --------
-Adafruit_NeoPXL8 leds(NUM_LEDS, pins, COLOR_ORDER);
+Adafruit_NeoPXL8 leds(STRAND_LEN, pins, COLOR_ORDER);
 Adafruit_NeoPixel hb(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 
 std::vector<uint8_t> buf;     // rolling USB buffer
