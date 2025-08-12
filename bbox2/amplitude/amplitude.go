@@ -28,13 +28,13 @@ func (a *Amplitude) onRecvFrames(_, in []byte, _ uint32) {
 		return
 	}
 	var sum float64
-	// S16 mono: 2 bytes per sample, little-endian
-	for i := 0; i+1 < len(in); i += 2 {
-		s := int16(binary.LittleEndian.Uint16(in[i : i+2]))
-		// map to [-1,1]; using 32768.0 avoids overflow on -32768
-		f := float64(s) / 32768.0
+	// S16 mono LE: 2 bytes per sample
+	for i := 0; i < len(in)-1; i += 2 {
+		s := int16(binary.LittleEndian.Uint16(in[i:]))
+		f := float64(s) / 32768.0 // [-1,1]
 		sum += math.Abs(f)
 	}
+
 	n := float64(len(in) / 2) // number of samples
 	avg := sum / n            // 0..1
 	a.log.Tracef("Amplitude: %.3f", avg)
@@ -42,7 +42,7 @@ func (a *Amplitude) onRecvFrames(_, in []byte, _ uint32) {
 	select {
 	case a.levels <- avg:
 	default:
-		a.log.Warn("Amplitude channel buffer full, dropping value")
+		a.log.Trace("Amplitude channel buffer full, dropping value")
 	}
 }
 
@@ -83,7 +83,11 @@ func New() (*Amplitude, error) {
 func (a *Amplitude) Close() {
 	a.log.Info("Closing")
 
+	a.device.Stop()
 	a.device.Uninit()
+
+	close(a.levels)
+
 	a.ctx.Uninit()
 	a.ctx.Free()
 }
