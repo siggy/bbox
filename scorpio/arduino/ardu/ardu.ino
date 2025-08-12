@@ -15,7 +15,6 @@
 // -------- Configuration --------
 #define NUM_STRANDS   8
 #define STRAND_LEN    144
-#define NUM_LEDS      (NUM_STRANDS * STRAND_LEN)
 #define COLOR_ORDER   NEO_GRBW
 
 // SCORPIO RP2040 PIO pins (GP16..GP23)
