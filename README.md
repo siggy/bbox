@@ -3,6 +3,10 @@
 - confirm drum timing
 - handle multiple keyboards
 - fix baux deadlock
+- guarantee scorpio at /dev/ttyACM0
+- guarantee audio at card:
+  defaults.pcm.card 1
+  defaults.ctl.card 1
 
 # BBox
 
@@ -135,8 +139,8 @@ Plug in USB audio device and run:
 aplay -l
 
 sudo tee /etc/asound.conf > /dev/null <<'EOF'
-defaults.pcm.card 2
-defaults.ctl.card 2
+defaults.pcm.card 1
+defaults.ctl.card 1
 EOF
 
 aplay /usr/share/sounds/alsa/Front_Center.wav

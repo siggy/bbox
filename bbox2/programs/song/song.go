@@ -31,7 +31,10 @@ type (
 	}
 )
 
-const ticksPerColorRotation = 15
+const (
+	ticksPerColorRotation = 60
+	pressThreshold        = 10
+)
 
 func New(song string, length time.Duration) program.ProgramFactory {
 	return func(ctx context.Context) program.Program {
@@ -128,6 +131,8 @@ func (s *songProgram) run() {
 
 	s.play <- s.song
 
+	presses := 0
+
 	// song duration
 	timer := time.NewTimer(s.length)
 
@@ -143,6 +148,12 @@ func (s *songProgram) run() {
 
 		case press := <-s.in:
 			s.log.Debugf("Processing press: %+v", press)
+			presses++
+
+			if presses >= pressThreshold {
+				s.yield <- struct{}{}
+				return
+			}
 
 		case displayData := <-s.eq:
 			s.log.Tracef("Processing EQ: %+v", displayData)
@@ -167,7 +178,7 @@ func (s *songProgram) run() {
 
 			colorTicks++
 			if colorTicks == ticksPerColorRotation {
-				colorPos = (colorPos + 1) % equalizer.HistorySize // Cycle through colors
+				colorPos = (colorPos - 1 + equalizer.HistorySize) % equalizer.HistorySize // Cycle through colors
 				colorTicks = 0
 			}
 		}
