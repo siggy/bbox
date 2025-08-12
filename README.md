@@ -139,8 +139,20 @@ Plug in USB audio device and run:
 aplay -l
 
 sudo tee /etc/asound.conf > /dev/null <<'EOF'
-defaults.pcm.card 1
-defaults.ctl.card 1
+defaults.pcm.card 2
+defaults.ctl.card 2
+EOF
+
+sudo tee /etc/asound.conf > /dev/null <<'EOF'
+pcm.!default {
+    type plug
+    slave.pcm "plughw:CARD=Audio,DEV=0"
+}
+
+ctl.!default {
+    type hw
+    card "Audio"
+}
 EOF
 
 aplay /usr/share/sounds/alsa/Front_Center.wav

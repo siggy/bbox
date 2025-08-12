@@ -11,6 +11,8 @@ import (
 )
 
 const (
+	brightness = 0.5
+
 	// TODO: bbox testing
 	// 2x structure
 	BAUX_STRAND_COUNT1 = 1
@@ -86,6 +88,12 @@ func (c *Baux) Run() {
 	last := time.Now()
 	interval := 2 * time.Second
 
+	// pick a sane frame rate; 60 is often overkill for ws281x, 30 is fine
+	const fps = 30
+
+	ticker := time.NewTicker(time.Second / fps)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case phone, more := <-c.w.Phone():
@@ -126,7 +134,7 @@ func (c *Baux) Run() {
 			if !more {
 				return
 			}
-		default:
+		case _ = <-ticker.C:
 			_ = uint32(255.0 * c.ampLevel)
 			interval = time.Duration(math.Max(
 				DEFAULT_INTERVAL_MS-(DEFAULT_INTERVAL_MS*c.ampLevel),
@@ -144,7 +152,7 @@ func (c *Baux) Run() {
 			// streaks
 			sineMap := color.GetSineVals(BAUX_LED_COUNT1, loc*BAUX_LED_COUNT1, BAUX_STREAK_LENGTH)
 			for led, value := range sineMap {
-				mag := float64(value) / 254.0
+				mag := float64(value) / 254.0 * brightness
 				strand1[led] = color.Make(
 					uint32(float64(phoneR)*mag),
 					uint32(float64(phoneG)*mag),
@@ -169,13 +177,13 @@ func (c *Baux) Run() {
 
 				sineMap1 := color.GetSineVals(length, peak1, length/2)
 				for led, value := range sineMap1 {
-					mag := (float64(value) / 254.0) // / 2
+					mag := (float64(value) / 254.0) * brightness // / 2
 					strand2[start+led] = color.MultiplyColor(globeColor1, mag)
 				}
 
 				sineMap2 := color.GetSineVals(length, peak2, length/2)
 				for led, value := range sineMap2 {
-					mag := (float64(value) / 254.0) // / 2
+					mag := (float64(value) / 254.0) * brightness // / 2
 					strand2[start+led] = color.MultiplyColor(globeColor2, mag)
 				}
 
