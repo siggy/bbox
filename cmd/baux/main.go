@@ -125,7 +125,7 @@ func main() {
 				sineMap := color.GetSineVals(length, peak, length/2)
 				for led, value := range sineMap {
 					mag := (float64(value) / 254.0)
-					ledsState.Set(globalLEDStrip, led, leds.Brightness(leds.Red, mag))
+					ledsState.Set(globalLEDStrip, start+led, leds.Brightness(leds.Red, mag))
 				}
 			}
 
