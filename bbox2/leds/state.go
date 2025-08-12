@@ -11,7 +11,27 @@ type (
 	State map[int]map[int]Color
 )
 
-func (s State) ApplyState(incoming State) {
+func (s State) String() string {
+	flat := []flatState{}
+	for strip, pixels := range s {
+		for pixel, color := range pixels {
+			flat = append(flat, flatState{strip: strip, pixel: pixel, color: color})
+		}
+	}
+
+	sort.Slice(flat, func(i, j int) bool {
+		return flat[i].strip < flat[j].strip || (flat[i].strip == flat[j].strip && flat[i].pixel < flat[j].pixel)
+	})
+
+	strs := make([]string, len(flat))
+	for i, f := range flat {
+		strs[i] = f.String()
+	}
+
+	return strings.Join(strs, ",")
+}
+
+func (s State) Apply(incoming State) {
 	for strip, stripLEDs := range incoming {
 		for pixel, color := range stripLEDs {
 			s.Set(strip, pixel, color)
@@ -66,24 +86,4 @@ type flatState struct {
 
 func (f flatState) String() string {
 	return fmt.Sprintf("%dx%d:%s", f.strip, f.pixel, f.color)
-}
-
-func (s State) String() string {
-	flat := []flatState{}
-	for strip, pixels := range s {
-		for pixel, color := range pixels {
-			flat = append(flat, flatState{strip: strip, pixel: pixel, color: color})
-		}
-	}
-
-	sort.Slice(flat, func(i, j int) bool {
-		return flat[i].strip < flat[j].strip || (flat[i].strip == flat[j].strip && flat[i].pixel < flat[j].pixel)
-	})
-
-	strs := make([]string, len(flat))
-	for i, f := range flat {
-		strs[i] = f.String()
-	}
-
-	return strings.Join(strs, ",")
 }

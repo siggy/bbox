@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/siggy/bbox/bbox/color"
 	"github.com/siggy/bbox/bbox2/leds"
 	log "github.com/sirupsen/logrus"
 )
@@ -108,7 +107,7 @@ func main() {
 			}
 
 			// streaks
-			sineMap := color.GetSineVals(baseLEDCount, loc*baseLEDCount, bauxStreakLength)
+			sineMap := leds.GetSineVals(baseLEDCount, loc*baseLEDCount, bauxStreakLength)
 			for led, value := range sineMap {
 				mag := float64(value) / 254.0
 				ledsState.Set(baseLEDStrip, led, leds.Brightness(leds.DeepPurple, mag))
@@ -122,7 +121,7 @@ func main() {
 
 				peak := float64(length) * loc
 
-				sineMap := color.GetSineVals(length, peak, length/2)
+				sineMap := leds.GetSineVals(length, peak, length/2)
 				for led, value := range sineMap {
 					mag := (float64(value) / 254.0)
 					ledsState.Set(globalLEDStrip, start+led, leds.Brightness(leds.Red, mag))

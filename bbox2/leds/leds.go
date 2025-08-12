@@ -165,7 +165,7 @@ func (l *leds) run() {
 			lastTick = currentState.copy()
 
 		case s := <-l.set:
-			currentState.ApplyState(s)
+			currentState.Apply(s)
 		case <-l.ctx.Done():
 			return
 		}
