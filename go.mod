@@ -5,6 +5,7 @@ go 1.24.3
 require (
 	github.com/ebitengine/oto/v3 v3.3.3
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
+	github.com/gen2brain/malgo v0.11.23
 	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
 	github.com/gorilla/websocket v1.5.3
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12

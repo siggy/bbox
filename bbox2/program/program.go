@@ -41,13 +41,3 @@ const (
 	// TODO: remove?
 	ChannelBuffer = 100
 )
-
-// byte(strip), pixel, g, r, b, w
-// stripLengths = []int{30, 30, 10, 10, 10, 10, 10, 10}
-
-// TODO:
-// program interface {
-// 	Press() Coord<-
-//  Play() <-String
-//  Render() <-LEDs
-// }

@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/siggy/bbox/bbox2/amplitude"
 	"github.com/siggy/bbox/bbox2/leds"
 	log "github.com/sirupsen/logrus"
 )
@@ -80,6 +81,12 @@ func main() {
 	defer ledStrips.Close()
 	ledStrips.Clear()
 
+	amp, err := amplitude.New()
+	if err != nil {
+		log.Fatalf("amplitude.New failed: %v", err)
+	}
+	defer amp.Close()
+
 	ticker := time.NewTicker(time.Second / fps)
 	defer ticker.Stop()
 
@@ -129,6 +136,9 @@ func main() {
 			}
 
 			ledStrips.Set(ledsState)
+
+		case level := <-amp.Level():
+			ampLevel = level
 
 		case <-ctx.Done():
 			log.Info("context done")
