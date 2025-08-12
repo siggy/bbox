@@ -37,7 +37,6 @@ func (a *Amplitude) onRecvFrames(_, in []byte, _ uint32) {
 
 	n := float64(len(in) / 2) // number of samples
 	avg := sum / n            // 0..1
-	a.log.Tracef("Amplitude: %.3f", avg)
 
 	select {
 	case a.levels <- avg:
