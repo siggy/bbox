@@ -135,18 +135,10 @@ git clone https://github.com/siggy/bbox.git ~/code/bbox
 
 Plug in USB audio device and run:
 ```bash
-# note the card number of the USB audio device
-aplay -l
-
-sudo tee /etc/asound.conf > /dev/null <<'EOF'
-defaults.pcm.card 2
-defaults.ctl.card 2
-EOF
-
 sudo tee /etc/asound.conf > /dev/null <<'EOF'
 pcm.!default {
     type plug
-    slave.pcm "plughw:CARD=Audio,DEV=0"
+    slave.pcm "dmix:Audio,0"
 }
 
 ctl.!default {
