@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/gen2brain/malgo"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +20,11 @@ type Amplitude struct {
 	device *malgo.Device
 	levels chan float64
 
-	log *log.Entry
+	deviceConfig    malgo.DeviceConfig    // saved so we can reinit
+	deviceCallbacks malgo.DeviceCallbacks // saved so we can reinit
+	lastNanos       int64                 // last time we saw audio
+	mu              sync.Mutex            // guards device (stop/uninit/reinit)
+	log             *log.Entry
 }
 
 func (a *Amplitude) Level() <-chan float64 {
@@ -28,6 +35,8 @@ func (a *Amplitude) onRecvFrames(_, in []byte, _ uint32) {
 	if len(in) < 2 {
 		return
 	}
+	atomic.StoreInt64(&a.lastNanos, time.Now().UnixNano())
+
 	var sum float64
 	// S16 mono LE: 2 bytes per sample
 	for i := 0; i < len(in)-1; i += 2 {
@@ -64,12 +73,12 @@ func New() (*Amplitude, error) {
 		log:    log.WithField("bbox2", "amplitude"),
 	}
 
-	deviceConfig := malgo.DefaultDeviceConfig(malgo.Capture)
-	deviceConfig.Capture.Format = malgo.FormatS16
-	deviceConfig.Capture.Channels = 1
-	deviceConfig.SampleRate = 48000
+	a.deviceConfig = malgo.DefaultDeviceConfig(malgo.Capture)
+	a.deviceConfig.Capture.Format = malgo.FormatS16
+	a.deviceConfig.Capture.Channels = 1
+	a.deviceConfig.SampleRate = 48000 // prefer 48k for USB codecs
 
-	deviceCallbacks := malgo.DeviceCallbacks{
+	a.deviceCallbacks = malgo.DeviceCallbacks{
 		Data: a.onRecvFrames,
 	}
 
@@ -80,12 +89,12 @@ func New() (*Amplitude, error) {
 	for _, inf := range infos {
 		if n := inf.Name(); strings.Contains(n, "USB Audio Device") {
 			a.log.Infof("found usb audio device: %s", inf.String())
-			deviceConfig.Capture.DeviceID = inf.ID.Pointer()
+			a.deviceConfig.Capture.DeviceID = inf.ID.Pointer()
 			break
 		}
 	}
 
-	device, err := malgo.InitDevice(ctx.Context, deviceConfig, deviceCallbacks)
+	device, err := malgo.InitDevice(ctx.Context, a.deviceConfig, a.deviceCallbacks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open capture device: %w", err)
 	}
@@ -95,14 +104,61 @@ func New() (*Amplitude, error) {
 		return nil, fmt.Errorf("failed to start capture device: %w", err)
 	}
 
+	// Watchdog: if no audio for > 10 seconds, restart the device
+	atomic.StoreInt64(&a.lastNanos, time.Now().UnixNano())
+	go func() {
+		t := time.NewTicker(10 * time.Second)
+		defer t.Stop()
+		for range t.C {
+			last := time.Unix(0, atomic.LoadInt64(&a.lastNanos))
+			if time.Since(last) > 10*time.Second {
+				a.log.Warn("no audio received for 10 seconds; restarting capture device")
+				a.restartCapture()
+				// After restart, give it a fresh window
+				atomic.StoreInt64(&a.lastNanos, time.Now().UnixNano())
+			}
+		}
+	}()
+
 	return a, nil
+}
+
+func (a *Amplitude) restartCapture() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if a.device != nil {
+		_ = a.device.Stop()
+		a.device.Uninit()
+	}
+
+	dev, err := malgo.InitDevice(a.ctx.Context, a.deviceConfig, a.deviceCallbacks)
+	if err != nil {
+		a.log.WithError(err).Error("failed to re-open capture device")
+		return
+	}
+	a.device = dev
+
+	if err := a.device.Start(); err != nil {
+		a.log.WithError(err).Error("failed to restart capture device")
+		// best effort: uninit the half-open device
+		a.device.Uninit()
+		a.device = nil
+		return
+	}
+
+	a.log.Info("capture device restarted")
 }
 
 func (a *Amplitude) Close() {
 	a.log.Info("Closing")
 
-	a.device.Stop()
-	a.device.Uninit()
+	a.mu.Lock()
+	if a.device != nil {
+		_ = a.device.Stop()
+		a.device.Uninit()
+	}
+	a.mu.Unlock()
 
 	close(a.levels)
 
