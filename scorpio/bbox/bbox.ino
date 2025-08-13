@@ -27,6 +27,11 @@ std::vector<uint8_t> buf; // rolling USB buffer
 // Protocol constants
 const uint8_t START = 0xAA;
 
+// add near the top (globals)
+static uint32_t front_stamp_ms = 0;
+static const uint32_t FRAME_STUCK_MS = 200;                             // resync window
+static const uint32_t MAX_LEN = (uint32_t)NUM_STRANDS * STRAND_LEN * 6; // hard cap
+
 // -------- Helpers --------
 static inline uint32_t packGRBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w)
 {
@@ -48,32 +53,56 @@ void heartbeat()
 
 bool parseAndApplyFrames()
 {
-  // Returns true if any pixels were changed (to optionally optimize show()).
   bool changed = false;
 
-  // We may have multiple frames in the buffer.
   for (;;)
   {
     if (buf.size() < 4)
-      break; // need at least start + len + chk
+      break; // need start + len_hi + len_lo + chk(min)
+
+    // Resync until we find a START at front
     if (buf[0] != START)
     {
       buf.erase(buf.begin());
+      front_stamp_ms = 0;
       continue;
     }
 
+    // Have a START; if this is a new candidate frame, start a timer
+    if (front_stamp_ms == 0)
+      front_stamp_ms = millis();
+
+    // read length
     uint16_t length = ((uint16_t)buf[1] << 8) | buf[2];
+
+    // Sanity checks — drop the START and resync on bogus lengths
+    if (length == 0 || length > MAX_LEN || (length % 6u) != 0u)
+    {
+      // bad frame header; drop START and try next byte
+      buf.erase(buf.begin());
+      front_stamp_ms = 0;
+      continue;
+    }
+
     uint32_t total = 3u + length + 1u; // start + len(2) + payload + chk
     if (buf.size() < total)
-      break; // wait for full frame
+    {
+      // Not enough data yet. If it's been too long, assume corrupted header and resync.
+      if (millis() - front_stamp_ms > FRAME_STUCK_MS)
+      {
+        buf.erase(buf.begin()); // drop START; try to find next one
+        front_stamp_ms = 0;
+      }
+      break; // wait for more bytes
+    }
 
-    // Verify checksum (XOR of payload)
+    // Verify checksum
     uint8_t x = 0;
     for (uint32_t i = 0; i < length; i++)
       x ^= buf[3 + i];
     uint8_t chk = buf[3 + length];
 
-    if (x == chk && (length % 6u) == 0u)
+    if (x == chk)
     {
       // Apply pixels
       for (uint32_t i = 3; i < 3u + length; i += 6)
@@ -84,17 +113,17 @@ bool parseAndApplyFrames()
         uint8_t g = buf[i + 3];
         uint8_t b = buf[i + 4];
         uint8_t w = buf[i + 5];
-
         if (si < NUM_STRANDS && pi < STRAND_LEN)
         {
           uint32_t idx = (uint32_t)si * STRAND_LEN + pi;
-          leds.setPixelColor(idx, packGRBW(r, g, b, w));
+          leds.setPixelColor(idx, leds.Color(r, g, b, w));
           changed = true;
         }
       }
     }
-    // Drop processed frame (valid or not — resync happens via START search)
+    // Drop processed (or bad‑checksum) frame and reset timer
     buf.erase(buf.begin(), buf.begin() + total);
+    front_stamp_ms = 0;
   }
   return changed;
 }
