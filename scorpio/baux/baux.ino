@@ -8,7 +8,6 @@
 */
 
 #include <Adafruit_NeoPXL8.h>
-#include <Adafruit_NeoPixel.h>
 #include <vector>
 #include <math.h>
 
@@ -18,16 +17,10 @@
 #define COLOR_ORDER NEO_GRBW
 
 // SCORPIO RP2040 PIO pins (GP16..GP17)
-int8_t pins[8] = { 16, 17, -1, -1, -1, -1, -1, -1 };
-
-// Onboard heartbeat NeoPixel
-#ifndef PIN_NEOPIXEL
-#define PIN_NEOPIXEL 16 // fallback, most RP2040 boards define this
-#endif
+int8_t pins[8] = {16, 17, -1, -1, -1, -1, -1, -1};
 
 // -------- Globals --------
 Adafruit_NeoPXL8 leds(STRAND_LEN, pins, COLOR_ORDER);
-Adafruit_NeoPixel hb(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 
 std::vector<uint8_t> buf; // rolling USB buffer
 
@@ -41,16 +34,16 @@ static inline uint32_t packGRBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w)
   return leds.Color(r, g, b, w);
 }
 
+// Heartbeat on built-in LED (no PIO/NeoPixel usage)
 void heartbeat()
 {
-  // Simple green<->blue breathing at ~1 Hz
   static uint32_t t0 = millis();
   float t = (millis() - t0) / 1000.0f;
   float pulse = (sinf(2.0f * M_PI * t) + 1.0f) * 0.5f; // 0..1
-  uint8_t g = (uint8_t)(pulse * 64.0f);
-  uint8_t b = (uint8_t)((1.0f - pulse) * 64.0f);
-  hb.setPixelColor(0, hb.Color(0, g, b));
-  hb.show();
+  int duty = (int)(pulse * 255.0f);
+
+  // Prefer PWM if available on LED_BUILTIN; otherwise fall back to binary
+  analogWrite(LED_BUILTIN, duty);
 }
 
 bool parseAndApplyFrames()
@@ -117,11 +110,9 @@ void setup()
   {
   }
 
-  // Heartbeat LED
-  hb.begin();
-  hb.setBrightness(128);
-  hb.setPixelColor(0, hb.Color(0, 255, 0)); // green on boot
-  hb.show();
+  // Heartbeat LED (built-in)
+  pinMode(LED_BUILTIN, OUTPUT);
+  analogWrite(LED_BUILTIN, 128); // mid brightness on boot
 
   // NeoPXL8 start
   if (!leds.begin())

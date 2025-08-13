@@ -7,6 +7,7 @@
 - guarantee audio at card:
   defaults.pcm.card 1
   defaults.ctl.card 1
+- turn up volume output from bbox pi
 
 # BBox
 
@@ -24,6 +25,7 @@ Beatboxer in Go
   - [Run](#run)
   - [Build](#build)
   - [Auto boot with keyboard attach](#auto-boot-with-keyboard-attach)
+    - [Auto boot baux](#auto-boot-baux)
   - [Connectivity](#connectivity)
     - [Configure to connect over ethernet](#configure-to-connect-over-ethernet)
     - [Configure the Pi to connect as Wifi AP](#configure-the-pi-to-connect-as-wifi-ap)
@@ -137,13 +139,13 @@ Plug in USB audio device and run:
 ```bash
 sudo tee /etc/asound.conf > /dev/null <<'EOF'
 pcm.!default {
-    type plug
-    slave.pcm "dmix:Audio,0"
+  type plug
+  slave.pcm "dmix:Audio,0"
 }
 
 ctl.!default {
-    type hw
-    card "Audio"
+  type hw
+  card "Audio"
 }
 EOF
 
@@ -190,6 +192,20 @@ EOF
 sudo systemctl daemon-reload
 sudo reboot
 ```
+
+### Auto boot baux
+
+```bash
+cat <<'EOF' >> ~/.profile
+
+export MINIAUDIO_ALSA_NO_MMAP=1
+if [ "$(tty)" = "/dev/tty1" ]; then
+  tmux attach -t bbox || tmux new-session -s bbox "bash -c '/home/sig/bin/baux; exec bash'"
+fi
+EOF
+```
+
+
 
 ## Connectivity
 

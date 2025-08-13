@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/gen2brain/malgo"
 	log "github.com/sirupsen/logrus"
@@ -38,6 +39,12 @@ func (a *Amplitude) onRecvFrames(_, in []byte, _ uint32) {
 	n := float64(len(in) / 2) // number of samples
 	avg := sum / n            // 0..1
 
+	s := ""
+	for range int(avg * 100) {
+		s += "█"
+	}
+	a.log.Tracef("%.3f: %s\n", avg, s)
+
 	select {
 	case a.levels <- avg:
 	default:
@@ -60,10 +67,22 @@ func New() (*Amplitude, error) {
 	deviceConfig := malgo.DefaultDeviceConfig(malgo.Capture)
 	deviceConfig.Capture.Format = malgo.FormatS16
 	deviceConfig.Capture.Channels = 1
-	deviceConfig.SampleRate = 44100
+	deviceConfig.SampleRate = 48000
 
 	deviceCallbacks := malgo.DeviceCallbacks{
 		Data: a.onRecvFrames,
+	}
+
+	infos, err := ctx.Devices(malgo.Capture)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get capture devices: %w", err)
+	}
+	for _, inf := range infos {
+		if n := inf.Name(); strings.Contains(n, "USB Audio Device") {
+			a.log.Infof("found usb audio device: %s", inf.String())
+			deviceConfig.Capture.DeviceID = inf.ID.Pointer()
+			break
+		}
 	}
 
 	device, err := malgo.InitDevice(ctx.Context, deviceConfig, deviceCallbacks)
