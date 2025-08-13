@@ -32,18 +32,19 @@ var (
 	stripLengths = []int{baseLEDCount, globeLEDCount}
 
 	globeLeds = []int{
-		0,
-		29,
-		55,
-		79,
-		102,
-		124,
-		145,
-		165,
-		183,
-		200,
-		216,
-		230,
+		0,   // 29
+		29,  // 26
+		55,  // 24
+		79,  // 23
+		102, // 22
+		124, // 21
+		145, // 20
+		165, // 18
+		183, // 17
+		200, // 16
+		216, // 14
+		230, // 12
+		242,
 	}
 )
 
@@ -131,7 +132,9 @@ func main() {
 				sineMap := leds.GetSineVals(length, peak, length/2)
 				for led, value := range sineMap {
 					mag := (float64(value) / 254.0)
-					ledsState.Set(globalLEDStrip, start+led, leds.Brightness(leds.Red, mag))
+					if start+led < globeLEDCount {
+						ledsState.Set(globalLEDStrip, start+led, leds.Brightness(leds.Red, mag))
+					}
 				}
 			}
 
