@@ -21,6 +21,9 @@ Beatboxer in Go
     - [Faster boot](#faster-boot)
     - [Code](#code)
     - [USB Audio](#usb-audio)
+      - [bbox-style sound card](#bbox-style-sound-card)
+      - [baux-style sound card](#baux-style-sound-card)
+      - [Test](#test)
     - [Audio support for Go](#audio-support-for-go)
   - [Run](#run)
   - [Build](#build)
@@ -135,6 +138,10 @@ git clone https://github.com/siggy/bbox.git ~/code/bbox
 
 ### USB Audio
 
+#### bbox-style sound card
+
+For MCSPER USB to 3.5mm Audio Jack Adapter.
+
 Plug in USB audio device and run:
 ```bash
 sudo tee /etc/asound.conf > /dev/null <<'EOF'
@@ -148,7 +155,30 @@ ctl.!default {
   card "Audio"
 }
 EOF
+```
 
+#### baux-style sound card
+
+For Plugable USB Audio Adapter with 3.5mm Speaker-Headphone and Microphone Jack.
+
+Plug in USB audio device and run:
+```bash
+sudo tee /etc/asound.conf > /dev/null <<'EOF'
+pcm.!default {
+  type plug
+  slave.pcm "dmix:Device,0"
+}
+
+ctl.!default {
+  type hw
+  card "Device"
+}
+EOF
+```
+
+#### Test
+
+```bash
 aplay /usr/share/sounds/alsa/Front_Center.wav
 ```
 
