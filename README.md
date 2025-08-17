@@ -68,6 +68,7 @@ Beatboxer in Go
 
 ```bash
 HOSTNAME=raspberrypi
+HOSTNAME=raspberrypi5-2
 HOSTNAME=raspberrypi5-3
 HOSTNAME=raspberrypi5-4
 HOSTNAME=raspberrypi5-5
@@ -235,8 +236,6 @@ fi
 EOF
 ```
 
-
-
 ## Connectivity
 
 ### Configure to connect over ethernet
@@ -253,10 +252,12 @@ sudo nmcli con up eth0-static
 
 ```bash
 HOSTNAME=raspberrypi
+HOSTNAME=raspberrypi5-2
 HOSTNAME=raspberrypi5-3
 HOSTNAME=raspberrypi5-4
 HOSTNAME=raspberrypi5-5
 HOSTNAME=raspberrypi5-6
+IP=192.168.2.2
 IP=192.168.2.2
 IP=192.168.2.3
 IP=192.168.2.4
@@ -270,6 +271,7 @@ alias pieth="ssh sig@$IP"
 
 ```bash
 SSID=sigpi
+SSID=sigpi5-2
 SSID=sigpi5-3
 SSID=sigpi5-4
 SSID=sigpi5-5
