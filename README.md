@@ -149,6 +149,10 @@ ctl.!default {
   card "Audio"
 }
 EOF
+
+amixer
+amixer -c 0 scontrols
+amixer -c 0 set PCM 95%
 ```
 
 #### baux-style sound card
