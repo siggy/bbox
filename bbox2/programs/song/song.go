@@ -32,7 +32,8 @@ type (
 )
 
 const (
-	ticksPerColorRotation = 60
+	// practically disable color rotation
+	ticksPerColorRotation = 10000000 // 60
 	pressThreshold        = 10
 )
 
