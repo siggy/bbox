@@ -1,12 +1,5 @@
 # TODO
 
-- confirm drum timing
-- handle multiple keyboards
-- fix baux deadlock
-- guarantee scorpio at /dev/ttyACM0
-- guarantee audio at card:
-  defaults.pcm.card 1
-  defaults.ctl.card 1
 - turn up volume output from bbox pi
 
 # BBox
