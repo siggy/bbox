@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/siggy/bbox/bbox2/amplitude"
-	"github.com/siggy/bbox/bbox2/leds"
+	"github.com/siggy/bbox/pkg/amplitude"
+	"github.com/siggy/bbox/pkg/leds"
 	log "github.com/sirupsen/logrus"
 )
 

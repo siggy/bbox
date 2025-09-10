@@ -176,13 +176,13 @@ sudo apt-get install -y libasound2-dev
 ## Run
 
 ```bash
-go run cmd/bbox2/main.go --fake-leds
+go run cmd/bbox/main.go --fake-leds
 ```
 
 ## Build
 
 ```bash
-go build -o /home/sig/bin/bbox cmd/bbox2/main.go
+go build -o /home/sig/bin/bbox cmd/bbox/main.go
 ```
 
 ## Auto boot with keyboard attach

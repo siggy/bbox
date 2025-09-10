@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/siggy/bbox/bbox2/equalizer"
-	"github.com/siggy/bbox/bbox2/keyboard"
-	"github.com/siggy/bbox/bbox2/leds"
-	"github.com/siggy/bbox/bbox2/program"
-	"github.com/siggy/bbox/bbox2/wavs"
+	"github.com/siggy/bbox/pkg/equalizer"
+	"github.com/siggy/bbox/pkg/keyboard"
+	"github.com/siggy/bbox/pkg/leds"
+	"github.com/siggy/bbox/pkg/program"
+	"github.com/siggy/bbox/pkg/wavs"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,7 +30,7 @@ func main() {
 		log.Fatalf("Invalid log level: %v", err)
 	}
 	log.SetLevel(lvl)
-	log := log.WithField("bbox2", "main")
+	log := log.WithField("bbox", "main")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

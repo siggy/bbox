@@ -12,7 +12,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/siggy/bbox/bbox2/leds"
+	"github.com/siggy/bbox/pkg/leds"
 	log "github.com/sirupsen/logrus"
 )
 
