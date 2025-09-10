@@ -1,6 +1,6 @@
 # Beatboxer <!-- omit from toc -->
 
-A human-sized drum machine built with a Raspberry Pi, Adafruit Feather Scorpios, NeoPixels, and Go
+A human-sized drum machine built with a Raspberry Pi, Adafruit Feather Scorpios, NeoPixels, and Go.
 
 - [Raspberry PI Setup](#raspberry-pi-setup)
   - [OS](#os)
@@ -285,8 +285,9 @@ open http://127.0.0.1:4000/bbox
 
 # Credits
 
+- [amplitude](pkg/amplitude) courtesy of (https://github.com/johnusher)
+- Hardware keyboard courtesy of (https://github.com/kodachi614/macropaw)
 - [wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
-- Keyboard courtesy of (https://github.com/kodachi614/macropaw)
 
 # TODO
 
