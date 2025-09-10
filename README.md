@@ -1,15 +1,9 @@
-# TODO
+# Beatboxer <!-- omit from toc -->
 
-- turn up volume output from bbox pi
+A human-sized drum machine built with a Raspberry Pi, Adafruit Feather Scorpios, NeoPixels, and Go
 
-# BBox
-
-Beatboxer in Go
-
-- [TODO](#todo)
-- [BBox](#bbox)
-  - [Raspberry PI Setup](#raspberry-pi-setup)
-    - [OS](#os)
+- [Raspberry PI Setup](#raspberry-pi-setup)
+  - [OS](#os)
     - [First Boot](#first-boot)
     - [Faster boot](#faster-boot)
     - [Code](#code)
@@ -18,21 +12,21 @@ Beatboxer in Go
       - [baux-style sound card](#baux-style-sound-card)
       - [Test](#test)
     - [Audio support for Go](#audio-support-for-go)
-  - [Run](#run)
-  - [Build](#build)
-  - [Auto boot with keyboard attach](#auto-boot-with-keyboard-attach)
-    - [Auto boot baux](#auto-boot-baux)
-  - [Connectivity](#connectivity)
-    - [Configure to connect over ethernet](#configure-to-connect-over-ethernet)
-    - [Configure the Pi to connect as Wifi AP](#configure-the-pi-to-connect-as-wifi-ap)
-      - [Switch the Pi back to connecting to the internet with wifi](#switch-the-pi-back-to-connecting-to-the-internet-with-wifi)
-  - [Docs](#docs)
-  - [Credits](#credits)
+- [Run](#run)
+- [Build](#build)
+- [Auto boot with keyboard attach](#auto-boot-with-keyboard-attach)
+  - [Auto boot baux](#auto-boot-baux)
+- [Connectivity](#connectivity)
+  - [Configure to connect over ethernet](#configure-to-connect-over-ethernet)
+  - [Configure the Pi to connect as Wifi AP](#configure-the-pi-to-connect-as-wifi-ap)
+    - [Switch the Pi back to connecting to the internet with wifi](#switch-the-pi-back-to-connecting-to-the-internet-with-wifi)
+- [Docs](#docs)
+- [Credits](#credits)
+- [TODO](#todo)
 
+# Raspberry PI Setup
 
-## Raspberry PI Setup
-
-### OS
+## OS
 
 1. Install Raspberry Pi Imager: https://www.raspberrypi.com/software/
 2. Choose `Raspberry Pi 5`, `Raspberry Pi OS Lite (64-bit)` and
@@ -173,19 +167,19 @@ aplay /usr/share/sounds/alsa/Front_Center.wav
 sudo apt-get install -y libasound2-dev
 ```
 
-## Run
+# Run
 
 ```bash
 go run cmd/bbox/main.go --fake-leds
 ```
 
-## Build
+# Build
 
 ```bash
 go build -o /home/sig/bin/bbox cmd/bbox/main.go
 ```
 
-## Auto boot with keyboard attach
+# Auto boot with keyboard attach
 
 ```bash
 cat <<'EOF' >> ~/.profile
@@ -208,7 +202,7 @@ sudo systemctl daemon-reload
 sudo reboot
 ```
 
-### Auto boot baux
+## Auto boot baux
 
 ```bash
 cat <<'EOF' >> ~/.profile
@@ -220,9 +214,9 @@ fi
 EOF
 ```
 
-## Connectivity
+# Connectivity
 
-### Configure to connect over ethernet
+## Configure to connect over ethernet
 
 ```bash
 IP=192.168.2.2
@@ -251,7 +245,7 @@ alias pi="ssh sig@$HOSTNAME.local"
 alias pieth="ssh sig@$IP"
 ```
 
-### Configure the Pi to connect as Wifi AP
+## Configure the Pi to connect as Wifi AP
 
 ```bash
 SSID=sigpi
@@ -275,22 +269,25 @@ HOSTNAME=raspberrypi5-4
 ssh sig@$HOSTNAME.local
 ```
 
-
-#### Switch the Pi back to connecting to the internet with wifi
+### Switch the Pi back to connecting to the internet with wifi
 
 ```bash
 nmcli connection show
 sudo nmcli connection down Hotspot
 ```
 
-## Docs
+# Docs
 
 ```bash
 jekyll serve -s docs
 open http://127.0.0.1:4000/bbox
 ```
 
-## Credits
+# Credits
 
 - [wavs](wavs) courtesy of (http://99sounds.org/drum-samples/)
 - Keyboard courtesy of (https://github.com/kodachi614/macropaw)
+
+# TODO
+
+- proper LED simulator
