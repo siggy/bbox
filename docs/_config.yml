@@ -8,6 +8,7 @@ markdown: kramdown
 theme: jekyll-theme-dinky
 github_username:  siggy
 twitter_username: siggy
+repository: siggy/bbox
 google_analytics: true
 github:
   is_project_page: true

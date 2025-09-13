@@ -279,8 +279,14 @@ sudo nmcli connection down Hotspot
 # Docs
 
 ```bash
-jekyll serve -s docs
-open http://127.0.0.1:4000/bbox
+docker run --rm \
+  --volume="$PWD/docs:/srv/jekyll:Z" \
+  --publish 4000:4000 \
+  --publish 35729:35729 \
+  -it jekyll/jekyll:4.2.2 \
+  jekyll serve --source /srv/jekyll --livereload
+
+open http://0.0.0.0:4000/bbox/
 ```
 
 # Credits
