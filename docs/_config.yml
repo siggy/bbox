@@ -1,7 +1,7 @@
 title: "Beatboxer"
 email: andrew@sig.gy
 description: >
-  A human-sized drum machine built with a Raspberry Pi, LEDs, and Go
+  A human-sized drum machine built with a Raspberry Pi, a Feather Scorpio, NeoPixels, and Go
 url: "https://sig.gy"
 baseurl: "/bbox"
 markdown: kramdown

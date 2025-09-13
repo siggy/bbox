@@ -4,34 +4,35 @@ title: "Beatboxer: A human-sized drum machine built with a Raspberry Pi, a Feath
 permalink: /
 ---
 
+<style>
+  :root { color-scheme: dark; }
+  html, body, h1, h2 { background:#202124; color:#619e4e; }
+  a { color:#b88de3; }
+  a:visited { color:#a774d6; }
+  pre, code { background:#111; color:#619e4e; }
+  hr { border-color:#333; }
+</style>
+
 # Beatboxer: A human-sized drum machine built with a Raspberry Pi, a Feather Scorpio, NeoPixels, and Go
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/MepepCV4EUw" frameborder="0" allowfullscreen></iframe>
 
 # Prior Art
 
-## Nine Inch Nails
-
 Inspired by Nine Inch Nails' Echoplex drum machine:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/6O_92BTrUcA" frameborder="0" allowfullscreen></iframe>
+---
+First implementation in JavaScript at [sig.gy/beatboxer](https://sig.gy/beatboxer):
 
-## Beatboxer in JavaScript
-
-First implemented in JS at [sig.gy/beatboxer](https://sig.gy/beatboxer/):
-
-<iframe width="900" height="315" src="https://sig.gy/beatboxer/" frameborder="0" allowfullscreen></iframe>
+<iframe width="900" height="315" src="https://sig.gy/beatboxer" frameborder="0" allowfullscreen></iframe>
 
 # Hardware
-
-## Components
 
 - [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)
 - [Adafruit Feather RP2040 SCORPIO](https://www.adafruit.com/product/5650)
 - 8x [Neopixel 144 strands](https://www.adafruit.com/product/2847)
-- [Custom Macropaw keyboard](https://github.com/kodachi614/macropaw) by [@kodachi614](https://github.com/kodachi614)
-
-## Wiring diagram
+- [Custom MacroPaw keyboard](https://github.com/kodachi614/macropaw) by [@kodachi614](https://github.com/kodachi614)
 
 <a href="assets/images/bbox2025_fritzing.webp" data-lightbox="bbox2025_fritzing" data-title="Beatboxer 2025 Fritzing"><img src="assets/images/bbox2025_fritzing.webp" alt="Beatboxer 2025 Fritzing" class="thumbnail mid"></a>
 
