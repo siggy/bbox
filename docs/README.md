@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "Beatboxer: A human-sized drum machine built with a Raspberry Pi, a Feather Scorpio, NeoPixels, and Go"
+title: "Beatboxer: A human-sized drum machine built with a Raspberry Pi, a Feather SCORPIO, NeoPixels, and Go"
 permalink: /
 ---
 
@@ -13,7 +13,7 @@ permalink: /
   hr { border-color:#333; }
 </style>
 
-# Beatboxer: A human-sized drum machine built with a Raspberry Pi, a Feather Scorpio, NeoPixels, and Go
+# Beatboxer: A human-sized drum machine built with a Raspberry Pi, a Feather SCORPIO, NeoPixels, and Go
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/MepepCV4EUw" frameborder="0" allowfullscreen></iframe>
 
@@ -42,7 +42,7 @@ First implementation in JavaScript at [sig.gy/beatboxer](https://sig.gy/beatboxe
 
 - [main.go](https://github.com/siggy/bbox/blob/main/cmd/bbox/main.go)
 - [generic program interface](https://github.com/siggy/bbox/blob/main/pkg/program/program.go#L16-L32)
-- [SCORPIO integration](https://github.com/siggy/bbox/tree/main/scorpio/bbox)
+- [SCORPIO integration](https://github.com/siggy/bbox/tree/main/scorpio)
 
 # Build photos
 
@@ -64,8 +64,6 @@ href="assets/images/bbox2025_dust.webp" data-lightbox="bbox2025" data-title="Aft
 ## Contact
 
 <a href="https://github.com/siggy/bbox/issues">File an issue against this repo</a>, or find me at <a href="https://sig.gy">sig.gy</a>
-
-Published 2025.09.12.
 
 This doc updated for 2025. For the original 2017-2018 writeup, see [Beatboxer 2017-2018](2017-2018).
 
