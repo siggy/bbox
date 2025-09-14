@@ -31,7 +31,7 @@ First implementation in JavaScript at [sig.gy/beatboxer](https://sig.gy/beatboxe
 
 - [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)
 - [Adafruit Feather RP2040 SCORPIO](https://www.adafruit.com/product/5650)
-- 8x [Neopixel 144 strands](https://www.adafruit.com/product/2847)
+- 8x [NeoPixel 144 strands](https://www.adafruit.com/product/2847)
 - [Custom MacroPaw keyboard](https://github.com/kodachi614/macropaw) by [@kodachi614](https://github.com/kodachi614)
 
 <a href="assets/images/bbox2025_fritzing.webp" data-lightbox="bbox2025_fritzing" data-title="Beatboxer 2025 Fritzing"><img src="assets/images/bbox2025_fritzing.webp" alt="Beatboxer 2025 Fritzing" class="thumbnail mid"></a>
