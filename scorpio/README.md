@@ -71,8 +71,8 @@ for _, b := range payload {
 ### Sequence diagram
 
 ```
-Pi (Go)                                     SCORPIO
-───────                                     ───────
+Pi (Go)                               SCORPIO
+───────                               ───────
 
  every 30 ms tick:
    ┌───────────────────┐
