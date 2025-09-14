@@ -8,9 +8,9 @@
 3. Boards Manager -> Raspberry Pi Pico/RP2040
 4. Boards -> Adafruit Feather RP2040 SCORPIO
 5. Sketch -> Include Library -> Manage Libraries ->
-  - Adafruit_NeoPXL8
-  - Adafruit_NeoPixel
-  - Adafruit_ZeroDMA
+   - Adafruit_NeoPXL8
+   - Adafruit_NeoPixel
+   - Adafruit_ZeroDMA
 
 ## Arduino programs for SCORPIO
 
