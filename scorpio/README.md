@@ -12,6 +12,12 @@
   - Adafruit_NeoPixel
   - Adafruit_ZeroDMA
 
+## Arduino programs for SCORPIO
+
+- [bbox.ino](bbox.ino): Main Beatboxer program.
+- [baux.ino](baux.ino): Auxilliary Beatboxer program for driving the base and globe.
+- [strand.ino](strand.ino): Standalone NeoPixel strand experiment.
+
 ## Debug from Pi
 
 ```bash
