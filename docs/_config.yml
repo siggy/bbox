@@ -15,3 +15,18 @@ github:
   owner_name: siggy
   owner_url: https://github.com/siggy
   repository_url: https://github.com/siggy/bbox
+logo: /assets/images/bbox.playa.2018_1200.630.jpg
+social:
+  name: Siggy
+  links:
+    - https://mastodon.social/@siggy
+    - https://github.com/siggy
+defaults:
+- scope:
+    path: ""
+  values:
+    image:
+      path: /assets/images/bbox.playa.2018_1200.630.jpg
+      height: 630
+      width: 1200
+      alt: Beatboxer in 2018
